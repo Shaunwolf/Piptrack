@@ -7,23 +7,24 @@ import logging
 
 class ForecastingEngine:
     def __init__(self):
-        self.forecast_days = 5
+        self.forecast_hours = 4  # Changed from 5 days to 4 hours
         self.path_types = ['momentum', 'retest', 'breakdown', 'sideways']
     
     def generate_spaghetti_model(self, symbol):
-        """Generate 3-5 probable price paths for the stock"""
+        """Generate 3-5 probable price paths for the stock (1-4 hour timeframe)"""
         try:
-            # Get stock data
+            # Get intraday stock data (5-minute intervals for last 5 days)
             ticker = yf.Ticker(symbol)
-            hist = ticker.history(period="3mo")
+            hist = ticker.history(period="5d", interval="5m")
             
             if hist.empty:
                 return []
             
             current_price = hist['Close'].iloc[-1]
             
-            # Calculate volatility and trend metrics
-            volatility = hist['Close'].pct_change().std() * np.sqrt(252)  # Annualized
+            # Calculate intraday volatility (hourly basis)
+            hourly_returns = hist['Close'].resample('1H').last().pct_change().dropna()
+            volatility = hourly_returns.std() * np.sqrt(24)  # Daily intraday volatility
             
             # Generate paths
             paths = []
