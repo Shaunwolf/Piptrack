@@ -21,78 +21,81 @@
         </div>
     </div>
     
-    <!-- Filter Controls -->
-    <div class="card">
-        <div class="card-header">
-            <h2 class="text-xl font-bold">Filters</h2>
-            <div class="flex space-x-2">
-                <button onclick="applyFilters()" class="btn-primary text-sm">
+    <!-- Filter Controls Widget -->
+    <div class="widget-card bg-gray-800 rounded-xl border border-gray-700 shadow-lg">
+        <div class="widget-header flex justify-between items-center p-6 border-b border-gray-700">
+            <h2 class="text-xl font-bold text-white flex items-center">
+                <i class="fas fa-sliders-h mr-2 text-blue-400"></i>Filters
+            </h2>
+            <div class="flex space-x-3">
+                <button onclick="applyFilters()" class="btn-gradient-primary px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105">
                     <i class="fas fa-filter mr-1"></i>Apply Filters
                 </button>
-                <button onclick="clearFilters()" class="btn-secondary text-sm">
+                <button onclick="clearFilters()" class="btn-gradient-secondary px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105">
                     <i class="fas fa-times mr-1"></i>Clear All
                 </button>
             </div>
         </div>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-            <div>
-                <label class="block text-sm font-medium mb-2">Price Range</label>
-                <select id="priceFilter" class="form-select bg-dark-accent border-gray-600 text-white">
-                    <option value="">All Prices</option>
-                    <option value="1-5">$1 - $5</option>
-                    <option value="5-15">$5 - $15</option>
-                    <option value="15-25">$15 - $25</option>
-                    <option value="1-25" selected>$1 - $25 (Target Range)</option>
-                </select>
-            </div>
+        <div class="widget-content p-6 pt-0">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+                <div class="filter-group">
+                    <label class="block text-sm font-medium mb-3 text-gray-300">Price Range</label>
+                    <select id="priceFilter" class="widget-input bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition-all">
+                        <option value="">All Prices</option>
+                        <option value="1-5">$1 - $5</option>
+                        <option value="5-15">$5 - $15</option>
+                        <option value="15-25">$15 - $25</option>
+                        <option value="1-25" selected>$1 - $25 (Target Range)</option>
+                    </select>
+                </div>
             
-            <div>
-                <label class="block text-sm font-medium mb-2">Min Confidence Score</label>
-                <div class="relative">
-                    <input type="range" id="minConfidence" min="0" max="100" value="0" 
-                           class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider">
-                    <div class="flex justify-between text-xs text-gray-400 mt-1">
-                        <span>0%</span>
-                        <span id="minConfidenceValue" class="font-semibold text-accent-blue">0%</span>
-                        <span>100%</span>
+                <div class="filter-group">
+                    <label class="block text-sm font-medium mb-3 text-gray-300">Min Confidence Score</label>
+                    <div class="relative">
+                        <input type="range" id="minConfidence" min="0" max="100" value="0" 
+                               class="w-full h-3 bg-gray-700 rounded-lg appearance-none cursor-pointer slider-thumb">
+                        <div class="flex justify-between text-xs text-gray-400 mt-2">
+                            <span>0%</span>
+                            <span id="minConfidenceValue" class="font-semibold text-blue-400">0%</span>
+                            <span>100%</span>
+                        </div>
                     </div>
                 </div>
-            </div>
-            
-            <div>
-                <label class="block text-sm font-medium mb-2">Min Volume Spike</label>
-                <div class="relative">
-                    <input type="range" id="minVolumeSpike" min="0" max="200" value="0" 
-                           class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider">
-                    <div class="flex justify-between text-xs text-gray-400 mt-1">
-                        <span>0%</span>
-                        <span id="minVolumeSpikeValue" class="font-semibold text-accent-blue">0%</span>
-                        <span>200%</span>
+                
+                <div class="filter-group">
+                    <label class="block text-sm font-medium mb-3 text-gray-300">Min Volume Spike</label>
+                    <div class="relative">
+                        <input type="range" id="minVolumeSpike" min="0" max="200" value="0" 
+                               class="w-full h-3 bg-gray-700 rounded-lg appearance-none cursor-pointer slider-thumb">
+                        <div class="flex justify-between text-xs text-gray-400 mt-2">
+                            <span>0%</span>
+                            <span id="minVolumeSpikeValue" class="font-semibold text-green-400">0%</span>
+                            <span>200%</span>
+                        </div>
                     </div>
                 </div>
-            </div>
-            
-            <div>
-                <label class="block text-sm font-medium mb-2">Pattern Type</label>
-                <select id="patternFilter" class="form-select bg-dark-accent border-gray-600 text-white">
-                    <option value="">All Patterns</option>
-                    <option value="Bullish Trend">Bullish Trend</option>
-                    <option value="Bearish Trend">Bearish Trend</option>
-                    <option value="Consolidation">Consolidation</option>
-                    <option value="Neutral">Neutral</option>
-                </select>
-            </div>
-            
-            <div>
-                <label class="block text-sm font-medium mb-2">RSI Range</label>
-                <select id="rsiFilter" class="form-select bg-dark-accent border-gray-600 text-white">
-                    <option value="">All RSI</option>
-                    <option value="oversold">Oversold (< 30)</option>
-                    <option value="neutral">Neutral (30-70)</option>
-                    <option value="overbought">Overbought (> 70)</option>
-                </select>
-            </div>
+                
+                <div class="filter-group">
+                    <label class="block text-sm font-medium mb-3 text-gray-300">Pattern Type</label>
+                    <select id="patternFilter" class="widget-input bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition-all">
+                        <option value="">All Patterns</option>
+                        <option value="Bullish Trend">🚀 Bullish Trend</option>
+                        <option value="Bearish Trend">📉 Bearish Trend</option>
+                        <option value="Consolidation">📊 Consolidation</option>
+                        <option value="Neutral">⚪ Neutral</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label class="block text-sm font-medium mb-3 text-gray-300">RSI Range</label>
+                    <select id="rsiFilter" class="widget-input bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition-all">
+                        <option value="">All RSI</option>
+                        <option value="oversold">🔴 Oversold (< 30)</option>
+                        <option value="neutral">🟡 Neutral (30-70)</option>
+                        <option value="overbought">🟢 Overbought (> 70)</option>
+                    </select>
+                </div>
         </div>
         
         <!-- Active Filters Display -->
@@ -104,17 +107,19 @@
         </div>
     </div>
     
-    <!-- Scan Results -->
-    <div class="card">
-        <div class="card-header">
-            <h2 class="text-xl font-bold">Scan Results</h2>
+    <!-- Scan Results Widget -->
+    <div class="widget-card bg-gray-800 rounded-xl border border-gray-700 shadow-lg">
+        <div class="widget-header flex justify-between items-center p-6 border-b border-gray-700">
+            <h2 class="text-xl font-bold text-white flex items-center">
+                <i class="fas fa-chart-line mr-2 text-green-400"></i>Scan Results
+            </h2>
             <div class="flex items-center space-x-4">
-                <span id="resultsCount" class="text-gray-400">{{ stocks|length }} stocks found</span>
+                <span id="resultsCount" class="text-gray-400 bg-gray-700 px-3 py-1 rounded-lg">{{ stocks|length }} stocks found</span>
                 <div class="flex space-x-2">
-                    <button onclick="sortResults('confidence')" class="btn-secondary">
+                    <button onclick="sortResults('confidence')" class="btn-gradient-secondary px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105">
                         <i class="fas fa-sort mr-1"></i>Confidence
                     </button>
-                    <button onclick="sortResults('volume')" class="btn-secondary">
+                    <button onclick="sortResults('volume')" class="btn-gradient-secondary px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105">
                         <i class="fas fa-sort mr-1"></i>Volume
                     </button>
                 </div>

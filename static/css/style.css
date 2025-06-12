@@ -31,7 +31,35 @@ body {
   @apply text-white bg-dark-accent;
 }
 
-/* Button Styles */
+/* Modern Gradient Button Styles */
+.btn-gradient-primary {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+  transition: all 0.3s ease;
+}
+
+.btn-gradient-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+}
+
+.btn-gradient-secondary {
+  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 15px rgba(107, 114, 128, 0.2);
+  transition: all 0.3s ease;
+}
+
+.btn-gradient-secondary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(107, 114, 128, 0.3);
+  background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+}
+
 .btn-primary {
   @apply inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-accent-blue hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent-blue transition-colors duration-200;
 }

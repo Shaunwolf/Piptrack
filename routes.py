@@ -63,8 +63,11 @@ def scan_stocks():
         else:
             results = stock_scanner.scan_selected_tickers(tickers)
         
-        # Update database with scan results
+        # Update database with scan results and calculate confidence scores
         for result in results:
+            # Calculate confidence score using the result data
+            confidence_score = confidence_scorer.calculate_score(result)
+            
             stock = Stock.query.filter_by(symbol=result['symbol']).first()
             if not stock:
                 stock = Stock(symbol=result['symbol'])
@@ -76,7 +79,10 @@ def scan_stocks():
             stock.volume_spike = float(result.get('volume_spike', 0))
             stock.pattern_type = result.get('pattern_type', '')
             stock.fibonacci_position = float(result.get('fibonacci_position', 0))
-            stock.confidence_score = float(confidence_scorer.calculate_score(result))
+            stock.confidence_score = float(confidence_score)
+            
+            # Add confidence score to result for display
+            result['confidence_score'] = confidence_score
         
         db.session.commit()
         return jsonify({'success': True, 'results': results})
