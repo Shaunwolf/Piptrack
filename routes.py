@@ -311,23 +311,23 @@ def pattern_evolution_analysis(symbol):
                     existing.timing_confidence = float(breakout_pred.get('timing_confidence', 0.5))
                     existing.updated_at = datetime.utcnow()
                 else:
-                    # Create new record
+                    # Create new record with numpy conversion
                     new_evolution = PatternEvolution(
                         symbol=symbol,
                         pattern_type=pattern['pattern_type'],
-                        confidence_score=pattern['confidence'],
+                        confidence_score=float(pattern['confidence']),
                         stage=pattern['current_stage'],
-                        completion_percentage=pattern['completion_percentage'],
-                        time_in_pattern=pattern['time_in_pattern'],
-                        volatility_trend=evolution.get('volatility_trend', 0),
-                        volume_trend=evolution.get('volume_trend', 0),
-                        momentum_change=evolution.get('momentum_change', 0),
-                        support_resistance_strength=evolution.get('support_resistance_strength', 0),
-                        estimated_days_to_breakout=breakout_pred.get('estimated_days_to_breakout', 7),
-                        breakout_probability_5_days=breakout_pred.get('breakout_probability_next_5_days', 0),
-                        breakout_probability_10_days=breakout_pred.get('breakout_probability_next_10_days', 0),
-                        direction_bias=breakout_pred.get('direction_bias', 0.5),
-                        timing_confidence=breakout_pred.get('timing_confidence', 0.5),
+                        completion_percentage=float(pattern['completion_percentage']),
+                        time_in_pattern=int(pattern['time_in_pattern']),
+                        volatility_trend=float(evolution.get('volatility_trend', 0)),
+                        volume_trend=float(evolution.get('volume_trend', 0)),
+                        momentum_change=float(evolution.get('momentum_change', 0)),
+                        support_resistance_strength=float(evolution.get('support_resistance_strength', 0)),
+                        estimated_days_to_breakout=int(breakout_pred.get('estimated_days_to_breakout', 7)),
+                        breakout_probability_5_days=float(breakout_pred.get('breakout_probability_next_5_days', 0)),
+                        breakout_probability_10_days=float(breakout_pred.get('breakout_probability_next_10_days', 0)),
+                        direction_bias=float(breakout_pred.get('direction_bias', 0.5)),
+                        timing_confidence=float(breakout_pred.get('timing_confidence', 0.5)),
                         pattern_data=breakout_pred.get('key_levels', {})
                     )
                     db.session.add(new_evolution)

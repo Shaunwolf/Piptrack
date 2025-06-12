@@ -85,16 +85,54 @@ class PatternEvolutionTracker:
                         'time_in_pattern': pattern.get('duration', 0)
                     })
             
-            return {
+            # Convert all data to JSON-serializable types
+            serialized_data = {
                 'symbol': symbol,
                 'timestamp': datetime.now().isoformat(),
-                'patterns': evolution_data,
-                'overall_breakout_probability': self.calculate_overall_breakout_probability(evolution_data)
+                'patterns': self._serialize_patterns(evolution_data),
+                'overall_breakout_probability': float(self.calculate_overall_breakout_probability(evolution_data))
             }
+            
+            return serialized_data
             
         except Exception as e:
             logging.error(f"Error tracking pattern evolution for {symbol}: {e}")
             return None
+
+    def _serialize_patterns(self, patterns):
+        """Convert patterns data to JSON-serializable format"""
+        serialized = []
+        for pattern in patterns:
+            serialized_pattern = {}
+            for key, value in pattern.items():
+                if isinstance(value, (np.integer, np.floating)):
+                    serialized_pattern[key] = float(value)
+                elif isinstance(value, np.bool_):
+                    serialized_pattern[key] = bool(value)
+                elif isinstance(value, dict):
+                    serialized_pattern[key] = self._serialize_dict(value)
+                else:
+                    serialized_pattern[key] = value
+            serialized.append(serialized_pattern)
+        return serialized
+
+    def _serialize_dict(self, data):
+        """Recursively serialize dictionary data"""
+        if isinstance(data, dict):
+            return {k: self._serialize_value(v) for k, v in data.items()}
+        return data
+
+    def _serialize_value(self, value):
+        """Serialize individual values"""
+        if isinstance(value, (np.integer, np.floating)):
+            return float(value)
+        elif isinstance(value, np.bool_):
+            return bool(value)
+        elif isinstance(value, dict):
+            return self._serialize_dict(value)
+        elif isinstance(value, list):
+            return [self._serialize_value(v) for v in value]
+        return value
 
     def detect_all_patterns(self, hist):
         """Detect all active patterns in the price data"""
@@ -157,16 +195,16 @@ class PatternEvolutionTracker:
                         
                         pattern = {
                             'type': 'bull_flag',
-                            'start_date': hist.index[flagpole_start],
-                            'flagpole_end': hist.index[flagpole_end],
-                            'current_date': hist.index[-1],
-                            'flagpole_gain': flagpole_gain,
-                            'consolidation_range': flag_range,
-                            'volume_declining': volume_trend < -0.1,
-                            'confidence': self.calculate_bull_flag_confidence(flagpole_gain, flag_range, volume_trend),
+                            'start_date': hist.index[flagpole_start].isoformat(),
+                            'flagpole_end': hist.index[flagpole_end].isoformat(),
+                            'current_date': hist.index[-1].isoformat(),
+                            'flagpole_gain': float(flagpole_gain),
+                            'consolidation_range': float(flag_range),
+                            'volume_declining': bool(volume_trend < -0.1),
+                            'confidence': float(self.calculate_bull_flag_confidence(flagpole_gain, flag_range, volume_trend)),
                             'stage': self.determine_flag_stage(hist.index[flagpole_end:], flag_period),
-                            'completion': min(len(flag_period) / 15, 1.0),
-                            'duration': len(flag_period)
+                            'completion': float(min(len(flag_period) / 15, 1.0)),
+                            'duration': int(len(flag_period))
                         }
                         
                         if pattern['confidence'] > 0.6:
