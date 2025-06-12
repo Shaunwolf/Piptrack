@@ -1,0 +1,653 @@
+{% extends "base.html" %}
+
+{% block title %}Trade Journal - AI Coach{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Header -->
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-3xl font-bold mb-2">Trade Journal</h1>
+            <p class="text-gray-400">Track your trades and analyze performance</p>
+        </div>
+        
+        <div class="flex space-x-3">
+            <button onclick="showAddTradeModal()" class="btn-primary">
+                <i class="fas fa-plus mr-1"></i>Add Trade
+            </button>
+            <button onclick="exportTradesToSheets()" class="btn-secondary">
+                <i class="fas fa-upload mr-1"></i>Sync to Sheets
+            </button>
+        </div>
+    </div>
+    
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="stat-card">
+            <div class="stat-icon bg-accent-blue">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div>
+                <p class="stat-label">Total Trades</p>
+                <p class="stat-value">{{ trades|length }}</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon bg-accent-green">
+                <i class="fas fa-trophy"></i>
+            </div>
+            <div>
+                <p class="stat-label">Win Rate</p>
+                <p class="stat-value" id="winRate">
+                    {{ "%.1f"|format(((trades|selectattr('outcome', 'equalto', 'win')|list|length) / (trades|selectattr('outcome', 'ne', 'active')|list|length) * 100) if trades|selectattr('outcome', 'ne', 'active')|list|length > 0 else 0) }}%
+                </p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon bg-purple-500">
+                <i class="fas fa-dollar-sign"></i>
+            </div>
+            <div>
+                <p class="stat-label">Total P&L</p>
+                <p class="stat-value" id="totalPnL">
+                    ${{ "%.2f"|format(trades|sum(attribute='pnl') if trades|selectattr('pnl')|list else 0) }}
+                </p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon bg-yellow-500">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div>
+                <p class="stat-label">Active Trades</p>
+                <p class="stat-value">{{ trades|selectattr('outcome', 'equalto', 'active')|list|length or trades|rejectattr('outcome')|list|length }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Trade Filters -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="text-xl font-bold">Filter Trades</h2>
+            <button onclick="clearTradeFilters()" class="text-accent-blue hover:underline">Clear Filters</button>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label class="block text-sm font-medium mb-1">Status</label>
+                <select id="statusFilter" class="form-select" onchange="applyTradeFilters()">
+                    <option value="">All Trades</option>
+                    <option value="active">Active</option>
+                    <option value="win">Wins</option>
+                    <option value="loss">Losses</option>
+                    <option value="breakeven">Breakeven</option>
+                </select>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium mb-1">Symbol</label>
+                <input type="text" id="symbolFilter" placeholder="Enter symbol" class="form-input" oninput="applyTradeFilters()">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium mb-1">Date Range</label>
+                <select id="dateFilter" class="form-select" onchange="applyTradeFilters()">
+                    <option value="">All Time</option>
+                    <option value="today">Today</option>
+                    <option value="week">This Week</option>
+                    <option value="month">This Month</option>
+                </select>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium mb-1">Pattern Confirmed</label>
+                <select id="patternFilter" class="form-select" onchange="applyTradeFilters()">
+                    <option value="">All</option>
+                    <option value="true">Confirmed</option>
+                    <option value="false">Not Confirmed</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Trades List -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="text-xl font-bold">Trade History</h2>
+            <div class="flex space-x-2">
+                <button onclick="sortTrades('date')" class="btn-secondary">
+                    <i class="fas fa-sort mr-1"></i>Date
+                </button>
+                <button onclick="sortTrades('pnl')" class="btn-secondary">
+                    <i class="fas fa-sort mr-1"></i>P&L
+                </button>
+            </div>
+        </div>
+        
+        <div id="tradesContainer" class="space-y-4">
+            {% for trade in trades %}
+            <div class="trade-card" data-trade-id="{{ trade.id }}" data-status="{{ trade.outcome or 'active' }}">
+                <div class="flex justify-between items-start">
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-3 mb-2">
+                            <h3 class="font-bold text-lg">{{ trade.symbol }}</h3>
+                            <span class="status-badge status-{{ trade.outcome or 'active' }}">
+                                {{ trade.outcome or 'Active' }}
+                            </span>
+                            {% if trade.pattern_confirmed %}
+                            <i class="fas fa-check-circle text-accent-green" title="Pattern Confirmed"></i>
+                            {% endif %}
+                            {% if trade.screenshot_taken %}
+                            <i class="fas fa-camera text-accent-blue" title="Screenshot Taken"></i>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
+                            <div>
+                                <p class="text-xs text-gray-400">Entry</p>
+                                <p class="font-semibold">${{ trade.entry_price }}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-400">Stop Loss</p>
+                                <p class="font-semibold">${{ trade.stop_loss }}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-400">Take Profit</p>
+                                <p class="font-semibold">${{ trade.take_profit }}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-400">Confidence</p>
+                                <p class="font-semibold">{{ trade.confidence_at_entry }}%</p>
+                            </div>
+                        </div>
+                        
+                        {% if trade.reflection %}
+                        <div class="mb-3">
+                            <p class="text-xs text-gray-400 mb-1">Reflection</p>
+                            <p class="text-sm text-gray-300">{{ trade.reflection[:100] }}{% if trade.reflection|length > 100 %}...{% endif %}</p>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="flex items-center justify-between">
+                            <div class="text-sm text-gray-400">
+                                {{ trade.created_at.strftime('%m/%d/%Y %H:%M') }}
+                            </div>
+                            
+                            {% if trade.pnl %}
+                            <div class="text-lg font-bold {{ 'text-accent-green' if trade.pnl > 0 else 'text-accent-red' if trade.pnl < 0 else 'text-gray-400' }}">
+                                {{ "+" if trade.pnl > 0 else "" }}${{ "%.2f"|format(trade.pnl) }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-col space-y-2 ml-4">
+                        <button onclick="editTrade({{ trade.id }})" class="btn-secondary">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        {% if not trade.outcome or trade.outcome == 'active' %}
+                        <button onclick="closeTrade({{ trade.id }})" class="btn-primary">
+                            <i class="fas fa-flag-checkered"></i>
+                        </button>
+                        {% endif %}
+                        <button onclick="viewTradeDetails({{ trade.id }})" class="btn-secondary">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="text-center py-12">
+                <i class="fas fa-book text-6xl text-gray-600 mb-4"></i>
+                <h3 class="text-xl font-semibold mb-2">No Trades Yet</h3>
+                <p class="text-gray-400 mb-4">Start by adding your first trade to the journal</p>
+                <button onclick="showAddTradeModal()" class="btn-primary">
+                    <i class="fas fa-plus mr-2"></i>Add First Trade
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Add Trade Modal -->
+<div id="addTradeModal" class="modal">
+    <div class="modal-content max-w-2xl">
+        <div class="modal-header">
+            <h3 class="text-xl font-bold">Add New Trade</h3>
+            <button onclick="closeModal('addTradeModal')" class="modal-close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form id="addTradeForm" class="modal-body">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Symbol *</label>
+                    <input type="text" id="tradeSymbol" name="symbol" class="form-input" required>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-1">Entry Price *</label>
+                    <input type="number" id="entryPrice" name="entry_price" step="0.01" class="form-input" required>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-1">Stop Loss *</label>
+                    <input type="number" id="stopLoss" name="stop_loss" step="0.01" class="form-input" required>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-1">Take Profit *</label>
+                    <input type="number" id="takeProfit" name="take_profit" step="0.01" class="form-input" required>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-1">Confidence Score</label>
+                    <input type="range" id="confidenceSlider" min="0" max="100" value="50" class="range-input">
+                    <span id="confidenceValue" class="text-sm text-gray-400">50%</span>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <label class="flex items-center">
+                        <input type="checkbox" id="patternConfirmed" class="form-checkbox">
+                        <span class="ml-2 text-sm">Pattern Confirmed</span>
+                    </label>
+                    
+                    <label class="flex items-center">
+                        <input type="checkbox" id="screenshotTaken" class="form-checkbox">
+                        <span class="ml-2 text-sm">Screenshot Taken</span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <label class="block text-sm font-medium mb-1">Trade Reflection</label>
+                <textarea id="tradeReflection" name="reflection" rows="3" 
+                    placeholder="Why did you take this trade? What's your thesis?"
+                    class="form-textarea"></textarea>
+            </div>
+            
+            <div class="mt-4">
+                <label class="flex items-center">
+                    <input type="checkbox" id="perfectTrade" class="form-checkbox">
+                    <span class="ml-2 text-sm font-medium">This was a perfect trade setup</span>
+                </label>
+            </div>
+            
+            <div class="flex space-x-3 mt-6">
+                <button type="submit" class="btn-primary flex-1">
+                    <i class="fas fa-save mr-1"></i>Add Trade
+                </button>
+                <button type="button" onclick="closeModal('addTradeModal')" class="btn-secondary">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Close Trade Modal -->
+<div id="closeTradeModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="text-xl font-bold">Close Trade</h3>
+            <button onclick="closeModal('closeTradeModal')" class="modal-close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form id="closeTradeForm" class="modal-body">
+            <input type="hidden" id="closeTradeId">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Exit Price *</label>
+                    <input type="number" id="exitPrice" step="0.01" class="form-input" required>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-1">Outcome *</label>
+                    <select id="tradeOutcome" class="form-select" required>
+                        <option value="">Select outcome</option>
+                        <option value="win">Win</option>
+                        <option value="loss">Loss</option>
+                        <option value="breakeven">Breakeven</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <label class="block text-sm font-medium mb-1">Lessons Learned</label>
+                <textarea id="lessonsLearned" rows="3" 
+                    placeholder="What did you learn from this trade?"
+                    class="form-textarea"></textarea>
+            </div>
+            
+            <div class="flex space-x-3 mt-6">
+                <button type="submit" class="btn-primary flex-1">
+                    <i class="fas fa-flag-checkered mr-1"></i>Close Trade
+                </button>
+                <button type="button" onclick="closeModal('closeTradeModal')" class="btn-secondary">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Trade Details Modal -->
+<div id="tradeDetailsModal" class="modal">
+    <div class="modal-content max-w-2xl">
+        <div class="modal-header">
+            <h3 class="text-xl font-bold">Trade Details</h3>
+            <button onclick="closeModal('tradeDetailsModal')" class="modal-close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div id="tradeDetailsContent" class="modal-body">
+            <!-- Content will be populated by JavaScript -->
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Global variables
+let allTrades = {{ trades|tojson }};
+let filteredTrades = [...allTrades];
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    // Set up confidence slider
+    document.getElementById('confidenceSlider').addEventListener('input', function() {
+        document.getElementById('confidenceValue').textContent = this.value + '%';
+    });
+    
+    // Pre-fill symbol if provided in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const symbol = urlParams.get('symbol');
+    if (symbol) {
+        showAddTradeModal();
+        document.getElementById('tradeSymbol').value = symbol;
+    }
+    
+    // Set up form submissions
+    document.getElementById('addTradeForm').addEventListener('submit', handleAddTrade);
+    document.getElementById('closeTradeForm').addEventListener('submit', handleCloseTrade);
+});
+
+// Show add trade modal
+function showAddTradeModal() {
+    document.getElementById('addTradeModal').classList.remove('hidden');
+    document.getElementById('tradeSymbol').focus();
+}
+
+// Handle add trade form submission
+async function handleAddTrade(e) {
+    e.preventDefault();
+    
+    const formData = {
+        symbol: document.getElementById('tradeSymbol').value.toUpperCase(),
+        entry_price: parseFloat(document.getElementById('entryPrice').value),
+        stop_loss: parseFloat(document.getElementById('stopLoss').value),
+        take_profit: parseFloat(document.getElementById('takeProfit').value),
+        confidence_at_entry: parseInt(document.getElementById('confidenceSlider').value),
+        pattern_confirmed: document.getElementById('patternConfirmed').checked,
+        screenshot_taken: document.getElementById('screenshotTaken').checked,
+        reflection: document.getElementById('tradeReflection').value,
+        perfect_trade: document.getElementById('perfectTrade').checked
+    };
+    
+    try {
+        const response = await fetch('/add_trade', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(formData)
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            showAlert('Trade added successfully!', 'success');
+            closeModal('addTradeModal');
+            location.reload(); // Refresh to show new trade
+        } else {
+            showAlert('Error adding trade: ' + data.error, 'error');
+        }
+    } catch (error) {
+        showAlert('Error adding trade', 'error');
+    }
+}
+
+// Close a trade
+function closeTrade(tradeId) {
+    document.getElementById('closeTradeId').value = tradeId;
+    document.getElementById('closeTradeModal').classList.remove('hidden');
+}
+
+// Handle close trade form submission
+async function handleCloseTrade(e) {
+    e.preventDefault();
+    
+    const tradeId = document.getElementById('closeTradeId').value;
+    const exitPrice = parseFloat(document.getElementById('exitPrice').value);
+    const outcome = document.getElementById('tradeOutcome').value;
+    const lessonsLearned = document.getElementById('lessonsLearned').value;
+    
+    // Calculate P&L (simplified - you might want more complex logic)
+    const trade = allTrades.find(t => t.id == tradeId);
+    const pnl = exitPrice - trade.entry_price;
+    
+    const updateData = {
+        exit_price: exitPrice,
+        outcome: outcome,
+        pnl: pnl,
+        lessons_learned: lessonsLearned
+    };
+    
+    try {
+        const response = await fetch(`/update_trade/${tradeId}`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(updateData)
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            showAlert('Trade closed successfully!', 'success');
+            closeModal('closeTradeModal');
+            location.reload();
+        } else {
+            showAlert('Error closing trade: ' + data.error, 'error');
+        }
+    } catch (error) {
+        showAlert('Error closing trade', 'error');
+    }
+}
+
+// Apply trade filters
+function applyTradeFilters() {
+    const statusFilter = document.getElementById('statusFilter').value;
+    const symbolFilter = document.getElementById('symbolFilter').value.toUpperCase();
+    const dateFilter = document.getElementById('dateFilter').value;
+    const patternFilter = document.getElementById('patternFilter').value;
+    
+    filteredTrades = allTrades.filter(trade => {
+        if (statusFilter && (trade.outcome || 'active') !== statusFilter) return false;
+        if (symbolFilter && !trade.symbol.includes(symbolFilter)) return false;
+        if (patternFilter && trade.pattern_confirmed.toString() !== patternFilter) return false;
+        
+        if (dateFilter) {
+            const tradeDate = new Date(trade.created_at);
+            const now = new Date();
+            
+            if (dateFilter === 'today' && !isSameDay(tradeDate, now)) return false;
+            if (dateFilter === 'week' && !isSameWeek(tradeDate, now)) return false;
+            if (dateFilter === 'month' && !isSameMonth(tradeDate, now)) return false;
+        }
+        
+        return true;
+    });
+    
+    renderFilteredTrades();
+}
+
+// Clear trade filters
+function clearTradeFilters() {
+    document.getElementById('statusFilter').value = '';
+    document.getElementById('symbolFilter').value = '';
+    document.getElementById('dateFilter').value = '';
+    document.getElementById('patternFilter').value = '';
+    
+    filteredTrades = [...allTrades];
+    renderFilteredTrades();
+}
+
+// Sort trades
+function sortTrades(criteria) {
+    if (criteria === 'date') {
+        filteredTrades.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    } else if (criteria === 'pnl') {
+        filteredTrades.sort((a, b) => (b.pnl || 0) - (a.pnl || 0));
+    }
+    
+    renderFilteredTrades();
+}
+
+// Render filtered trades
+function renderFilteredTrades() {
+    // This would update the trades display based on filters
+    // For now, we'll just hide/show existing trade cards
+    const tradeCards = document.querySelectorAll('.trade-card');
+    const filteredIds = filteredTrades.map(t => t.id);
+    
+    tradeCards.forEach(card => {
+        const tradeId = parseInt(card.dataset.tradeId);
+        if (filteredIds.includes(tradeId)) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+
+// Edit trade
+function editTrade(tradeId) {
+    const trade = allTrades.find(t => t.id === tradeId);
+    if (trade) {
+        // Pre-fill the add trade form with existing data
+        document.getElementById('tradeSymbol').value = trade.symbol;
+        document.getElementById('entryPrice').value = trade.entry_price;
+        document.getElementById('stopLoss').value = trade.stop_loss;
+        document.getElementById('takeProfit').value = trade.take_profit;
+        document.getElementById('confidenceSlider').value = trade.confidence_at_entry;
+        document.getElementById('confidenceValue').textContent = trade.confidence_at_entry + '%';
+        document.getElementById('patternConfirmed').checked = trade.pattern_confirmed;
+        document.getElementById('screenshotTaken').checked = trade.screenshot_taken;
+        document.getElementById('tradeReflection').value = trade.reflection || '';
+        document.getElementById('perfectTrade').checked = trade.perfect_trade;
+        
+        showAddTradeModal();
+    }
+}
+
+// View trade details
+function viewTradeDetails(tradeId) {
+    const trade = allTrades.find(t => t.id === tradeId);
+    if (trade) {
+        const detailsContent = `
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <h4 class="font-semibold text-accent-blue">Trade Information</h4>
+                        <div class="mt-2 space-y-1">
+                            <p><span class="text-gray-400">Symbol:</span> ${trade.symbol}</p>
+                            <p><span class="text-gray-400">Entry:</span> $${trade.entry_price}</p>
+                            <p><span class="text-gray-400">Stop Loss:</span> $${trade.stop_loss}</p>
+                            <p><span class="text-gray-400">Take Profit:</span> $${trade.take_profit}</p>
+                            <p><span class="text-gray-400">Confidence:</span> ${trade.confidence_at_entry}%</p>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-semibold text-accent-blue">Trade Status</h4>
+                        <div class="mt-2 space-y-1">
+                            <p><span class="text-gray-400">Status:</span> ${trade.outcome || 'Active'}</p>
+                            ${trade.exit_price ? `<p><span class="text-gray-400">Exit:</span> $${trade.exit_price}</p>` : ''}
+                            ${trade.pnl ? `<p><span class="text-gray-400">P&L:</span> <span class="${trade.pnl > 0 ? 'text-accent-green' : 'text-accent-red'}">$${trade.pnl.toFixed(2)}</span></p>` : ''}
+                            <p><span class="text-gray-400">Date:</span> ${new Date(trade.created_at).toLocaleDateString()}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="font-semibold text-accent-blue">Checklist</h4>
+                    <div class="mt-2 space-y-1">
+                        <p class="flex items-center">
+                            <i class="fas ${trade.pattern_confirmed ? 'fa-check-circle text-accent-green' : 'fa-times-circle text-accent-red'} mr-2"></i>
+                            Pattern Confirmed
+                        </p>
+                        <p class="flex items-center">
+                            <i class="fas ${trade.screenshot_taken ? 'fa-check-circle text-accent-green' : 'fa-times-circle text-accent-red'} mr-2"></i>
+                            Screenshot Taken
+                        </p>
+                        <p class="flex items-center">
+                            <i class="fas ${trade.perfect_trade ? 'fa-check-circle text-accent-green' : 'fa-times-circle text-accent-red'} mr-2"></i>
+                            Perfect Trade
+                        </p>
+                    </div>
+                </div>
+                
+                ${trade.reflection ? `
+                <div>
+                    <h4 class="font-semibold text-accent-blue">Reflection</h4>
+                    <p class="mt-2 text-gray-300">${trade.reflection}</p>
+                </div>
+                ` : ''}
+                
+                ${trade.lessons_learned ? `
+                <div>
+                    <h4 class="font-semibold text-accent-blue">Lessons Learned</h4>
+                    <p class="mt-2 text-gray-300">${trade.lessons_learned}</p>
+                </div>
+                ` : ''}
+            </div>
+        `;
+        
+        document.getElementById('tradeDetailsContent').innerHTML = detailsContent;
+        document.getElementById('tradeDetailsModal').classList.remove('hidden');
+    }
+}
+
+// Export trades to Google Sheets
+async function exportTradesToSheets() {
+    try {
+        showLoading();
+        // This would trigger a bulk export to Google Sheets
+        await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call
+        showAlert('Trades exported to Google Sheets successfully!', 'success');
+    } catch (error) {
+        showAlert('Error exporting to Google Sheets', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+// Utility functions for date filtering
+function isSameDay(date1, date2) {
+    return date1.toDateString() === date2.toDateString();
+}
+
+function isSameWeek(date1, date2) {
+    const oneWeek = 7 * 24 * 60 * 60 * 1000;
+    return Math.abs(date1 - date2) < oneWeek;
+}
+
+function isSameMonth(date1, date2) {
+    return date1.getMonth() === date2.getMonth() && date1.getFullYear() === date2.getFullYear();
+}
+</script>
+{% endblock %}

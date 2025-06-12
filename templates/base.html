@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Stock Scanner & AI Coach{% endblock %}</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Plotly.js -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <!-- Configure Tailwind for dark theme -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        'dark-bg': '#0f1419',
+                        'dark-surface': '#1a1f29',
+                        'dark-accent': '#2d3748',
+                        'accent-blue': '#3b82f6',
+                        'accent-green': '#10b981',
+                        'accent-red': '#ef4444'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="dark bg-dark-bg text-white min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-dark-surface border-b border-dark-accent">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center space-x-8">
+                    <!-- Logo -->
+                    <div class="flex-shrink-0">
+                        <a href="{{ url_for('index') }}" class="text-xl font-bold text-accent-blue">
+                            <i class="fas fa-chart-line mr-2"></i>AIvest Scanner
+                        </a>
+                    </div>
+                    
+                    <!-- Navigation Links -->
+                    <div class="hidden md:flex space-x-6">
+                        <a href="{{ url_for('index') }}" class="nav-link">
+                            <i class="fas fa-home mr-1"></i>Dashboard
+                        </a>
+                        <a href="{{ url_for('scanner') }}" class="nav-link">
+                            <i class="fas fa-search mr-1"></i>Scanner
+                        </a>
+                        <a href="{{ url_for('journal') }}" class="nav-link">
+                            <i class="fas fa-book mr-1"></i>Journal
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Right side buttons -->
+                <div class="flex items-center space-x-4">
+                    <button id="voiceToggle" class="btn-secondary">
+                        <i class="fas fa-volume-up mr-1"></i>Voice: ON
+                    </button>
+                    <button onclick="exportWeeklyReport()" class="btn-primary">
+                        <i class="fas fa-download mr-1"></i>Export
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'success' if category == 'message' else category }} mb-4">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Voice Alert Audio Element -->
+    <audio id="alertSound" preload="auto">
+        <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLfxxIcjBjiR1/LMeSwFJHfH8N2QQAoUXrTsxX4eCixzzPHYjzoIH2K+6tuVSAwa" type="audio/wav">
+    </audio>
+    
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+        <div class="flex items-center justify-center h-full">
+            <div class="text-center">
+                <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-accent-blue"></div>
+                <p class="mt-4 text-lg">Processing...</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- JavaScript -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/voice_alerts.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

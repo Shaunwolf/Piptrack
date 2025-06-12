@@ -1,0 +1,382 @@
+{% extends "base.html" %}
+
+{% block title %}Stock Scanner - AI Coach{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Header -->
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-3xl font-bold mb-2">Stock Scanner</h1>
+            <p class="text-gray-400">Find top gappers and high-confidence setups</p>
+        </div>
+        
+        <div class="flex space-x-3">
+            <button onclick="showCustomScanModal()" class="btn-secondary">
+                <i class="fas fa-list mr-1"></i>Custom Tickers
+            </button>
+            <button onclick="scanTopGappers()" class="btn-primary">
+                <i class="fas fa-search mr-1"></i>Scan Gappers
+            </button>
+        </div>
+    </div>
+    
+    <!-- Filter Controls -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="text-xl font-bold">Filters</h2>
+            <button onclick="clearFilters()" class="text-accent-blue hover:underline">Clear All</button>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+                <label class="block text-sm font-medium mb-1">Min Confidence</label>
+                <input type="range" id="minConfidence" min="0" max="100" value="0" class="range-input">
+                <span id="minConfidenceValue" class="text-xs text-gray-400">0%</span>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium mb-1">Min Volume Spike</label>
+                <input type="range" id="minVolumeSpike" min="0" max="200" value="0" class="range-input">
+                <span id="minVolumeSpikeValue" class="text-xs text-gray-400">0%</span>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium mb-1">Pattern Type</label>
+                <select id="patternFilter" class="form-select">
+                    <option value="">All Patterns</option>
+                    <option value="Bullish Trend">Bullish Trend</option>
+                    <option value="Bull Flag">Bull Flag</option>
+                    <option value="Breakout">Breakout</option>
+                    <option value="Consolidation">Consolidation</option>
+                </select>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium mb-1">RSI Range</label>
+                <select id="rsiFilter" class="form-select">
+                    <option value="">All RSI</option>
+                    <option value="oversold">Oversold (< 30)</option>
+                    <option value="neutral">Neutral (30-70)</option>
+                    <option value="overbought">Overbought (> 70)</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scan Results -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="text-xl font-bold">Scan Results</h2>
+            <div class="flex items-center space-x-4">
+                <span id="resultsCount" class="text-gray-400">{{ stocks|length }} stocks found</span>
+                <div class="flex space-x-2">
+                    <button onclick="sortResults('confidence')" class="btn-secondary">
+                        <i class="fas fa-sort mr-1"></i>Confidence
+                    </button>
+                    <button onclick="sortResults('volume')" class="btn-secondary">
+                        <i class="fas fa-sort mr-1"></i>Volume
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="scanResults" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for stock in stocks %}
+            {% include 'components/stock_card.html' %}
+            {% else %}
+            <div class="col-span-full text-center py-12">
+                <i class="fas fa-search text-6xl text-gray-600 mb-4"></i>
+                <h3 class="text-xl font-semibold mb-2">No Stocks Found</h3>
+                <p class="text-gray-400 mb-4">Run a scan to find potential trading opportunities</p>
+                <button onclick="scanTopGappers()" class="btn-primary">
+                    <i class="fas fa-search mr-2"></i>Start Scanning
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Custom Scan Modal -->
+<div id="customScanModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="text-xl font-bold">Custom Ticker Scan</h3>
+            <button onclick="closeModal('customScanModal')" class="modal-close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2">Enter Ticker Symbols</label>
+                <textarea 
+                    id="customTickers" 
+                    rows="4" 
+                    placeholder="Enter tickers separated by commas (e.g., AAPL, MSFT, GOOGL)"
+                    class="form-textarea"
+                ></textarea>
+                <p class="text-xs text-gray-400 mt-1">Separate multiple tickers with commas</p>
+            </div>
+            
+            <div class="flex space-x-3">
+                <button onclick="scanCustomTickers()" class="btn-primary flex-1">
+                    <i class="fas fa-search mr-1"></i>Scan Tickers
+                </button>
+                <button onclick="closeModal('customScanModal')" class="btn-secondary">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading States -->
+<div id="scanningIndicator" class="hidden fixed bottom-4 right-4 bg-accent-blue px-4 py-2 rounded-lg shadow-lg">
+    <div class="flex items-center space-x-2">
+        <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+        <span>Scanning stocks...</span>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+let allStocks = {{ stocks|tojson }};
+let filteredStocks = [...allStocks];
+
+// Initialize filter controls
+document.addEventListener('DOMContentLoaded', function() {
+    // Range input updates
+    document.getElementById('minConfidence').addEventListener('input', function() {
+        document.getElementById('minConfidenceValue').textContent = this.value + '%';
+        applyFilters();
+    });
+    
+    document.getElementById('minVolumeSpike').addEventListener('input', function() {
+        document.getElementById('minVolumeSpikeValue').textContent = this.value + '%';
+        applyFilters();
+    });
+    
+    // Select filters
+    document.getElementById('patternFilter').addEventListener('change', applyFilters);
+    document.getElementById('rsiFilter').addEventListener('change', applyFilters);
+});
+
+// Scan for top gappers
+async function scanTopGappers() {
+    document.getElementById('scanningIndicator').classList.remove('hidden');
+    
+    try {
+        const response = await fetch('/scan_stocks', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({type: 'gappers'})
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            allStocks = data.results;
+            filteredStocks = [...allStocks];
+            renderResults();
+            showAlert(`Found ${data.results.length} stocks`, 'success');
+        } else {
+            showAlert('Error scanning stocks: ' + data.error, 'error');
+        }
+    } catch (error) {
+        showAlert('Error scanning stocks', 'error');
+    } finally {
+        document.getElementById('scanningIndicator').classList.add('hidden');
+    }
+}
+
+// Show custom scan modal
+function showCustomScanModal() {
+    document.getElementById('customScanModal').classList.remove('hidden');
+}
+
+// Scan custom tickers
+async function scanCustomTickers() {
+    const tickersText = document.getElementById('customTickers').value.trim();
+    if (!tickersText) {
+        showAlert('Please enter at least one ticker symbol', 'error');
+        return;
+    }
+    
+    const tickers = tickersText.split(',').map(t => t.trim().toUpperCase()).filter(t => t);
+    
+    closeModal('customScanModal');
+    document.getElementById('scanningIndicator').classList.remove('hidden');
+    
+    try {
+        const response = await fetch('/scan_stocks', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({type: 'custom', tickers: tickers})
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            allStocks = data.results;
+            filteredStocks = [...allStocks];
+            renderResults();
+            showAlert(`Scanned ${data.results.length} stocks`, 'success');
+        } else {
+            showAlert('Error scanning tickers: ' + data.error, 'error');
+        }
+    } catch (error) {
+        showAlert('Error scanning custom tickers', 'error');
+    } finally {
+        document.getElementById('scanningIndicator').classList.add('hidden');
+    }
+}
+
+// Apply filters
+function applyFilters() {
+    const minConfidence = parseInt(document.getElementById('minConfidence').value);
+    const minVolumeSpike = parseInt(document.getElementById('minVolumeSpike').value);
+    const patternFilter = document.getElementById('patternFilter').value;
+    const rsiFilter = document.getElementById('rsiFilter').value;
+    
+    filteredStocks = allStocks.filter(stock => {
+        if (stock.confidence_score < minConfidence) return false;
+        if (stock.volume_spike < minVolumeSpike) return false;
+        if (patternFilter && stock.pattern_type !== patternFilter) return false;
+        
+        if (rsiFilter) {
+            const rsi = stock.rsi || 50;
+            if (rsiFilter === 'oversold' && rsi >= 30) return false;
+            if (rsiFilter === 'neutral' && (rsi < 30 || rsi > 70)) return false;
+            if (rsiFilter === 'overbought' && rsi <= 70) return false;
+        }
+        
+        return true;
+    });
+    
+    renderResults();
+}
+
+// Clear all filters
+function clearFilters() {
+    document.getElementById('minConfidence').value = 0;
+    document.getElementById('minConfidenceValue').textContent = '0%';
+    document.getElementById('minVolumeSpike').value = 0;
+    document.getElementById('minVolumeSpikeValue').textContent = '0%';
+    document.getElementById('patternFilter').value = '';
+    document.getElementById('rsiFilter').value = '';
+    
+    filteredStocks = [...allStocks];
+    renderResults();
+}
+
+// Sort results
+function sortResults(criteria) {
+    if (criteria === 'confidence') {
+        filteredStocks.sort((a, b) => b.confidence_score - a.confidence_score);
+    } else if (criteria === 'volume') {
+        filteredStocks.sort((a, b) => b.volume_spike - a.volume_spike);
+    }
+    
+    renderResults();
+}
+
+// Render filtered results
+function renderResults() {
+    const resultsContainer = document.getElementById('scanResults');
+    document.getElementById('resultsCount').textContent = `${filteredStocks.length} stocks found`;
+    
+    if (filteredStocks.length === 0) {
+        resultsContainer.innerHTML = `
+            <div class="col-span-full text-center py-12">
+                <i class="fas fa-filter text-6xl text-gray-600 mb-4"></i>
+                <h3 class="text-xl font-semibold mb-2">No Stocks Match Filters</h3>
+                <p class="text-gray-400 mb-4">Try adjusting your filter criteria</p>
+                <button onclick="clearFilters()" class="btn-primary">
+                    <i class="fas fa-times mr-2"></i>Clear Filters
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
+    resultsContainer.innerHTML = filteredStocks.map(stock => `
+        <div class="stock-card" data-symbol="${stock.symbol}">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <h3 class="font-bold text-lg">${stock.symbol}</h3>
+                    <p class="text-gray-400 text-sm">${stock.name ? stock.name.substring(0, 30) + '...' : ''}</p>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <div class="confidence-badge confidence-${stock.confidence_score >= 70 ? 'high' : stock.confidence_score >= 40 ? 'medium' : 'low'}">
+                        ${stock.confidence_score}%
+                    </div>
+                    ${stock.is_tracked ? '<i class="fas fa-star text-yellow-500"></i>' : ''}
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <p class="text-xs text-gray-400">Price</p>
+                    <p class="font-semibold">$${stock.price}</p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-400">RSI</p>
+                    <p class="font-semibold">${stock.rsi}</p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-400">Volume Spike</p>
+                    <p class="font-semibold">${stock.volume_spike}%</p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-400">Pattern</p>
+                    <p class="font-semibold text-xs">${stock.pattern_type}</p>
+                </div>
+            </div>
+            
+            <div class="flex space-x-2">
+                <a href="/forecast/${stock.symbol}" class="btn-primary flex-1">
+                    <i class="fas fa-chart-area mr-1"></i>View Forecast
+                </a>
+                <button onclick="addToJournal('${stock.symbol}')" class="btn-secondary">
+                    <i class="fas fa-book mr-1"></i>Journal
+                </button>
+                ${!stock.is_tracked ? `<button onclick="trackStock('${stock.symbol}')" class="btn-secondary"><i class="fas fa-plus"></i></button>` : ''}
+            </div>
+        </div>
+    `).join('');
+}
+
+// Track a stock (add to Top 5)
+async function trackStock(symbol) {
+    try {
+        const response = await fetch(`/track_stock/${symbol}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            showAlert(data.message, 'success');
+            // Update the stock card to show it's tracked
+            const stockCard = document.querySelector(`[data-symbol="${symbol}"]`);
+            if (stockCard) {
+                const trackButton = stockCard.querySelector('button[onclick*="trackStock"]');
+                if (trackButton) {
+                    trackButton.remove();
+                }
+                // Add star icon
+                const confidenceBadge = stockCard.querySelector('.confidence-badge');
+                confidenceBadge.insertAdjacentHTML('afterend', '<i class="fas fa-star text-yellow-500"></i>');
+            }
+        } else {
+            showAlert(data.error, 'error');
+        }
+    } catch (error) {
+        showAlert('Error tracking stock', 'error');
+    }
+}
+
+// Add stock to trade journal
+function addToJournal(symbol) {
+    window.location.href = `/journal?symbol=${symbol}`;
+}
+</script>
+{% endblock %}

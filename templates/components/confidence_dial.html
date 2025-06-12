@@ -1,0 +1,171 @@
+<div class="confidence-dial" data-confidence="{{ confidence }}">
+    <div class="dial-container">
+        <svg class="dial-svg" viewBox="0 0 200 120">
+            <!-- Background arc -->
+            <path d="M 20 100 A 80 80 0 0 1 180 100" 
+                  fill="none" 
+                  stroke="#374151" 
+                  stroke-width="8" 
+                  stroke-linecap="round"/>
+            
+            <!-- Confidence arc -->
+            <path id="confidenceArc-{{ confidence }}" 
+                  d="M 20 100 A 80 80 0 0 1 180 100" 
+                  fill="none" 
+                  stroke-width="8" 
+                  stroke-linecap="round"
+                  stroke-dasharray="251.2" 
+                  stroke-dashoffset="251.2"
+                  class="confidence-arc"/>
+            
+            <!-- Tick marks -->
+            <g class="tick-marks">
+                <line x1="20" y1="100" x2="15" y2="95" stroke="#6B7280" stroke-width="2"/>
+                <line x1="60" y1="40" x2="55" y2="35" stroke="#6B7280" stroke-width="2"/>
+                <line x1="100" y1="20" x2="100" y2="15" stroke="#6B7280" stroke-width="2"/>
+                <line x1="140" y1="40" x2="145" y2="35" stroke="#6B7280" stroke-width="2"/>
+                <line x1="180" y1="100" x2="185" y2="95" stroke="#6B7280" stroke-width="2"/>
+            </g>
+            
+            <!-- Labels -->
+            <text x="20" y="115" text-anchor="middle" fill="#9CA3AF" class="dial-label">0%</text>
+            <text x="60" y="30" text-anchor="middle" fill="#9CA3AF" class="dial-label">25%</text>
+            <text x="100" y="10" text-anchor="middle" fill="#9CA3AF" class="dial-label">50%</text>
+            <text x="140" y="30" text-anchor="middle" fill="#9CA3AF" class="dial-label">75%</text>
+            <text x="180" y="115" text-anchor="middle" fill="#9CA3AF" class="dial-label">100%</text>
+            
+            <!-- Center value -->
+            <text x="100" y="80" text-anchor="middle" fill="white" class="dial-value">{{ confidence }}%</text>
+        </svg>
+        
+        <!-- Confidence indicator dot -->
+        <div class="confidence-dot" id="confidenceDot-{{ confidence }}"></div>
+    </div>
+    
+    <div class="dial-footer">
+        <p class="dial-title">Confidence Score</p>
+        <p class="dial-subtitle">{{ 'High' if confidence >= 70 else 'Medium' if confidence >= 40 else 'Low' }} Confidence</p>
+    </div>
+</div>
+
+<style>
+.confidence-dial {
+    @apply flex flex-col items-center p-4;
+}
+
+.dial-container {
+    @apply relative;
+    width: 200px;
+    height: 120px;
+}
+
+.dial-svg {
+    @apply w-full h-full;
+}
+
+.dial-label {
+    font-size: 10px;
+    font-weight: 500;
+}
+
+.dial-value {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.confidence-arc {
+    transition: stroke-dashoffset 2s ease-in-out, stroke 0.5s ease;
+}
+
+.confidence-dot {
+    @apply absolute w-3 h-3 rounded-full;
+    @apply bg-white border-2 border-gray-400;
+    transition: all 1s ease-in-out;
+    top: 50%;
+    left: 50%;
+    transform-origin: 0 40px;
+}
+
+.dial-footer {
+    @apply mt-4 text-center;
+}
+
+.dial-title {
+    @apply font-semibold text-white;
+}
+
+.dial-subtitle {
+    @apply text-sm text-gray-400;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    animateConfidenceDial({{ confidence }});
+});
+
+function animateConfidenceDial(confidence) {
+    const arc = document.getElementById('confidenceArc-' + confidence);
+    const dot = document.getElementById('confidenceDot-' + confidence);
+    
+    if (!arc || !dot) return;
+    
+    // Calculate the offset based on confidence (0-100%)
+    const circumference = 251.2;
+    const offset = circumference - (confidence / 100) * circumference;
+    
+    // Determine color based on confidence level
+    let color;
+    if (confidence >= 70) {
+        color = '#10B981'; // Green
+    } else if (confidence >= 40) {
+        color = '#3B82F6'; // Blue
+    } else {
+        color = '#EF4444'; // Red
+    }
+    
+    // Animate the arc
+    setTimeout(() => {
+        arc.style.strokeDashoffset = offset;
+        arc.style.stroke = color;
+    }, 500);
+    
+    // Animate the dot position
+    const angle = (confidence / 100) * 180; // 0 to 180 degrees
+    const radians = (angle - 90) * (Math.PI / 180); // Convert to radians, offset by 90 degrees
+    const radius = 80;
+    const centerX = 100;
+    const centerY = 100;
+    
+    const dotX = centerX + radius * Math.cos(radians);
+    const dotY = centerY + radius * Math.sin(radians);
+    
+    setTimeout(() => {
+        dot.style.left = (dotX - 6) + 'px'; // Offset by half dot width
+        dot.style.top = (dotY - 6) + 'px';  // Offset by half dot height
+        dot.style.backgroundColor = color;
+        dot.style.borderColor = color;
+    }, 1000);
+}
+
+// Function to update confidence dial
+function updateConfidenceDial(element, newConfidence) {
+    const valueText = element.querySelector('.dial-value');
+    const subtitle = element.querySelector('.dial-subtitle');
+    
+    // Update text
+    valueText.textContent = newConfidence + '%';
+    
+    if (newConfidence >= 70) {
+        subtitle.textContent = 'High Confidence';
+    } else if (newConfidence >= 40) {
+        subtitle.textContent = 'Medium Confidence';
+    } else {
+        subtitle.textContent = 'Low Confidence';
+    }
+    
+    // Re-animate with new value
+    element.dataset.confidence = newConfidence;
+    animateConfidenceDial(newConfidence);
+}
+</script>

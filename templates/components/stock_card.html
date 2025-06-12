@@ -1,0 +1,75 @@
+<div class="stock-card" data-symbol="{{ stock.symbol }}">
+    <div class="flex justify-between items-start mb-4">
+        <div>
+            <h3 class="font-bold text-lg">{{ stock.symbol }}</h3>
+            <p class="text-gray-400 text-sm">{{ stock.name[:30] if stock.name else '' }}{% if stock.name and stock.name|length > 30 %}...{% endif %}</p>
+        </div>
+        <div class="flex items-center space-x-2">
+            <div class="confidence-badge confidence-{{ 'high' if stock.confidence_score >= 70 else 'medium' if stock.confidence_score >= 40 else 'low' }}">
+                {{ stock.confidence_score }}%
+            </div>
+            {% if stock.is_tracked %}
+            <i class="fas fa-star text-yellow-500" title="Tracked"></i>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="grid grid-cols-2 gap-4 mb-4">
+        <div>
+            <p class="text-xs text-gray-400">Price</p>
+            <p class="font-semibold">${{ stock.price }}</p>
+        </div>
+        <div>
+            <p class="text-xs text-gray-400">RSI</p>
+            <p class="font-semibold">{{ stock.rsi }}</p>
+        </div>
+        <div>
+            <p class="text-xs text-gray-400">Volume Spike</p>
+            <p class="font-semibold">{{ stock.volume_spike }}%</p>
+        </div>
+        <div>
+            <p class="text-xs text-gray-400">Pattern</p>
+            <p class="font-semibold text-xs">{{ stock.pattern_type }}</p>
+        </div>
+    </div>
+    
+    <!-- Fibonacci Position Indicator -->
+    <div class="mb-4">
+        <div class="flex justify-between text-xs text-gray-400 mb-1">
+            <span>Fibonacci Position</span>
+            <span>{{ stock.fibonacci_position }}%</span>
+        </div>
+        <div class="w-full bg-dark-accent rounded-full h-2">
+            <div class="bg-gradient-to-r from-accent-red via-accent-blue to-accent-green h-2 rounded-full relative">
+                <div class="absolute top-0 h-2 w-1 bg-white rounded-full" 
+                     style="left: {{ stock.fibonacci_position }}%"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Action Buttons -->
+    <div class="flex space-x-2">
+        <a href="{{ url_for('forecast', symbol=stock.symbol) }}" class="btn-primary flex-1">
+            <i class="fas fa-chart-area mr-1"></i>View Forecast
+        </a>
+        <button onclick="getAIReview('{{ stock.symbol }}')" class="btn-secondary" title="AI Review">
+            <i class="fas fa-robot"></i>
+        </button>
+        <button onclick="addToJournal('{{ stock.symbol }}')" class="btn-secondary" title="Add to Journal">
+            <i class="fas fa-book"></i>
+        </button>
+        {% if not stock.is_tracked %}
+        <button onclick="trackStock('{{ stock.symbol }}')" class="btn-secondary" title="Track Stock">
+            <i class="fas fa-plus"></i>
+        </button>
+        {% endif %}
+    </div>
+    
+    <!-- Quick Stats Footer -->
+    <div class="mt-3 pt-3 border-t border-dark-accent flex justify-between text-xs text-gray-400">
+        <span>Updated: {{ stock.updated_at.strftime('%H:%M') if stock.updated_at else 'N/A' }}</span>
+        {% if stock.market_cap %}
+        <span>Cap: {{ "${:.1f}B".format(stock.market_cap / 1e9) if stock.market_cap > 1e9 else "${:.0f}M".format(stock.market_cap / 1e6) }}</span>
+        {% endif %}
+    </div>
+</div>

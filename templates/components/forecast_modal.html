@@ -1,0 +1,189 @@
+<div id="forecastModal" class="modal">
+    <div class="modal-content max-w-6xl">
+        <div class="modal-header">
+            <h3 class="text-2xl font-bold flex items-center">
+                <i class="fas fa-chart-area text-accent-green mr-2"></i>
+                <span id="forecastModalTitle">Spaghetti Forecast</span>
+            </h3>
+            <button onclick="closeModal('forecastModal')" class="modal-close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="modal-body">
+            <!-- Forecast Chart Container -->
+            <div id="modalForecastChart" class="h-96 w-full bg-dark-surface rounded-lg mb-6"></div>
+            
+            <!-- Forecast Scenarios -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div id="momentumScenario" class="scenario-card">
+                    <div class="scenario-header">
+                        <div class="scenario-icon bg-accent-green">
+                            <i class="fas fa-rocket"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold">Momentum Extension</h4>
+                            <p class="scenario-probability">0%</p>
+                        </div>
+                    </div>
+                    <p class="scenario-description">Bullish breakout with sustained momentum</p>
+                    <div class="scenario-targets">
+                        <p class="text-xs text-gray-400">Target Range</p>
+                        <p class="font-semibold" id="momentumTargets">-</p>
+                    </div>
+                </div>
+                
+                <div id="retestScenario" class="scenario-card">
+                    <div class="scenario-header">
+                        <div class="scenario-icon bg-accent-blue">
+                            <i class="fas fa-redo"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold">Retest & Run</h4>
+                            <p class="scenario-probability">0%</p>
+                        </div>
+                    </div>
+                    <p class="scenario-description">Pullback to support followed by rally</p>
+                    <div class="scenario-targets">
+                        <p class="text-xs text-gray-400">Target Range</p>
+                        <p class="font-semibold" id="retestTargets">-</p>
+                    </div>
+                </div>
+                
+                <div id="breakdownScenario" class="scenario-card">
+                    <div class="scenario-header">
+                        <div class="scenario-icon bg-accent-red">
+                            <i class="fas fa-arrow-down"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold">Breakdown</h4>
+                            <p class="scenario-probability">0%</p>
+                        </div>
+                    </div>
+                    <p class="scenario-description">Support breakdown with continued selling</p>
+                    <div class="scenario-targets">
+                        <p class="text-xs text-gray-400">Target Range</p>
+                        <p class="font-semibold" id="breakdownTargets">-</p>
+                    </div>
+                </div>
+                
+                <div id="sidewaysScenario" class="scenario-card">
+                    <div class="scenario-header">
+                        <div class="scenario-icon bg-gray-500">
+                            <i class="fas fa-arrows-alt-h"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold">Sideways</h4>
+                            <p class="scenario-probability">0%</p>
+                        </div>
+                    </div>
+                    <p class="scenario-description">Range-bound consolidation pattern</p>
+                    <div class="scenario-targets">
+                        <p class="text-xs text-gray-400">Target Range</p>
+                        <p class="font-semibold" id="sidewaysTargets">-</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Risk Zones & Key Levels -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div class="card">
+                    <h4 class="font-semibold text-accent-blue mb-3">Key Levels</h4>
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Current Price</span>
+                            <span id="currentPrice" class="font-semibold">-</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Resistance</span>
+                            <span id="resistanceLevel" class="font-semibold text-accent-red">-</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Support</span>
+                            <span id="supportLevel" class="font-semibold text-accent-green">-</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h4 class="font-semibold text-accent-blue mb-3">Risk Assessment</h4>
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Volatility</span>
+                            <span id="volatilityLevel" class="font-semibold">-</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Risk Zone</span>
+                            <span id="riskZone" class="font-semibold">-</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Time Horizon</span>
+                            <span class="font-semibold">5 Days</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="flex space-x-3">
+                <button onclick="exportForecast()" class="btn-secondary flex-1">
+                    <i class="fas fa-download mr-1"></i>Export Chart
+                </button>
+                <button onclick="addForecastToJournal()" class="btn-primary flex-1">
+                    <i class="fas fa-book mr-1"></i>Add to Journal
+                </button>
+                <button onclick="setForecastAlert()" class="btn-secondary flex-1">
+                    <i class="fas fa-bell mr-1"></i>Set Alert
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Show forecast modal with data
+function showForecastModal(symbol, paths, stockData) {
+    document.getElementById('forecastModalTitle').textContent = `${symbol} Spaghetti Forecast`;
+    document.getElementById('forecastModal').classList.remove('hidden');
+    
+    // Update current price
+    document.getElementById('currentPrice').textContent = `$${stockData.price}`;
+    
+    // Update scenario cards
+    paths.forEach(path => {
+        const scenarioId = path.type + 'Scenario';
+        const scenario = document.getElementById(scenarioId);
+        
+        if (scenario) {
+            scenario.querySelector('.scenario-probability').textContent = `${Math.round(path.probability * 100)}%`;
+            
+            const targetsId = path.type + 'Targets';
+            const targetsElement = document.getElementById(targetsId);
+            if (targetsElement && path.targets && path.targets.length > 0) {
+                targetsElement.textContent = `$${path.targets[0]} - $${path.targets[path.targets.length - 1]}`;
+            }
+        }
+    });
+    
+    // Render chart in modal
+    renderModalSpaghettiChart(paths, stockData);
+}
+
+// Export forecast chart
+function exportForecast() {
+    // This would export the current forecast chart
+    showAlert('Forecast chart exported', 'success');
+}
+
+// Add forecast to journal
+function addForecastToJournal() {
+    const symbol = document.getElementById('forecastModalTitle').textContent.split(' ')[0];
+    window.location.href = `/journal?symbol=${symbol}`;
+}
+
+// Set forecast alert
+function setForecastAlert() {
+    // This would set up price alerts based on forecast levels
+    showAlert('Forecast alert set', 'success');
+}
+</script>

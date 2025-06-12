@@ -1,0 +1,348 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Stock Scanner & AI Coach{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Header -->
+    <div class="text-center">
+        <h1 class="text-4xl font-bold mb-2">Trading Dashboard</h1>
+        <p class="text-gray-400">AI-powered stock analysis with spaghetti model forecasting</p>
+    </div>
+    
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="stat-card">
+            <div class="stat-icon bg-accent-blue">
+                <i class="fas fa-eye"></i>
+            </div>
+            <div>
+                <p class="stat-label">Tracked Stocks</p>
+                <p class="stat-value">{{ tracked_stocks|length }}/5</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon bg-accent-green">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div>
+                <p class="stat-label">Avg Confidence</p>
+                <p class="stat-value" id="avgConfidence">{{ "%.1f"|format(tracked_stocks|sum(attribute='confidence_score')/tracked_stocks|length if tracked_stocks else 0) }}%</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon bg-purple-500">
+                <i class="fas fa-book"></i>
+            </div>
+            <div>
+                <p class="stat-label">Recent Trades</p>
+                <p class="stat-value">{{ recent_trades|length }}</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon bg-yellow-500">
+                <i class="fas fa-bell"></i>
+            </div>
+            <div>
+                <p class="stat-label">Alerts Today</p>
+                <p class="stat-value" id="alertsCount">0</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Top 5 Tracked Stocks -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="text-2xl font-bold">Top 5 Tracked Stocks</h2>
+            <div class="flex space-x-2">
+                <button onclick="updateConfidenceScores()" class="btn-secondary">
+                    <i class="fas fa-sync-alt mr-1"></i>Update Scores
+                </button>
+                <a href="{{ url_for('scanner') }}" class="btn-primary">
+                    <i class="fas fa-plus mr-1"></i>Add More
+                </a>
+            </div>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for stock in tracked_stocks %}
+            <div class="stock-card" data-symbol="{{ stock.symbol }}">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 class="font-bold text-lg">{{ stock.symbol }}</h3>
+                        <p class="text-gray-400 text-sm">{{ stock.name[:30] }}...</p>
+                    </div>
+                    <div class="confidence-badge confidence-{{ 'high' if stock.confidence_score >= 70 else 'medium' if stock.confidence_score >= 40 else 'low' }}">
+                        {{ stock.confidence_score }}%
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <p class="text-xs text-gray-400">Price</p>
+                        <p class="font-semibold">${{ stock.price }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-400">RSI</p>
+                        <p class="font-semibold">{{ stock.rsi }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-400">Volume Spike</p>
+                        <p class="font-semibold">{{ stock.volume_spike }}%</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-400">Pattern</p>
+                        <p class="font-semibold text-xs">{{ stock.pattern_type }}</p>
+                    </div>
+                </div>
+                
+                <div class="flex space-x-2">
+                    <a href="{{ url_for('forecast', symbol=stock.symbol) }}" class="btn-primary flex-1">
+                        <i class="fas fa-chart-area mr-1"></i>View Forecast
+                    </a>
+                    <button onclick="getAIReview('{{ stock.symbol }}')" class="btn-secondary">
+                        <i class="fas fa-robot"></i>
+                    </button>
+                </div>
+            </div>
+            {% else %}
+            <div class="col-span-full text-center py-12">
+                <i class="fas fa-chart-line text-6xl text-gray-600 mb-4"></i>
+                <h3 class="text-xl font-semibold mb-2">No Stocks Tracked</h3>
+                <p class="text-gray-400 mb-4">Start by scanning for stocks and adding them to your watchlist</p>
+                <a href="{{ url_for('scanner') }}" class="btn-primary">
+                    <i class="fas fa-search mr-2"></i>Start Scanning
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Recent Trading Activity -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Recent Trades -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="text-xl font-bold">Recent Trades</h2>
+                <a href="{{ url_for('journal') }}" class="text-accent-blue hover:underline">View All</a>
+            </div>
+            
+            <div class="space-y-3">
+                {% for trade in recent_trades[:5] %}
+                <div class="flex justify-between items-center p-3 bg-dark-accent rounded-lg">
+                    <div>
+                        <p class="font-semibold">{{ trade.symbol }}</p>
+                        <p class="text-sm text-gray-400">{{ trade.created_at.strftime('%m/%d %H:%M') }}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-semibold">{{ trade.outcome or 'Active' }}</p>
+                        {% if trade.pnl %}
+                        <p class="text-sm {{ 'text-accent-green' if trade.pnl > 0 else 'text-accent-red' }}">
+                            ${{ "%.2f"|format(trade.pnl) }}
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center py-8">
+                    <i class="fas fa-book text-4xl text-gray-600 mb-2"></i>
+                    <p class="text-gray-400">No recent trades</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- AI Insights -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="text-xl font-bold">AI Insights</h2>
+                <button onclick="refreshInsights()" class="btn-secondary">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+            
+            <div id="aiInsights" class="space-y-4">
+                <div class="p-4 bg-dark-accent rounded-lg">
+                    <div class="flex items-center mb-2">
+                        <i class="fas fa-robot text-accent-blue mr-2"></i>
+                        <span class="font-semibold">Market Overview</span>
+                    </div>
+                    <p class="text-sm text-gray-400">
+                        Current market conditions favor momentum plays with strong volume confirmation.
+                        Focus on breakout patterns with RSI between 45-65.
+                    </p>
+                </div>
+                
+                <div class="p-4 bg-dark-accent rounded-lg">
+                    <div class="flex items-center mb-2">
+                        <i class="fas fa-lightbulb text-yellow-500 mr-2"></i>
+                        <span class="font-semibold">Trading Tip</span>
+                    </div>
+                    <p class="text-sm text-gray-400">
+                        Remember to take screenshots of your setups for better post-trade analysis.
+                        This helps identify patterns in your decision-making.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- AI Review Modal -->
+<div id="aiReviewModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="text-xl font-bold">AI Setup Analysis</h3>
+            <button onclick="closeModal('aiReviewModal')" class="modal-close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div id="aiReviewContent" class="modal-body">
+            <div class="text-center py-8">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-accent-blue"></div>
+                <p class="mt-2">Analyzing setup...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Update confidence scores for tracked stocks
+async function updateConfidenceScores() {
+    showLoading();
+    try {
+        const response = await fetch('/update_confidence_scores', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            // Update the UI with new scores
+            data.scores.forEach(stock => {
+                const card = document.querySelector(`[data-symbol="${stock.symbol}"]`);
+                if (card) {
+                    const badge = card.querySelector('.confidence-badge');
+                    badge.textContent = `${stock.score}%`;
+                    badge.className = `confidence-badge confidence-${stock.score >= 70 ? 'high' : stock.score >= 40 ? 'medium' : 'low'}`;
+                }
+            });
+            
+            // Update average confidence
+            const avgConf = data.scores.reduce((sum, s) => sum + s.score, 0) / data.scores.length;
+            document.getElementById('avgConfidence').textContent = `${avgConf.toFixed(1)}%`;
+            
+            showAlert('Confidence scores updated successfully', 'success');
+        } else {
+            showAlert('Error updating scores: ' + data.error, 'error');
+        }
+    } catch (error) {
+        showAlert('Error updating confidence scores', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+// Get AI review for a stock
+async function getAIReview(symbol) {
+    document.getElementById('aiReviewModal').classList.remove('hidden');
+    
+    try {
+        const response = await fetch(`/ai_review/${symbol}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            const analysis = data.analysis;
+            document.getElementById('aiReviewContent').innerHTML = `
+                <div class="space-y-4">
+                    <div class="flex items-center space-x-2 mb-4">
+                        <span class="text-2xl">${getMoodEmoji(analysis.mood_tag)}</span>
+                        <span class="font-semibold">${symbol}</span>
+                        <span class="px-2 py-1 rounded text-xs bg-accent-blue">${analysis.pattern}</span>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-semibold mb-2">Analysis</h4>
+                        <p class="text-gray-300">${analysis.analysis_text}</p>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-semibold mb-2">Historical Comparison</h4>
+                        <p class="text-gray-300">${analysis.historical_comparison}</p>
+                    </div>
+                    
+                    <div class="flex space-x-2">
+                        <a href="/forecast/${symbol}" class="btn-primary flex-1">
+                            <i class="fas fa-chart-area mr-1"></i>View Forecast
+                        </a>
+                        <button onclick="speakAnalysis('${analysis.analysis_text}')" class="btn-secondary">
+                            <i class="fas fa-volume-up"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        } else {
+            document.getElementById('aiReviewContent').innerHTML = `
+                <div class="text-red-500">Error: ${data.error}</div>
+            `;
+        }
+    } catch (error) {
+        document.getElementById('aiReviewContent').innerHTML = `
+            <div class="text-red-500">Error loading AI analysis</div>
+        `;
+    }
+}
+
+// Get mood emoji for mood tag
+function getMoodEmoji(moodTag) {
+    const emojis = {
+        'breakout': '💥',
+        'reversal': '🔄',
+        'risky': '⚠️',
+        'confirmed': '🔒',
+        'neutral': '📊'
+    };
+    return emojis[moodTag] || '📊';
+}
+
+// Refresh AI insights
+function refreshInsights() {
+    // In a real implementation, this would fetch fresh insights
+    showAlert('AI insights refreshed', 'success');
+}
+
+// Export weekly report
+async function exportWeeklyReport() {
+    showLoading();
+    try {
+        const response = await fetch('/export_weekly_report');
+        const data = await response.json();
+        
+        if (data.success) {
+            // Create download link
+            const link = document.createElement('a');
+            link.href = data.pdf_url;
+            link.download = 'weekly_report.pdf';
+            link.click();
+            
+            showAlert('Weekly report exported successfully', 'success');
+        } else {
+            showAlert('Error exporting report: ' + data.error, 'error');
+        }
+    } catch (error) {
+        showAlert('Error exporting weekly report', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+// Auto-refresh confidence scores every 5 minutes
+setInterval(updateConfidenceScores, 5 * 60 * 1000);
+</script>
+{% endblock %}

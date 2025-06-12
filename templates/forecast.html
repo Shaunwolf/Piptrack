@@ -1,0 +1,418 @@
+{% extends "base.html" %}
+
+{% block title %}Forecast - {{ stock.symbol }} - AI Coach{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Header -->
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-3xl font-bold mb-2">{{ stock.symbol }} Forecast</h1>
+            <p class="text-gray-400 flex items-center">
+                <span class="mr-4">${{ stock.price }}</span>
+                <span class="confidence-badge confidence-{{ 'high' if stock.confidence_score >= 70 else 'medium' if stock.confidence_score >= 40 else 'low' }}">
+                    {{ stock.confidence_score }}% Confidence
+                </span>
+            </p>
+        </div>
+        
+        <div class="flex space-x-3">
+            <button onclick="refreshForecast()" class="btn-secondary">
+                <i class="fas fa-sync-alt mr-1"></i>Refresh
+            </button>
+            <button onclick="addToJournal()" class="btn-primary">
+                <i class="fas fa-book mr-1"></i>Add to Journal
+            </button>
+        </div>
+    </div>
+    
+    <!-- Stock Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="stat-card">
+            <div class="stat-icon bg-accent-blue">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div>
+                <p class="stat-label">Current Price</p>
+                <p class="stat-value">${{ stock.price }}</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon bg-purple-500">
+                <i class="fas fa-tachometer-alt"></i>
+            </div>
+            <div>
+                <p class="stat-label">RSI</p>
+                <p class="stat-value">{{ stock.rsi }}</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon bg-yellow-500">
+                <i class="fas fa-volume-up"></i>
+            </div>
+            <div>
+                <p class="stat-label">Volume Spike</p>
+                <p class="stat-value">{{ stock.volume_spike }}%</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon bg-accent-green">
+                <i class="fas fa-magic"></i>
+            </div>
+            <div>
+                <p class="stat-label">Pattern</p>
+                <p class="stat-value text-sm">{{ stock.pattern_type }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- AI Analysis -->
+    {% if ai_analysis %}
+    <div class="card">
+        <div class="card-header">
+            <h2 class="text-xl font-bold flex items-center">
+                <i class="fas fa-robot text-accent-blue mr-2"></i>
+                AI Analysis
+                <span class="ml-2 text-2xl">{{ ai_analysis.mood_tag and {'breakout': '💥', 'reversal': '🔄', 'risky': '⚠️', 'confirmed': '🔒'}.get(ai_analysis.mood_tag, '📊') or '📊' }}</span>
+            </h2>
+            <button onclick="speakAnalysis('{{ ai_analysis.analysis_text }}')" class="btn-secondary">
+                <i class="fas fa-volume-up mr-1"></i>Listen
+            </button>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div>
+                <h3 class="font-semibold text-accent-blue mb-2">Current Setup</h3>
+                <p class="text-gray-300 mb-4">{{ ai_analysis.analysis_text }}</p>
+                
+                <h3 class="font-semibold text-accent-blue mb-2">Historical Comparison</h3>
+                <p class="text-gray-300">{{ ai_analysis.historical_comparison }}</p>
+            </div>
+            
+            <div>
+                <h3 class="font-semibold text-accent-blue mb-2">Confidence Factors</h3>
+                <div class="space-y-2">
+                    {% if ai_analysis.confidence_factors %}
+                    <div class="flex justify-between items-center">
+                        <span>RSI Level</span>
+                        <span class="font-semibold">{{ ai_analysis.confidence_factors.rsi }}%</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span>Volume Surge</span>
+                        <span class="font-semibold">{{ ai_analysis.confidence_factors.volume_surge }}%</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span>Momentum</span>
+                        <span class="font-semibold">{{ ai_analysis.confidence_factors.momentum }}%</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Spaghetti Model Forecast -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="text-xl font-bold flex items-center">
+                <i class="fas fa-chart-area text-accent-green mr-2"></i>
+                Spaghetti Model Forecast
+            </h2>
+            <button onclick="generateNewForecast()" class="btn-primary">
+                <i class="fas fa-magic mr-1"></i>Generate New
+            </button>
+        </div>
+        
+        <div id="forecastChart" class="h-96 w-full bg-dark-surface rounded-lg"></div>
+        
+        <!-- Forecast Paths Legend -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+            {% for path in forecast_paths %}
+            <div class="forecast-path-card" style="border-left: 4px solid {{ path.color }}">
+                <div class="flex justify-between items-start mb-2">
+                    <h3 class="font-semibold capitalize">{{ path.type.replace('_', ' ') }}</h3>
+                    <span class="probability-badge" style="background-color: {{ path.color }}20; color: {{ path.color }}">
+                        {{ (path.probability * 100)|round }}%
+                    </span>
+                </div>
+                <p class="text-sm text-gray-400 mb-2">{{ path.description }}</p>
+                <div class="text-xs">
+                    <p><strong>Target Range:</strong> ${{ path.targets|first }} - ${{ path.targets|last }}</p>
+                    {% if path.risk_zones %}
+                    <p><strong>Risk Zone:</strong> ${{ path.risk_zones|first }} - ${{ path.risk_zones|last }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Chart Story Mode -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="text-xl font-bold flex items-center">
+                <i class="fas fa-comments text-purple-500 mr-2"></i>
+                Chart Story Mode
+            </h2>
+            <label class="flex items-center">
+                <input type="checkbox" id="chartStoryToggle" class="form-checkbox" onchange="toggleChartStory()">
+                <span class="ml-2">Enable hover comments</span>
+            </label>
+        </div>
+        
+        <div id="chartStoryContainer" class="hidden">
+            <div id="priceChart" class="h-64 w-full bg-dark-surface rounded-lg"></div>
+            <div id="chartComments" class="mt-4 space-y-2">
+                <!-- Comments will be populated dynamically -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Trading Checklist -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="text-xl font-bold">Trading Checklist</h2>
+            <button onclick="copyToClipboard()" class="btn-secondary">
+                <i class="fas fa-copy mr-1"></i>Copy
+            </button>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <h3 class="font-semibold text-accent-blue mb-3">Pre-Entry</h3>
+                <div class="space-y-2">
+                    <label class="flex items-center">
+                        <input type="checkbox" class="form-checkbox">
+                        <span class="ml-2">Pattern confirmed on multiple timeframes</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" class="form-checkbox">
+                        <span class="ml-2">Volume supports the move</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" class="form-checkbox">
+                        <span class="ml-2">Risk/reward ratio is favorable (1:2 minimum)</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" class="form-checkbox">
+                        <span class="ml-2">Position size calculated</span>
+                    </label>
+                </div>
+            </div>
+            
+            <div>
+                <h3 class="font-semibold text-accent-blue mb-3">Entry & Management</h3>
+                <div class="space-y-2">
+                    <label class="flex items-center">
+                        <input type="checkbox" class="form-checkbox">
+                        <span class="ml-2">Screenshot taken before entry</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" class="form-checkbox">
+                        <span class="ml-2">Stop loss set immediately</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" class="form-checkbox">
+                        <span class="ml-2">Take profit levels identified</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" class="form-checkbox">
+                        <span class="ml-2">Trade logged in journal</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Voice Alert Notification -->
+<div id="voiceAlert" class="fixed top-4 right-4 max-w-sm bg-accent-blue p-4 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 z-50">
+    <div class="flex items-center space-x-3">
+        <i class="fas fa-volume-up text-2xl"></i>
+        <div>
+            <p class="font-semibold">Voice Alert</p>
+            <p id="voiceAlertText" class="text-sm opacity-90"></p>
+        </div>
+        <button onclick="dismissVoiceAlert()" class="text-white hover:text-gray-200">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/forecast.js') }}"></script>
+<script>
+// Initialize page with stock data
+const stockData = {
+    symbol: '{{ stock.symbol }}',
+    price: {{ stock.price }},
+    rsi: {{ stock.rsi }},
+    volume_spike: {{ stock.volume_spike }},
+    confidence_score: {{ stock.confidence_score }}
+};
+
+const forecastPaths = {{ forecast_paths|tojson }};
+const aiAnalysis = {{ ai_analysis|tojson }};
+
+// Initialize forecast chart
+document.addEventListener('DOMContentLoaded', function() {
+    renderSpaghettiChart(forecastPaths, stockData);
+    
+    // Check for high confidence voice alert
+    if (stockData.confidence_score >= 80) {
+        triggerVoiceAlert(`${stockData.symbol} has high breakout potential at ${stockData.confidence_score}% confidence`);
+    }
+    
+    // Load chart story if available
+    loadChartStory();
+});
+
+// Refresh forecast
+async function refreshForecast() {
+    showLoading();
+    
+    try {
+        const response = await fetch('/generate_forecast', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({symbol: stockData.symbol})
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            renderSpaghettiChart(data.paths, stockData);
+            showAlert('Forecast updated', 'success');
+        } else {
+            showAlert('Error updating forecast: ' + data.error, 'error');
+        }
+    } catch (error) {
+        showAlert('Error refreshing forecast', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+// Generate new forecast
+async function generateNewForecast() {
+    await refreshForecast();
+}
+
+// Add to journal
+function addToJournal() {
+    window.location.href = `/journal?symbol=${stockData.symbol}`;
+}
+
+// Toggle chart story mode
+async function toggleChartStory() {
+    const toggle = document.getElementById('chartStoryToggle');
+    const container = document.getElementById('chartStoryContainer');
+    
+    if (toggle.checked) {
+        container.classList.remove('hidden');
+        await loadChartStoryData();
+    } else {
+        container.classList.add('hidden');
+    }
+}
+
+// Load chart story
+async function loadChartStory() {
+    try {
+        const response = await fetch(`/chart_story/${stockData.symbol}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            window.chartStoryData = data.story;
+        }
+    } catch (error) {
+        console.error('Error loading chart story:', error);
+    }
+}
+
+// Load chart story data and render
+async function loadChartStoryData() {
+    if (!window.chartStoryData) {
+        await loadChartStory();
+    }
+    
+    if (window.chartStoryData) {
+        renderChartStoryMode(window.chartStoryData, stockData);
+    }
+}
+
+// Copy trading checklist to clipboard
+function copyToClipboard() {
+    const checklist = `
+Trading Checklist for ${stockData.symbol}
+Current Price: $${stockData.price}
+Confidence: ${stockData.confidence_score}%
+
+Pre-Entry:
+□ Pattern confirmed on multiple timeframes
+□ Volume supports the move
+□ Risk/reward ratio is favorable (1:2 minimum)
+□ Position size calculated
+
+Entry & Management:
+□ Screenshot taken before entry
+□ Stop loss set immediately
+□ Take profit levels identified
+□ Trade logged in journal
+    `.trim();
+    
+    navigator.clipboard.writeText(checklist).then(() => {
+        showAlert('Checklist copied to clipboard', 'success');
+    });
+}
+
+// Voice alert functions
+function triggerVoiceAlert(message) {
+    const alert = document.getElementById('voiceAlert');
+    const text = document.getElementById('voiceAlertText');
+    
+    text.textContent = message;
+    alert.classList.remove('translate-x-full');
+    
+    // Speak the message if voice is enabled
+    if (window.voiceEnabled) {
+        speak(message);
+    }
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        dismissVoiceAlert();
+    }, 5000);
+}
+
+function dismissVoiceAlert() {
+    document.getElementById('voiceAlert').classList.add('translate-x-full');
+}
+
+// Monitor confidence changes (poll every minute)
+setInterval(async () => {
+    try {
+        const response = await fetch(`/update_confidence_scores`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            const stockScore = data.scores.find(s => s.symbol === stockData.symbol);
+            if (stockScore && stockScore.score >= 80 && stockScore.score > stockData.confidence_score) {
+                triggerVoiceAlert(`${stockData.symbol} confidence increased to ${stockScore.score}%`);
+                stockData.confidence_score = stockScore.score;
+            }
+        }
+    } catch (error) {
+        console.error('Error checking confidence updates:', error);
+    }
+}, 60000); // Check every minute
+</script>
+{% endblock %}
