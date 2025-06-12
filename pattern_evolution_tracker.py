@@ -429,44 +429,332 @@ class PatternEvolutionTracker:
             return {}
 
     def predict_breakout_timing(self, hist, pattern, evolution):
-        """Predict when a breakout is likely to occur"""
+        """Predict when a breakout is likely to occur with advanced timing analysis"""
         try:
             current_stage = pattern.get('stage', 'unknown')
             completion = pattern.get('completion', 0)
             
-            # Base prediction on pattern type and current stage
+            # Advanced volatility compression analysis
+            recent_volatility = hist['Close'].pct_change().rolling(10).std().iloc[-1]
+            historical_volatility = hist['Close'].pct_change().rolling(50).std().mean()
+            volatility_compression = max(0, 1 - (recent_volatility / historical_volatility)) if historical_volatility > 0 else 0
+            
+            # Volume pattern analysis for breakout timing
+            volume_ma_short = hist['Volume'][-10:].mean()
+            volume_ma_long = hist['Volume'][-30:].mean()
+            volume_ratio = volume_ma_short / volume_ma_long if volume_ma_long > 0 else 1
+            
+            # Price action tightening analysis
+            price_range_recent = (hist['High'][-5:].max() - hist['Low'][-5:].min()) / hist['Close'].iloc[-1]
+            price_range_historical = (hist['High'][-30:].max() - hist['Low'][-30:].min()) / hist['Close'].iloc[-1]
+            price_tightening = max(0, 1 - (price_range_recent / price_range_historical)) if price_range_historical > 0 else 0
+            
+            # Support/Resistance test frequency for timing urgency
+            current_price = hist['Close'].iloc[-1]
+            resistance_level = pattern.get('resistance_level', current_price * 1.02)
+            support_level = pattern.get('support_level', current_price * 0.98)
+            
+            # Count recent tests of key levels (last 10 days)
+            recent_resistance_tests = sum(1 for price in hist['High'][-10:] if abs(price - resistance_level) / resistance_level < 0.015)
+            recent_support_tests = sum(1 for price in hist['Low'][-10:] if abs(price - support_level) / support_level < 0.015)
+            level_test_frequency = recent_resistance_tests + recent_support_tests
+            
+            # Pattern-specific urgency calculation
+            pattern_urgency = self.calculate_pattern_urgency(pattern, completion, volatility_compression)
+            
+            # Base timing from pattern type and stage
             base_days = self.get_base_breakout_timing(pattern['type'], current_stage)
             
-            # Adjust based on evolution factors
-            volatility_multiplier = 1 + (evolution.get('volatility_trend', 0) * 0.3)
-            volume_multiplier = 1 - (evolution.get('volume_trend', 0) * 0.2)
-            momentum_multiplier = 1 - (evolution.get('momentum_change', 0) * 0.25)
+            # Advanced timing factors
+            compression_factor = 0.5 + (volatility_compression * 0.5)  # 0.5-1.0
+            volume_factor = 0.7 if volume_ratio > 1.3 else (1.2 if volume_ratio < 0.8 else 1.0)
+            tightening_factor = 0.6 + (price_tightening * 0.4)  # 0.6-1.0
+            urgency_factor = 0.7 if level_test_frequency > 3 else 1.0
             
-            adjusted_days = base_days * volatility_multiplier * volume_multiplier * momentum_multiplier
+            # Calculate adjusted timing
+            timing_multiplier = compression_factor * volume_factor * tightening_factor * urgency_factor * pattern_urgency
+            adjusted_days = max(1, min(int(base_days * timing_multiplier), 21))
             
-            # Calculate probability scores
-            breakout_probability = self.calculate_breakout_probability(pattern, evolution)
-            direction_bias = self.calculate_breakout_direction_bias(hist, pattern)
+            # Enhanced probability calculations
+            base_probability = self.calculate_enhanced_breakout_probability(pattern, evolution, volatility_compression, price_tightening)
             
-            # Determine timing confidence
-            timing_confidence = self.calculate_timing_confidence(pattern, evolution)
+            # Probability boosts from timing factors
+            compression_boost = volatility_compression * 0.2
+            volume_boost = max(0, (volume_ratio - 1) * 0.15)
+            urgency_boost = min(0.25, level_test_frequency * 0.05)
+            
+            breakout_prob_5_days = min(0.95, base_probability + compression_boost + volume_boost + urgency_boost)
+            breakout_prob_10_days = min(0.98, breakout_prob_5_days * 1.25)
+            
+            # Enhanced direction bias with multiple factors
+            direction_bias = self.calculate_enhanced_direction_bias(hist, pattern, evolution)
+            
+            # Advanced timing confidence
+            timing_confidence = self.calculate_advanced_timing_confidence(
+                pattern, evolution, volatility_compression, price_tightening, volume_ratio, level_test_frequency
+            )
+            
+            # Comprehensive breakout levels
+            key_levels = self.identify_comprehensive_breakout_levels(hist, pattern, current_price)
+            
+            # Breakout catalyst identification
+            catalysts = self.identify_breakout_catalysts(hist, pattern, evolution, volatility_compression)
             
             prediction = {
-                'estimated_days_to_breakout': max(1, int(adjusted_days)),
-                'breakout_probability_next_5_days': min(breakout_probability * 5 / adjusted_days, 0.95),
-                'breakout_probability_next_10_days': min(breakout_probability * 10 / adjusted_days, 0.98),
-                'direction_bias': direction_bias,
-                'timing_confidence': timing_confidence,
-                'key_levels': self.identify_key_breakout_levels(hist, pattern),
-                'volume_confirmation_needed': evolution.get('volume_trend', 0) < 0.5,
-                'pattern_maturity': completion
+                'estimated_days_to_breakout': adjusted_days,
+                'breakout_probability_next_5_days': round(breakout_prob_5_days, 3),
+                'breakout_probability_next_10_days': round(breakout_prob_10_days, 3),
+                'direction_bias': round(direction_bias, 3),
+                'timing_confidence': round(timing_confidence, 3),
+                'key_levels': key_levels,
+                'breakout_factors': {
+                    'volatility_compression': round(volatility_compression, 3),
+                    'volume_ratio': round(volume_ratio, 3),
+                    'price_tightening': round(price_tightening, 3),
+                    'pattern_urgency': round(pattern_urgency, 3),
+                    'timing_multiplier': round(timing_multiplier, 3),
+                    'level_tests': level_test_frequency
+                },
+                'breakout_catalysts': catalysts,
+                'pattern_maturity': round(completion, 3),
+                'imminent_breakout': adjusted_days <= 3 and timing_confidence > 0.7,
+                'high_probability': breakout_prob_5_days > 0.75
             }
             
             return prediction
             
         except Exception as e:
             logging.error(f"Error predicting breakout timing: {e}")
-            return {}
+            return self.get_default_timing_prediction()
+
+    def calculate_pattern_urgency(self, pattern, completion, volatility_compression):
+        """Calculate pattern-specific urgency factor"""
+        try:
+            pattern_type = pattern.get('type', '')
+            base_urgency = 1.0
+            
+            # Pattern-specific urgency calculations
+            if pattern_type == 'bull_flag':
+                # Bull flags become urgent as they approach 15-20 days
+                time_factor = min(pattern.get('duration', 0) / 20, 1.0)
+                base_urgency = 0.7 + (time_factor * 0.3)
+            elif pattern_type == 'ascending_triangle':
+                # Triangles become urgent as they converge
+                convergence = pattern.get('convergence', 0)
+                base_urgency = 0.6 + (convergence * 0.4)
+            elif pattern_type == 'cup_and_handle':
+                # Cup and handles urgent when handle is mature
+                if pattern.get('stage') == 'mature':
+                    base_urgency = 0.9
+                else:
+                    base_urgency = 0.6
+            
+            # Adjust for completion and volatility compression
+            completion_factor = 0.5 + (completion * 0.5)
+            compression_factor = 0.7 + (volatility_compression * 0.3)
+            
+            return base_urgency * completion_factor * compression_factor
+            
+        except Exception:
+            return 1.0
+
+    def calculate_enhanced_breakout_probability(self, pattern, evolution, volatility_compression, price_tightening):
+        """Calculate enhanced breakout probability with multiple factors"""
+        try:
+            base_prob = pattern.get('confidence', 0.5)
+            
+            # Pattern maturity boost
+            completion = pattern.get('completion', 0)
+            maturity_boost = completion * 0.2
+            
+            # Technical factor boosts
+            compression_boost = volatility_compression * 0.15
+            tightening_boost = price_tightening * 0.1
+            
+            # Evolution trend boosts
+            volume_boost = max(0, evolution.get('volume_trend', 0) * 0.1)
+            momentum_boost = max(0, evolution.get('momentum_change', 0) * 0.1)
+            
+            total_probability = base_prob + maturity_boost + compression_boost + tightening_boost + volume_boost + momentum_boost
+            return min(0.9, max(0.1, total_probability))
+            
+        except Exception:
+            return 0.5
+
+    def calculate_enhanced_direction_bias(self, hist, pattern, evolution):
+        """Calculate enhanced direction bias with trend and momentum analysis"""
+        try:
+            # Recent trend analysis
+            recent_trend = self.calculate_recent_trend(hist, 20)
+            
+            # Pattern-specific bias
+            pattern_type = pattern.get('type', '')
+            pattern_bias = 0.5  # Neutral default
+            
+            if pattern_type in ['bull_flag', 'cup_and_handle', 'ascending_triangle']:
+                pattern_bias = 0.7  # Bullish patterns
+            elif pattern_type == 'descending_triangle':
+                pattern_bias = 0.3  # Bearish pattern
+            
+            # Volume confirmation
+            volume_trend = evolution.get('volume_trend', 0)
+            volume_bias = 0.5 + (volume_trend * 0.2)
+            
+            # Momentum factor
+            momentum_change = evolution.get('momentum_change', 0)
+            momentum_bias = 0.5 + (momentum_change * 0.3)
+            
+            # Weighted combination
+            direction_bias = (pattern_bias * 0.4 + 
+                            (0.5 + recent_trend * 0.5) * 0.3 + 
+                            volume_bias * 0.2 + 
+                            momentum_bias * 0.1)
+            
+            return max(0.0, min(1.0, direction_bias))
+            
+        except Exception:
+            return 0.5
+
+    def calculate_advanced_timing_confidence(self, pattern, evolution, volatility_compression, 
+                                           price_tightening, volume_ratio, level_test_frequency):
+        """Calculate advanced timing confidence with multiple convergence factors"""
+        try:
+            base_confidence = pattern.get('confidence', 0.5)
+            
+            # Technical convergence factors
+            compression_confidence = volatility_compression * 0.25
+            tightening_confidence = price_tightening * 0.2
+            volume_confidence = min(0.15, abs(volume_ratio - 1) * 0.3)
+            level_confidence = min(0.2, level_test_frequency * 0.05)
+            
+            # Pattern maturity confidence
+            completion = pattern.get('completion', 0)
+            maturity_confidence = completion * 0.15
+            
+            # Evolution consistency
+            evolution_consistency = self.calculate_evolution_consistency(evolution)
+            consistency_confidence = evolution_consistency * 0.1
+            
+            total_confidence = (base_confidence * 0.3 + 
+                              compression_confidence + 
+                              tightening_confidence + 
+                              volume_confidence + 
+                              level_confidence + 
+                              maturity_confidence + 
+                              consistency_confidence)
+            
+            return max(0.1, min(0.95, total_confidence))
+            
+        except Exception:
+            return 0.5
+
+    def identify_comprehensive_breakout_levels(self, hist, pattern, current_price):
+        """Identify comprehensive breakout and breakdown levels"""
+        try:
+            levels = {}
+            
+            # Pattern-specific levels
+            if 'resistance_level' in pattern:
+                levels['resistance'] = pattern['resistance_level']
+            else:
+                levels['resistance'] = hist['High'][-20:].max()
+                
+            if 'support_level' in pattern:
+                levels['support'] = pattern['support_level']
+            else:
+                levels['support'] = hist['Low'][-20:].min()
+            
+            # Confirmation levels (beyond pattern levels)
+            levels['breakout_confirmation'] = levels['resistance'] * 1.02
+            levels['breakdown_confirmation'] = levels['support'] * 0.98
+            
+            # Volume-based confirmation levels
+            high_volume_days = hist[hist['Volume'] > hist['Volume'].rolling(20).mean() * 1.5]
+            if not high_volume_days.empty:
+                levels['volume_resistance'] = high_volume_days['High'].max()
+                levels['volume_support'] = high_volume_days['Low'].min()
+            
+            # Fibonacci levels around current price
+            price_range = levels['resistance'] - levels['support']
+            levels['fib_618'] = levels['support'] + (price_range * 0.618)
+            levels['fib_382'] = levels['support'] + (price_range * 0.382)
+            
+            return levels
+            
+        except Exception:
+            return {'resistance': current_price * 1.02, 'support': current_price * 0.98}
+
+    def identify_breakout_catalysts(self, hist, pattern, evolution, volatility_compression):
+        """Identify potential breakout catalysts"""
+        try:
+            catalysts = []
+            
+            # Volatility compression catalyst
+            if volatility_compression > 0.6:
+                catalysts.append({
+                    'type': 'volatility_compression',
+                    'strength': volatility_compression,
+                    'description': 'Significant volatility compression detected'
+                })
+            
+            # Volume pattern catalyst
+            volume_trend = evolution.get('volume_trend', 0)
+            if volume_trend > 0.3:
+                catalysts.append({
+                    'type': 'volume_buildup',
+                    'strength': volume_trend,
+                    'description': 'Volume building up for potential breakout'
+                })
+            
+            # Momentum catalyst
+            momentum_change = evolution.get('momentum_change', 0)
+            if abs(momentum_change) > 0.2:
+                catalysts.append({
+                    'type': 'momentum_shift',
+                    'strength': abs(momentum_change),
+                    'description': f"{'Positive' if momentum_change > 0 else 'Negative'} momentum shift detected"
+                })
+            
+            # Pattern maturity catalyst
+            completion = pattern.get('completion', 0)
+            if completion > 0.8:
+                catalysts.append({
+                    'type': 'pattern_maturity',
+                    'strength': completion,
+                    'description': 'Pattern approaching full maturity'
+                })
+            
+            # Support/resistance test catalyst
+            current_price = hist['Close'].iloc[-1]
+            if 'resistance_level' in pattern:
+                distance_to_resistance = abs(current_price - pattern['resistance_level']) / current_price
+                if distance_to_resistance < 0.02:
+                    catalysts.append({
+                        'type': 'resistance_test',
+                        'strength': 1 - distance_to_resistance * 50,
+                        'description': 'Price testing key resistance level'
+                    })
+            
+            return catalysts
+            
+        except Exception:
+            return []
+
+    def get_default_timing_prediction(self):
+        """Return default timing prediction when calculation fails"""
+        return {
+            'estimated_days_to_breakout': 7,
+            'breakout_probability_next_5_days': 0.3,
+            'breakout_probability_next_10_days': 0.5,
+            'direction_bias': 0.5,
+            'timing_confidence': 0.3,
+            'key_levels': {},
+            'breakout_factors': {},
+            'breakout_catalysts': [],
+            'pattern_maturity': 0.5,
+            'imminent_breakout': False,
+            'high_probability': False
+        }
 
     def calculate_overall_breakout_probability(self, patterns):
         """Calculate overall breakout probability across all detected patterns"""
