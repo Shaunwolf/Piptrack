@@ -71,12 +71,12 @@ def scan_stocks():
                 db.session.add(stock)
             
             stock.name = result.get('name', '')
-            stock.price = result.get('price', 0)
-            stock.rsi = result.get('rsi', 0)
-            stock.volume_spike = result.get('volume_spike', 0)
+            stock.price = float(result.get('price', 0))
+            stock.rsi = float(result.get('rsi', 0))
+            stock.volume_spike = float(result.get('volume_spike', 0))
             stock.pattern_type = result.get('pattern_type', '')
-            stock.fibonacci_position = result.get('fibonacci_position', 0)
-            stock.confidence_score = confidence_scorer.calculate_score(result)
+            stock.fibonacci_position = float(result.get('fibonacci_position', 0))
+            stock.confidence_score = float(confidence_scorer.calculate_score(result))
         
         db.session.commit()
         return jsonify({'success': True, 'results': results})

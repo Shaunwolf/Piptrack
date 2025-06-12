@@ -7,22 +7,60 @@ import logging
 
 class StockScanner:
     def __init__(self):
+        # Expanded list focusing on $1-$50 price range stocks
         self.top_gappers = [
-            'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'META', 'NVDA', 'NFLX', 
-            'AMD', 'BABA', 'CRM', 'ORCL', 'ADBE', 'PYPL', 'INTC', 'CSCO',
-            'PFE', 'JNJ', 'KO', 'PEP', 'WMT', 'HD', 'BAC', 'JPM', 'V', 'MA'
+            # Tech stocks in range
+            'AMD', 'INTC', 'MU', 'QCOM', 'TXN', 'AMAT', 'LRCX', 'KLAC', 'MCHP', 'SWKS',
+            'MRVL', 'NXPI', 'TSM', 'ASML', 'CSCO', 'ORCL', 'IBM', 'HPQ', 'DELL', 'WDC',
+            
+            # Energy stocks 
+            'XOM', 'CVX', 'COP', 'EOG', 'SLB', 'HAL', 'OXY', 'DVN', 'FANG', 'MRO',
+            'APA', 'EQT', 'CTRA', 'AR', 'CNX', 'RRC', 'CLR', 'PXD', 'MTDR', 'HES',
+            
+            # Financial stocks
+            'BAC', 'WFC', 'C', 'GS', 'MS', 'COF', 'AXP', 'USB', 'PNC', 'TFC',
+            'RF', 'ZION', 'CMA', 'HBAN', 'CFG', 'FITB', 'KEY', 'MTB', 'STI', 'BBT',
+            
+            # Healthcare/biotech
+            'PFE', 'MRK', 'BMY', 'ABBV', 'GILD', 'BIIB', 'AMGN', 'REGN', 'VRTX', 'ILMN',
+            'MRNA', 'BNTX', 'JNJ', 'UNH', 'CVS', 'CI', 'HUM', 'ANTM', 'CNC', 'MOH',
+            
+            # Industrial/materials
+            'CAT', 'DE', 'BA', 'HON', 'MMM', 'GE', 'LMT', 'RTX', 'UPS', 'FDX',
+            'AA', 'FCX', 'NEM', 'VALE', 'RIO', 'BHP', 'CLF', 'X', 'STLD', 'NUE',
+            
+            # Consumer stocks
+            'F', 'GM', 'NIO', 'RIVN', 'LCID', 'KO', 'PEP', 'SBUX', 'NKE', 'LULU',
+            'TGT', 'BBY', 'GPS', 'ANF', 'M', 'JWN', 'COST', 'WMT', 'HD', 'LOW',
+            
+            # REITs and utilities in range
+            'SPG', 'O', 'REIT', 'EXR', 'PSA', 'DLR', 'CCI', 'AMT', 'EQIX', 'PLD',
+            'NEE', 'SO', 'DUK', 'AEP', 'EXC', 'XEL', 'ED', 'ETR', 'ES', 'FE'
         ]
     
-    def scan_top_gappers(self, limit=20):
-        """Scan for top gapping stocks"""
+    def scan_top_gappers(self, limit=50):
+        """Scan for top gapping stocks in $1-$50 price range"""
         results = []
+        processed = 0
         
         try:
-            for symbol in self.top_gappers[:limit]:
+            for symbol in self.top_gappers:
+                if len(results) >= limit:
+                    break
+                    
                 try:
                     stock_data = self.get_stock_data(symbol)
                     if stock_data:
-                        results.append(stock_data)
+                        price = stock_data.get('price', 0)
+                        # Filter for $1-$50 price range
+                        if 1.0 <= price <= 50.0:
+                            results.append(stock_data)
+                        processed += 1
+                        
+                        # Stop after processing reasonable number to avoid timeout
+                        if processed >= 100:
+                            break
+                            
                 except Exception as e:
                     logging.warning(f"Error scanning {symbol}: {e}")
                     continue
@@ -33,7 +71,7 @@ class StockScanner:
         except Exception as e:
             logging.error(f"Error in scan_top_gappers: {e}")
         
-        return results
+        return results[:limit]
     
     def scan_selected_tickers(self, tickers):
         """Scan specific tickers"""
