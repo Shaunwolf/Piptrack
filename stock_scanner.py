@@ -135,28 +135,28 @@ class StockScanner:
         """Scan for top gapping stocks in $1-$25 price range with optimized processing"""
         results = []
         
-        # Optimized symbols targeting $1-$25 price range for maximum results
+        # Carefully selected symbols known to trade in $1-$25 range
         scan_symbols = [
-            # Prime $1-$25 Range - Financial
-            'F', 'T', 'BAC', 'WFC', 'C', 'USB', 'PNC', 'COF', 'KEY', 'RF',
-            # Energy & Materials in Range
-            'CLF', 'X', 'AA', 'HAL', 'SLB', 'OXY', 'KMI', 'EPD', 'ET', 'ETRN',
-            # Technology & Communications
-            'INTC', 'AMD', 'MU', 'SIRI', 'NOK', 'ORCL', 'IBM', 'HPQ', 'CSCO', 'VZ',
-            # Retail & Consumer
-            'M', 'KSS', 'GPS', 'ANF', 'AEO', 'URBN', 'JWN', 'BBY', 'BBBY', 'DDS',
-            # Transportation & Airlines  
+            # Financial - Under $25
+            'F', 'T', 'BAC', 'WFC', 'C', 'KEY', 'RF', 'ZION', 'FITB', 'HBAN',
+            # Energy & Materials - Under $25  
+            'CLF', 'X', 'AA', 'HAL', 'SLB', 'OXY', 'KMI', 'ET', 'AR', 'MRO',
+            # Technology - Lower Priced
+            'INTC', 'AMD', 'MU', 'SIRI', 'NOK', 'HPQ', 'WDC', 'QCOM', 'TXN', 'MRVL',
+            # Airlines & Transportation
             'DAL', 'UAL', 'AAL', 'LUV', 'JBLU', 'ALK', 'SAVE', 'SKYW', 'MESA', 'HA',
-            # Small-Mid Cap Growth
-            'SOFI', 'PLTR', 'WISH', 'CLOV', 'SPCE', 'NKLA', 'RIDE', 'WKHS', 'LCID', 'RIVN',
-            # Healthcare & Pharma
-            'PFE', 'GILD', 'BMY', 'ABBV', 'MRK', 'TEVA', 'VRTX', 'BIIB', 'REGN', 'AMGN',
-            # Energy Services
-            'FANG', 'DVN', 'CNX', 'AR', 'MRO', 'HES', 'APA', 'OVV', 'MTDR', 'SM',
-            # REITs & Real Estate
-            'AMC', 'GME', 'EXPR', 'KOSS', 'NAKD', 'SNDL', 'TLRY', 'CGC', 'ACB', 'HEXO',
-            # Additional Penny/Small Cap
-            'ZYXI', 'FCEL', 'PLUG', 'BLDP', 'BALLARD', 'HYLN', 'QS', 'CHPT', 'BLNK', 'EVGO'
+            # Retail & Consumer
+            'M', 'KSS', 'GPS', 'ANF', 'AEO', 'URBN', 'JWN', 'EXPR', 'DDS', 'KIRK',
+            # Small-Cap Growth
+            'SOFI', 'PLTR', 'WISH', 'CLOV', 'SPCE', 'NKLA', 'RIDE', 'WKHS', 'GOEV', 'LCID',
+            # Energy Services & Exploration
+            'FANG', 'DVN', 'CNX', 'HES', 'APA', 'OVV', 'MTDR', 'SM', 'CTRA', 'EQT',
+            # Cannabis & Biotech
+            'SNDL', 'TLRY', 'CGC', 'ACB', 'HEXO', 'CRON', 'APHA', 'TEVA', 'GILD', 'BMY',
+            # Meme & Penny Stocks
+            'AMC', 'GME', 'KOSS', 'EXPR', 'NAKD', 'CINE', 'GNUS', 'IDEX', 'XSPA', 'SHIP',
+            # Clean Energy & EV
+            'FCEL', 'PLUG', 'BLDP', 'HYLN', 'QS', 'CHPT', 'BLNK', 'EVGO', 'CLSK', 'MARA'
         ]
         
         try:
@@ -165,14 +165,29 @@ class StockScanner:
             
             for symbol in scan_symbols:
                 try:
-                    # Use yfinance for comprehensive data
+                    # Quick price check first to avoid heavy processing
+                    ticker = yf.Ticker(symbol)
+                    try:
+                        info = ticker.info
+                        current_price = info.get('currentPrice') or info.get('regularMarketPrice', 0)
+                        
+                        # Skip if price is outside $1-$25 range or unavailable
+                        if not current_price or not (1.0 <= current_price <= 25.0):
+                            logging.info(f"Skipping {symbol}: price ${current_price} outside $1-$25 range")
+                            continue
+                            
+                    except Exception as e:
+                        logging.warning(f"Could not get price for {symbol}: {e}")
+                        continue
+                    
+                    # Get comprehensive data only for valid price range stocks
                     stock_data = self.get_stock_data(symbol)
                     
                     if stock_data:
-                        current_price = stock_data['price']
-                        
-                        # Filter for $1-$25 price range
-                        if not (1.0 <= current_price <= 25.0):
+                        # Double-check price from comprehensive data
+                        final_price = stock_data['price']
+                        if not (1.0 <= final_price <= 25.0):
+                            logging.info(f"Final filter: {symbol} price ${final_price} outside range")
                             continue
                             
                         # Calculate gapping score based on price change and volume
@@ -217,21 +232,43 @@ class StockScanner:
         return results
     
     def get_stock_data(self, symbol):
-        """Get comprehensive stock data for analysis"""
+        """Get comprehensive stock data for analysis with error handling"""
         try:
             ticker = yf.Ticker(symbol)
             
-            # Get historical data (30 days)
-            hist = ticker.history(period="1mo")
-            if hist.empty:
+            # Get historical data with timeout and error handling
+            try:
+                hist = ticker.history(period="1mo", timeout=10)
+                if hist.empty or len(hist) < 5:
+                    logging.warning(f"Insufficient data for {symbol}")
+                    return None
+            except Exception as e:
+                logging.warning(f"Failed to get history for {symbol}: {e}")
                 return None
             
-            # Get basic info
-            info = ticker.info
+            # Get basic info with fallback
             current_price = hist['Close'].iloc[-1]
+            if pd.isna(current_price) or current_price <= 0:
+                return None
             
-            # Calculate technical indicators
-            rsi = ta.momentum.RSIIndicator(hist['Close']).rsi().iloc[-1]
+            try:
+                info = ticker.info
+            except:
+                info = {}  # Use empty dict if info fails
+            
+            # Calculate RSI manually since ta library has issues
+            try:
+                closes = hist['Close']
+                delta = closes.diff()
+                gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+                loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+                rs = gain / loss
+                rsi = 100 - (100 / (1 + rs))
+                rsi = rsi.iloc[-1]
+                if pd.isna(rsi) or rsi < 0 or rsi > 100:
+                    rsi = 50
+            except:
+                rsi = 50
             
             # Volume analysis
             avg_volume = hist['Volume'].rolling(20).mean().iloc[-2]  # Previous 20-day average
