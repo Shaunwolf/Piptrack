@@ -173,7 +173,11 @@
                         
                         <div class="flex items-center justify-between">
                             <div class="text-sm text-gray-400">
-                                {{ trade.created_at.strftime('%m/%d/%Y %H:%M') }}
+                                {% if trade.created_at %}
+                                    {{ trade.created_at[:10] | replace('-', '/') }} {{ trade.created_at[11:16] }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
                             </div>
                             
                             {% if trade.pnl %}
