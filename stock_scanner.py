@@ -135,115 +135,79 @@ class StockScanner:
         """Scan for top gapping stocks in $1-$50 price range with fallback to yfinance"""
         results = []
         
-        # Priority stocks confirmed to be in $1-$50 range
-        priority_symbols = [
-            'F',     # Ford Motor Company (~$12)
-            'T',     # AT&T Inc (~$19)  
-            'BAC',   # Bank of America (~$36)
-            'WFC',   # Wells Fargo (~$41)
-            'PFE',   # Pfizer Inc (~$30)
-            'INTC',  # Intel Corporation (~$31)
-            'AMD',   # Advanced Micro Devices (~$43)
-            'CLF',   # Cleveland-Cliffs (~$19)
-            'AA',    # Alcoa Corporation (~$38)
-            'HAL',   # Halliburton Company (~$36)
-            'SLB',   # Schlumberger Limited (~$44)
-            'FCX',   # Freeport-McMoRan (~$41)
-            'VZ',    # Verizon Communications (~$38)
-            'BBY',   # Best Buy Co (~$30)
-            'GM'     # General Motors Company (~$46)
+        # Expanded list of symbols covering various sectors and price ranges
+        scan_symbols = [
+            # Technology
+            'INTC', 'AMD', 'MU', 'QCOM', 'TXN', 'ADI', 'MRVL', 'KLAC', 'LRCX', 'AMAT',
+            # Financial
+            'BAC', 'WFC', 'C', 'JPM', 'GS', 'MS', 'COF', 'AXP', 'USB', 'PNC',
+            # Energy  
+            'CVX', 'XOM', 'COP', 'EOG', 'SLB', 'HAL', 'OXY', 'KMI', 'WMB', 'EPD',
+            # Industrial
+            'CAT', 'DE', 'BA', 'GE', 'HON', 'MMM', 'LMT', 'RTX', 'UNP', 'CSX',
+            # Healthcare
+            'PFE', 'JNJ', 'MRK', 'ABT', 'TMO', 'DHR', 'BMY', 'AMGN', 'GILD', 'BIIB',
+            # Consumer
+            'WMT', 'HD', 'PG', 'KO', 'PEP', 'NKE', 'COST', 'TGT', 'LOW', 'SBUX',
+            # Telecommunications
+            'T', 'VZ', 'TMUS', 'CHTR', 'CMCSA',
+            # Materials
+            'LIN', 'APD', 'ECL', 'FCX', 'NEM', 'AA', 'CLF', 'X', 'NUE', 'STLD',
+            # Utilities
+            'NEE', 'DUK', 'SO', 'D', 'EXC', 'XEL', 'WEC', 'ES', 'AEP', 'PPL',
+            # REITs & Real Estate  
+            'AMT', 'PLD', 'CCI', 'EQIX', 'PSA', 'EXR', 'AVB', 'EQR', 'DLR', 'O',
+            # Transportation
+            'UPS', 'FDX', 'DAL', 'UAL', 'AAL', 'LUV', 'JBLU', 'ALK',
+            # Retail
+            'BBY', 'M', 'KSS', 'JWN', 'GPS', 'ANF', 'AEO', 'URBN',
+            # Automotive
+            'F', 'GM', 'RIVN', 'LCID', 'FSLY', 'GOEV',
+            # Small-Mid Cap Growth
+            'SOFI', 'PLTR', 'WISH', 'CLOV', 'SPCE', 'NKLA', 'RIDE', 'WKHS'
         ]
         
         try:
-            for symbol in priority_symbols:
-                if len(results) >= limit:
-                    break
-                    
+            # Collect all candidates with price changes
+            candidates = []
+            
+            for symbol in scan_symbols:
                 try:
-                    # Try Alpha Vantage first, fallback to yfinance
-                    quote_data = self.get_stock_quote_alpha_vantage(symbol)
+                    # Use yfinance for comprehensive data
+                    stock_data = self.get_stock_data(symbol)
                     
-                    if not quote_data:
-                        # Fallback to yfinance for authentic data
-                        logging.info(f"Using yfinance fallback for {symbol}")
-                        stock_data = self.get_stock_data(symbol)
+                    if stock_data:
+                        current_price = stock_data['price']
                         
-                        if stock_data:
-                            current_price = stock_data['price']
+                        # Filter for $1-$50 price range
+                        if not (1.0 <= current_price <= 50.0):
+                            continue
                             
-                            # Filter for $1-$50 price range
-                            if not (1.0 <= current_price <= 50.0):
-                                logging.info(f"{symbol} price ${current_price} outside $1-$50 range")
-                                continue
-                                
-                            results.append(stock_data)
-                            logging.info(f"Successfully scanned {symbol} via yfinance: ${current_price}")
+                        # Calculate gapping score based on price change and volume
+                        price_change = abs(stock_data.get('change_percent', 0))
+                        volume_spike = abs(stock_data.get('volume_spike', 0))
+                        confidence = stock_data.get('confidence_score', 0)
                         
-                        continue
-                    
-                    current_price = quote_data['price']
-                    
-                    # Filter for $1-$50 price range
-                    if not (1.0 <= current_price <= 50.0):
-                        logging.info(f"{symbol} price ${current_price} outside $1-$50 range")
-                        continue
-                    
-                    # Use Alpha Vantage data
-                    current_volume = quote_data['volume']
-                    change_percent = float(quote_data['change_percent']) if quote_data['change_percent'] else 0.0
-                    
-                    # Calculate volume spike
-                    avg_volume_estimate = current_volume * 0.8
-                    volume_spike = (current_volume / avg_volume_estimate) * 100 if avg_volume_estimate > 0 else 125
-                    
-                    # Pattern detection based on price change
-                    if change_percent > 2:
-                        pattern_type = "Bullish Trend"
-                    elif change_percent < -2:
-                        pattern_type = "Bearish Trend"
-                    elif abs(change_percent) < 0.5:
-                        pattern_type = "Consolidation"
-                    else:
-                        pattern_type = "Neutral"
-                    
-                    # Estimate RSI
-                    if change_percent > 1:
-                        estimated_rsi = min(70, 50 + (change_percent * 5))
-                    elif change_percent < -1:
-                        estimated_rsi = max(30, 50 + (change_percent * 5))
-                    else:
-                        estimated_rsi = 50
-                    
-                    results.append({
-                        'symbol': symbol,
-                        'name': symbol,
-                        'price': round(current_price, 2),
-                        'rsi': round(estimated_rsi, 2),
-                        'volume_spike': round(volume_spike, 2),
-                        'pattern_type': pattern_type,
-                        'fibonacci_position': round(50.0 + (change_percent * 2), 2),
-                        'market_cap': 50000000000,
-                        'sector': 'Various'
-                    })
-                    
-                    logging.info(f"Successfully scanned {symbol} via Alpha Vantage: ${current_price}, change: {change_percent}%")
-                    
-                    # Rate limiting
-                    time.sleep(0.5)
+                        # Gapping score combines price movement, volume, and confidence
+                        gap_score = (price_change * 2) + (volume_spike * 0.5) + (confidence * 0.3)
+                        stock_data['gap_score'] = gap_score
+                        
+                        candidates.append(stock_data)
+                        logging.info(f"Scanned {symbol}: ${current_price:.2f}, change: {price_change:.1f}%, gap_score: {gap_score:.1f}")
                         
                 except Exception as e:
-                    logging.warning(f"Error scanning {symbol}: {e}")
+                    logging.error(f"Error scanning {symbol}: {e}")
                     continue
             
-            # Sort by volume spike (gap indicator)
-            results.sort(key=lambda x: x.get('volume_spike', 0), reverse=True)
+            # Sort by gap score and select top performers
+            candidates.sort(key=lambda x: x['gap_score'], reverse=True)
+            results = candidates[:limit]
             
-            logging.info(f"Scan completed: {len(results)} stocks found in $1-$50 range")
             
         except Exception as e:
             logging.error(f"Error in scan_top_gappers: {e}")
         
-        return results[:limit]
+        return results
     
     def scan_selected_tickers(self, tickers):
         """Scan specific tickers"""
