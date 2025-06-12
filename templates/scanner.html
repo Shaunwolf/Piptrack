@@ -40,10 +40,10 @@
                 <label class="block text-sm font-medium mb-2">Price Range</label>
                 <select id="priceFilter" class="form-select bg-dark-accent border-gray-600 text-white">
                     <option value="">All Prices</option>
-                    <option value="1-10">$1 - $10</option>
-                    <option value="10-25">$10 - $25</option>
-                    <option value="25-50">$25 - $50</option>
-                    <option value="1-50" selected>$1 - $50 (Target Range)</option>
+                    <option value="1-5">$1 - $5</option>
+                    <option value="5-15">$5 - $15</option>
+                    <option value="15-25">$15 - $25</option>
+                    <option value="1-25" selected>$1 - $25 (Target Range)</option>
                 </select>
             </div>
             
@@ -340,7 +340,7 @@ function clearFilters() {
     document.getElementById('minConfidenceValue').textContent = '0%';
     document.getElementById('minVolumeSpike').value = 0;
     document.getElementById('minVolumeSpikeValue').textContent = '0%';
-    document.getElementById('priceFilter').value = '1-50';
+    document.getElementById('priceFilter').value = '1-25';
     document.getElementById('patternFilter').value = '';
     document.getElementById('rsiFilter').value = '';
     
@@ -384,7 +384,7 @@ function updateActiveFiltersDisplay() {
         tags.push(`Min Volume: ${minVolumeSpike}%`);
     }
     
-    if (priceFilter && priceFilter !== '1-50') {
+    if (priceFilter && priceFilter !== '1-25') {
         const [min, max] = priceFilter.split('-');
         tags.push(`Price: $${min}-$${max}`);
     }

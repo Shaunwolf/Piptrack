@@ -132,28 +132,31 @@ class StockScanner:
         return {'name': symbol, 'sector': 'Unknown', 'market_cap': 0}
     
     def scan_top_gappers(self, limit=50):
-        """Scan for top gapping stocks in $1-$50 price range with optimized processing"""
+        """Scan for top gapping stocks in $1-$25 price range with optimized processing"""
         results = []
         
-        # Prioritized symbols known to be in $1-$50 range for efficient scanning
+        # Optimized symbols targeting $1-$25 price range for maximum results
         scan_symbols = [
-            # High Priority - Known $1-$50 Range
-            'F', 'T', 'BAC', 'WFC', 'PFE', 'INTC', 'AMD', 'CLF', 'AA', 'HAL',
-            'SLB', 'FCX', 'VZ', 'BBY', 'GM', 'X', 'NUE', 'STLD', 'M', 'KSS',
-            # Financial Sector
-            'C', 'COF', 'USB', 'PNC', 'MS', 'GS', 'JPM', 'AXP',
-            # Energy & Materials  
-            'CVX', 'XOM', 'COP', 'EOG', 'OXY', 'KMI', 'WMB', 'EPD', 'NEM',
-            # Technology
-            'MU', 'QCOM', 'TXN', 'ADI', 'MRVL', 'KLAC', 'LRCX', 'AMAT',
-            # Industrial & Transportation
-            'CAT', 'DE', 'BA', 'GE', 'HON', 'MMM', 'UPS', 'FDX', 'DAL', 'UAL',
-            # Healthcare & Consumer
-            'JNJ', 'MRK', 'ABT', 'BMY', 'AMGN', 'GILD', 'BIIB', 'PG', 'KO', 'PEP',
-            # Small-Mid Cap & Growth
-            'SOFI', 'PLTR', 'RIVN', 'LCID', 'SPCE', 'NKLA', 'RIDE', 'WKHS', 'CLOV',
-            # Additional Opportunities
-            'GPS', 'ANF', 'AEO', 'URBN', 'JWN', 'ALK', 'LUV', 'JBLU', 'AAL'
+            # Prime $1-$25 Range - Financial
+            'F', 'T', 'BAC', 'WFC', 'C', 'USB', 'PNC', 'COF', 'KEY', 'RF',
+            # Energy & Materials in Range
+            'CLF', 'X', 'AA', 'HAL', 'SLB', 'OXY', 'KMI', 'EPD', 'ET', 'ETRN',
+            # Technology & Communications
+            'INTC', 'AMD', 'MU', 'SIRI', 'NOK', 'ORCL', 'IBM', 'HPQ', 'CSCO', 'VZ',
+            # Retail & Consumer
+            'M', 'KSS', 'GPS', 'ANF', 'AEO', 'URBN', 'JWN', 'BBY', 'BBBY', 'DDS',
+            # Transportation & Airlines  
+            'DAL', 'UAL', 'AAL', 'LUV', 'JBLU', 'ALK', 'SAVE', 'SKYW', 'MESA', 'HA',
+            # Small-Mid Cap Growth
+            'SOFI', 'PLTR', 'WISH', 'CLOV', 'SPCE', 'NKLA', 'RIDE', 'WKHS', 'LCID', 'RIVN',
+            # Healthcare & Pharma
+            'PFE', 'GILD', 'BMY', 'ABBV', 'MRK', 'TEVA', 'VRTX', 'BIIB', 'REGN', 'AMGN',
+            # Energy Services
+            'FANG', 'DVN', 'CNX', 'AR', 'MRO', 'HES', 'APA', 'OVV', 'MTDR', 'SM',
+            # REITs & Real Estate
+            'AMC', 'GME', 'EXPR', 'KOSS', 'NAKD', 'SNDL', 'TLRY', 'CGC', 'ACB', 'HEXO',
+            # Additional Penny/Small Cap
+            'ZYXI', 'FCEL', 'PLUG', 'BLDP', 'BALLARD', 'HYLN', 'QS', 'CHPT', 'BLNK', 'EVGO'
         ]
         
         try:
@@ -168,8 +171,8 @@ class StockScanner:
                     if stock_data:
                         current_price = stock_data['price']
                         
-                        # Filter for $1-$50 price range
-                        if not (1.0 <= current_price <= 50.0):
+                        # Filter for $1-$25 price range
+                        if not (1.0 <= current_price <= 25.0):
                             continue
                             
                         # Calculate gapping score based on price change and volume
