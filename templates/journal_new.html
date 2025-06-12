@@ -1,0 +1,904 @@
+{% extends "base.html" %}
+
+{% block title %}My Trading Journal ✨ - AI Coach{% endblock %}
+
+{% block head %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@300;400;700&family=Caveat:wght@400;500;600;700&family=Indie+Flower&display=swap" rel="stylesheet">
+<style>
+/* Lisa Frank + Teen Journal Theme */
+.journal-container {
+    background: linear-gradient(135deg, #ff6b9d, #c44eb0, #8b5cf6, #06b6d4);
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+}
+
+.journal-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    animation: float 20s infinite linear;
+}
+
+@keyframes float {
+    0% { transform: translateY(0px) rotate(0deg); }
+    100% { transform: translateY(-60px) rotate(360deg); }
+}
+
+/* Notebook Paper Effect */
+.journal-page {
+    background: linear-gradient(to right, #ff69b4 0px, #ff69b4 2px, transparent 2px), 
+                repeating-linear-gradient(transparent, transparent 24px, #ffc0cb 24px, #ffc0cb 26px);
+    background-color: #fff5f8;
+    margin: 20px auto;
+    max-width: 900px;
+    border-radius: 15px;
+    box-shadow: 0 20px 40px rgba(255, 105, 180, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.journal-page::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 40px;
+    background: linear-gradient(90deg, #ff1493, #ff69b4);
+    border-radius: 15px 0 0 15px;
+}
+
+/* Handwritten Fonts */
+.handwritten-title {
+    font-family: 'Caveat', cursive;
+    font-weight: 700;
+    font-size: 3rem;
+    color: #ff1493;
+    text-shadow: 2px 2px 4px rgba(255, 20, 147, 0.3);
+    transform: rotate(-2deg);
+}
+
+.handwritten-heading {
+    font-family: 'Kalam', cursive;
+    font-weight: 600;
+    color: #8b5cf6;
+}
+
+.handwritten-text {
+    font-family: 'Indie Flower', cursive;
+    font-size: 1.1rem;
+    color: #4c1d95;
+    line-height: 26px;
+}
+
+/* Theme Switcher */
+.theme-switcher {
+    position: fixed;
+    top: 100px;
+    right: 20px;
+    z-index: 100;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 20px;
+    padding: 15px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.theme-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 3px solid white;
+    margin: 5px 0;
+    cursor: pointer;
+    transition: transform 0.2s;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.theme-btn:hover { transform: scale(1.1); }
+.theme-btn.active { transform: scale(1.2); border-width: 4px; }
+
+.theme-neon { background: linear-gradient(45deg, #ff00ff, #00ffff); }
+.theme-bubblegum { background: linear-gradient(45deg, #ff69b4, #ffc0cb); }
+.theme-arcade { background: linear-gradient(45deg, #000000, #8b5cf6); }
+
+/* Mood Tracker */
+.mood-selector {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+.mood-emoji {
+    font-size: 3rem;
+    cursor: pointer;
+    transition: transform 0.2s;
+    padding: 10px;
+    border-radius: 50%;
+    position: relative;
+}
+
+.mood-emoji:hover {
+    transform: scale(1.2) rotate(10deg);
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.mood-emoji.selected {
+    transform: scale(1.3);
+    background: linear-gradient(45deg, #ff69b4, #8b5cf6);
+    box-shadow: 0 0 20px rgba(255, 105, 180, 0.6);
+}
+
+/* Confidence Slider with Dynamic Icons */
+.confidence-slider-container {
+    position: relative;
+    margin: 30px 0;
+}
+
+.confidence-slider {
+    width: 100%;
+    height: 10px;
+    border-radius: 5px;
+    background: linear-gradient(90deg, #ff4444, #ffaa00, #00ff88);
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.confidence-slider::-webkit-slider-thumb {
+    appearance: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #fff;
+    cursor: pointer;
+    border: 3px solid #ff69b4;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.slider-emoji {
+    position: absolute;
+    top: -40px;
+    font-size: 2rem;
+    transition: all 0.3s;
+    pointer-events: none;
+}
+
+/* Sticker Drag Zone */
+.sticker-zone {
+    position: fixed;
+    right: 20px;
+    top: 200px;
+    width: 80px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    padding: 15px 10px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    z-index: 50;
+}
+
+.sticker {
+    font-size: 2rem;
+    margin: 8px 0;
+    cursor: grab;
+    transition: transform 0.2s;
+    text-align: center;
+    user-select: none;
+}
+
+.sticker:hover { transform: scale(1.2) rotate(10deg); }
+.sticker:active { cursor: grabbing; }
+
+/* Placed Stickers */
+.placed-sticker {
+    position: absolute;
+    font-size: 1.5rem;
+    cursor: move;
+    z-index: 10;
+    animation: stickerPop 0.3s ease-out;
+}
+
+@keyframes stickerPop {
+    0% { transform: scale(0) rotate(0deg); }
+    50% { transform: scale(1.2) rotate(180deg); }
+    100% { transform: scale(1) rotate(360deg); }
+}
+
+/* Tag Buttons */
+.tag-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+.tag-btn {
+    background: linear-gradient(45deg, #ff69b4, #8b5cf6);
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-family: 'Kalam', cursive;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.tag-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.tag-btn.selected {
+    background: linear-gradient(45deg, #00ff88, #00aaff);
+    transform: scale(1.05);
+}
+
+/* Rich Text Area */
+.rich-text-area {
+    background: transparent;
+    border: 2px dashed #ff69b4;
+    border-radius: 15px;
+    padding: 20px;
+    min-height: 150px;
+    font-family: 'Indie Flower', cursive;
+    font-size: 1.1rem;
+    color: #4c1d95;
+    line-height: 26px;
+    resize: vertical;
+}
+
+.rich-text-area:focus {
+    outline: none;
+    border-color: #8b5cf6;
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+}
+
+/* Save Button with Sparkles */
+.save-btn {
+    background: linear-gradient(45deg, #ff69b4, #8b5cf6);
+    border: none;
+    color: white;
+    padding: 15px 30px;
+    border-radius: 25px;
+    font-family: 'Caveat', cursive;
+    font-size: 1.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s;
+    box-shadow: 0 8px 20px rgba(255, 105, 180, 0.4);
+}
+
+.save-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 25px rgba(255, 105, 180, 0.6);
+}
+
+.save-btn::before {
+    content: '✨';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2rem;
+    opacity: 0;
+    animation: sparkle 2s infinite;
+}
+
+@keyframes sparkle {
+    0%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(0); }
+    50% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+/* Confetti Animation */
+.confetti {
+    position: fixed;
+    top: -10px;
+    pointer-events: none;
+    z-index: 1000;
+    animation: confetti-fall 3s linear forwards;
+}
+
+@keyframes confetti-fall {
+    0% { transform: translateY(-100vh) rotate(0deg); }
+    100% { transform: translateY(100vh) rotate(720deg); }
+}
+
+/* Binder Tabs */
+.binder-tabs {
+    display: flex;
+    margin: 20px 0;
+    position: relative;
+}
+
+.binder-tab {
+    background: linear-gradient(45deg, #ff69b4, #ffc0cb);
+    color: white;
+    padding: 12px 20px;
+    margin-right: 5px;
+    border-radius: 10px 10px 0 0;
+    cursor: pointer;
+    font-family: 'Kalam', cursive;
+    font-weight: 600;
+    position: relative;
+    transform: perspective(100px) rotateX(10deg);
+    transition: all 0.3s;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.binder-tab.active {
+    background: linear-gradient(45deg, #8b5cf6, #06b6d4);
+    transform: perspective(100px) rotateX(0deg) translateY(-5px);
+    z-index: 2;
+}
+
+.binder-tab:hover {
+    transform: perspective(100px) rotateX(0deg) translateY(-2px);
+}
+
+/* Quick Stats Grid */
+.quick-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.stat-input {
+    background: rgba(255, 255, 255, 0.8);
+    border: 2px solid #ff69b4;
+    border-radius: 15px;
+    padding: 10px;
+    text-align: center;
+    font-family: 'Kalam', cursive;
+    font-size: 1.1rem;
+    color: #4c1d95;
+}
+
+.stat-input:focus {
+    outline: none;
+    border-color: #8b5cf6;
+    box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
+}
+
+/* Voice Journal Button */
+.voice-btn {
+    background: linear-gradient(45deg, #00ff88, #00aaff);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 20px;
+    font-family: 'Kalam', cursive;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.voice-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.voice-btn.recording {
+    animation: pulse 1s infinite;
+    background: linear-gradient(45deg, #ff4444, #ff0088);
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .journal-page { margin: 10px; }
+    .handwritten-title { font-size: 2rem; }
+    .sticker-zone { right: 10px; width: 60px; }
+    .theme-switcher { right: 10px; }
+    .quick-stats { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="journal-container">
+    <!-- Theme Switcher -->
+    <div class="theme-switcher">
+        <div class="handwritten-text" style="font-size: 0.8rem; margin-bottom: 10px; text-align: center;">Vibes</div>
+        <div class="theme-btn theme-neon" onclick="switchTheme('neon')" title="80s Neon"></div>
+        <div class="theme-btn theme-bubblegum active" onclick="switchTheme('bubblegum')" title="Bubblegum Pink"></div>
+        <div class="theme-btn theme-arcade" onclick="switchTheme('arcade')" title="Dark Arcade"></div>
+    </div>
+
+    <!-- Sticker Zone -->
+    <div class="sticker-zone">
+        <div class="handwritten-text" style="font-size: 0.7rem; margin-bottom: 10px; text-align: center;">Stickers</div>
+        <div class="sticker" draggable="true" data-sticker="🦄">🦄</div>
+        <div class="sticker" draggable="true" data-sticker="💰">💰</div>
+        <div class="sticker" draggable="true" data-sticker="🔥">🔥</div>
+        <div class="sticker" draggable="true" data-sticker="📉">📉</div>
+        <div class="sticker" draggable="true" data-sticker="📊">📊</div>
+        <div class="sticker" draggable="true" data-sticker="🎯">🎯</div>
+        <div class="sticker" draggable="true" data-sticker="🌈">🌈</div>
+        <div class="sticker" draggable="true" data-sticker="⚡">⚡</div>
+        <div class="sticker" draggable="true" data-sticker="🚀">🚀</div>
+        <div class="sticker" draggable="true" data-sticker="💎">💎</div>
+    </div>
+
+    <!-- Main Journal Page -->
+    <div class="journal-page" id="journalPage">
+        <div style="padding: 60px 80px 40px 80px; position: relative;">
+            
+            <!-- Journal Header -->
+            <div style="text-align: center; margin-bottom: 40px;">
+                <h1 class="handwritten-title">My Trading Journal ✨</h1>
+                <div class="handwritten-text" style="font-size: 1.2rem; color: #8b5cf6;">
+                    Today is <span id="currentDate">loading...</span> 🌟
+                </div>
+            </div>
+
+            <!-- Binder Tabs -->
+            <div class="binder-tabs">
+                <div class="binder-tab active" onclick="switchTab('today')">📝 Today's Vibe</div>
+                <div class="binder-tab" onclick="switchTab('wins')">🏆 Wins</div>
+                <div class="binder-tab" onclick="switchTab('losses')">📚 Lessons</div>
+                <div class="binder-tab" onclick="switchTab('ideas')">💡 Ideas</div>
+            </div>
+
+            <!-- Today's Trading Session Card -->
+            <div class="tab-content" id="today-tab">
+                <div style="background: rgba(255, 255, 255, 0.9); border-radius: 20px; padding: 30px; margin: 20px 0; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);">
+                    
+                    <!-- Mood Tracker -->
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <h3 class="handwritten-heading" style="font-size: 1.8rem; margin-bottom: 15px;">How did today feel? 💭</h3>
+                        <div class="mood-selector">
+                            <div class="mood-emoji" data-mood="confident" title="Confident">😎</div>
+                            <div class="mood-emoji" data-mood="excited" title="Excited">🚀</div>
+                            <div class="mood-emoji" data-mood="neutral" title="Neutral">😐</div>
+                            <div class="mood-emoji" data-mood="frustrated" title="Frustrated">😩</div>
+                            <div class="mood-emoji" data-mood="angry" title="Angry">😡</div>
+                        </div>
+                    </div>
+
+                    <!-- Confidence Slider -->
+                    <div style="margin: 30px 0;">
+                        <h4 class="handwritten-heading" style="margin-bottom: 15px;">How confident were you before entering trades today?</h4>
+                        <div class="confidence-slider-container">
+                            <input type="range" class="confidence-slider" id="confidenceSlider" min="0" max="100" value="50">
+                            <div class="slider-emoji" id="sliderEmoji">🧠</div>
+                            <div class="handwritten-text" style="text-align: center; margin-top: 15px;">
+                                <span id="confidenceValue">50</span>% confidence
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Stats Grid -->
+                    <div style="margin: 30px 0;">
+                        <h4 class="handwritten-heading" style="margin-bottom: 15px;">Quick Stats ⚡</h4>
+                        <div class="quick-stats">
+                            <div>
+                                <label class="handwritten-text" style="display: block; margin-bottom: 5px;"># of Trades</label>
+                                <input type="number" class="stat-input" id="numTrades" placeholder="0">
+                            </div>
+                            <div>
+                                <label class="handwritten-text" style="display: block; margin-bottom: 5px;">Win Rate %</label>
+                                <input type="number" class="stat-input" id="winRate" placeholder="0">
+                            </div>
+                            <div>
+                                <label class="handwritten-text" style="display: block; margin-bottom: 5px;">Avg R:R Ratio</label>
+                                <input type="number" class="stat-input" id="rrRatio" placeholder="1:1" step="0.1">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Emotion + Behavior Tags -->
+                    <div style="margin: 30px 0;">
+                        <h4 class="handwritten-heading" style="margin-bottom: 15px;">Today's Trading Behavior 🎭</h4>
+                        <div class="tag-group">
+                            <button class="tag-btn" data-tag="hesitated">😬 Hesitated</button>
+                            <button class="tag-btn" data-tag="revenge">😤 Revenge Traded</button>
+                            <button class="tag-btn" data-tag="pattern">💡 Spotted New Pattern</button>
+                            <button class="tag-btn" data-tag="plan">📈 Followed Plan</button>
+                            <button class="tag-btn" data-tag="disciplined">🧘‍♂️ Stayed Disciplined</button>
+                            <button class="tag-btn" data-tag="fomo">😵‍💫 FOMO Entry</button>
+                        </div>
+                    </div>
+
+                    <!-- Trade Highlights -->
+                    <div style="margin: 30px 0;">
+                        <h4 class="handwritten-heading" style="margin-bottom: 15px;">What stood out about today's trades? ✨</h4>
+                        <textarea class="rich-text-area" id="tradeHighlights" 
+                                  placeholder="Spill the tea... what happened today? Any epic wins or learning moments? 📝"></textarea>
+                    </div>
+
+                    <!-- Key Learnings -->
+                    <div style="margin: 30px 0;">
+                        <h4 class="handwritten-heading" style="margin-bottom: 15px;">Key Learnings 🔑</h4>
+                        <div style="background: linear-gradient(45deg, rgba(255, 105, 180, 0.1), rgba(139, 92, 246, 0.1)); border-radius: 15px; padding: 20px; margin-bottom: 15px;">
+                            <div class="handwritten-text" style="font-style: italic; color: #8b5cf6;">
+                                💭 AI Prompt: "What would a better version of you have done differently?"
+                            </div>
+                        </div>
+                        <textarea class="rich-text-area" id="keyLearnings" 
+                                  placeholder="Reflect on today's performance... what insights did you gain? 🌱"></textarea>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Other Tab Contents (Placeholder) -->
+            <div class="tab-content" id="wins-tab" style="display: none;">
+                <div style="background: rgba(255, 255, 255, 0.9); border-radius: 20px; padding: 30px; text-align: center;">
+                    <h2 class="handwritten-heading" style="font-size: 2rem; color: #00ff88;">🏆 Victory Collection 🏆</h2>
+                    <div class="handwritten-text">Your winning trades and achievements will appear here!</div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="losses-tab" style="display: none;">
+                <div style="background: rgba(255, 255, 255, 0.9); border-radius: 20px; padding: 30px; text-align: center;">
+                    <h2 class="handwritten-heading" style="font-size: 2rem; color: #ff4444;">📚 Learning Library 📚</h2>
+                    <div class="handwritten-text">Lessons from challenging trades - your growth journey!</div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="ideas-tab" style="display: none;">
+                <div style="background: rgba(255, 255, 255, 0.9); border-radius: 20px; padding: 30px; text-align: center;">
+                    <h2 class="handwritten-heading" style="font-size: 2rem; color: #8b5cf6;">💡 Bright Ideas 💡</h2>
+                    <div class="handwritten-text">Trading strategies, patterns, and brilliant insights!</div>
+                </div>
+            </div>
+
+            <!-- Bottom Action Bar -->
+            <div style="display: flex; justify-content: center; gap: 20px; margin-top: 40px; flex-wrap: wrap;">
+                <button class="save-btn" id="saveBtn" onclick="saveJournalEntry()">
+                    💾 Save Entry
+                </button>
+                <button class="voice-btn" onclick="toggleVoiceJournal()">
+                    🎤 Voice Journal
+                </button>
+                <button class="voice-btn" onclick="viewPastPatterns()">
+                    📊 View Past Patterns
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+// Journal functionality
+let selectedMood = null;
+let selectedTags = new Set();
+let placedStickers = [];
+let currentTheme = 'bubblegum';
+
+// Initialize journal
+document.addEventListener('DOMContentLoaded', function() {
+    initializeJournal();
+    setupStickerDragDrop();
+    setupMoodSelector();
+    setupTagSelector();
+    setupConfidenceSlider();
+    setCurrentDate();
+});
+
+function setCurrentDate() {
+    const now = new Date();
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', options);
+}
+
+function initializeJournal() {
+    console.log('✨ Trading Journal initialized with Lisa Frank vibes!');
+    loadSavedEntry();
+}
+
+function setupMoodSelector() {
+    document.querySelectorAll('.mood-emoji').forEach(emoji => {
+        emoji.addEventListener('click', function() {
+            document.querySelectorAll('.mood-emoji').forEach(e => e.classList.remove('selected'));
+            this.classList.add('selected');
+            selectedMood = this.dataset.mood;
+            triggerSparkleEffect(this);
+        });
+    });
+}
+
+function setupTagSelector() {
+    document.querySelectorAll('.tag-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const tag = this.dataset.tag;
+            if (selectedTags.has(tag)) {
+                selectedTags.delete(tag);
+                this.classList.remove('selected');
+            } else {
+                selectedTags.add(tag);
+                this.classList.add('selected');
+            }
+        });
+    });
+}
+
+function setupConfidenceSlider() {
+    const slider = document.getElementById('confidenceSlider');
+    const emoji = document.getElementById('sliderEmoji');
+    const value = document.getElementById('confidenceValue');
+    
+    slider.addEventListener('input', function() {
+        const val = this.value;
+        value.textContent = val;
+        
+        // Update emoji position
+        const percent = (val - this.min) / (this.max - this.min);
+        const offset = percent * (this.offsetWidth - 30);
+        emoji.style.left = offset + 'px';
+        
+        // Update emoji based on confidence level
+        if (val < 20) emoji.textContent = '💀';
+        else if (val < 40) emoji.textContent = '😰';
+        else if (val < 60) emoji.textContent = '🤔';
+        else if (val < 80) emoji.textContent = '😎';
+        else emoji.textContent = '🧠';
+    });
+}
+
+function setupStickerDragDrop() {
+    const journalPage = document.getElementById('journalPage');
+    
+    document.querySelectorAll('.sticker').forEach(sticker => {
+        sticker.addEventListener('dragstart', function(e) {
+            e.dataTransfer.setData('text/plain', this.dataset.sticker);
+        });
+    });
+    
+    journalPage.addEventListener('dragover', function(e) {
+        e.preventDefault();
+    });
+    
+    journalPage.addEventListener('drop', function(e) {
+        e.preventDefault();
+        const stickerData = e.dataTransfer.getData('text/plain');
+        const rect = this.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        placeStickerOnPage(stickerData, x, y);
+    });
+}
+
+function placeStickerOnPage(stickerEmoji, x, y) {
+    const sticker = document.createElement('div');
+    sticker.className = 'placed-sticker';
+    sticker.textContent = stickerEmoji;
+    sticker.style.left = x + 'px';
+    sticker.style.top = y + 'px';
+    
+    // Make it draggable for repositioning
+    sticker.draggable = true;
+    sticker.addEventListener('dragstart', function(e) {
+        this.style.opacity = '0.5';
+    });
+    
+    sticker.addEventListener('dragend', function(e) {
+        this.style.opacity = '1';
+        const rect = document.getElementById('journalPage').getBoundingClientRect();
+        this.style.left = (e.clientX - rect.left) + 'px';
+        this.style.top = (e.clientY - rect.top) + 'px';
+    });
+    
+    // Double-click to remove
+    sticker.addEventListener('dblclick', function() {
+        this.remove();
+        placedStickers = placedStickers.filter(s => s.element !== this);
+    });
+    
+    document.getElementById('journalPage').appendChild(sticker);
+    placedStickers.push({ emoji: stickerEmoji, x, y, element: sticker });
+}
+
+function switchTheme(theme) {
+    currentTheme = theme;
+    document.querySelectorAll('.theme-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelector(`.theme-${theme}`).classList.add('active');
+    
+    const container = document.querySelector('.journal-container');
+    
+    if (theme === 'neon') {
+        container.style.background = 'linear-gradient(135deg, #ff00ff, #00ffff, #ffff00, #ff00ff)';
+    } else if (theme === 'bubblegum') {
+        container.style.background = 'linear-gradient(135deg, #ff6b9d, #c44eb0, #8b5cf6, #06b6d4)';
+    } else if (theme === 'arcade') {
+        container.style.background = 'linear-gradient(135deg, #000000, #8b5cf6, #000000, #ff00ff)';
+    }
+}
+
+function switchTab(tabName) {
+    document.querySelectorAll('.binder-tab').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
+    
+    event.target.classList.add('active');
+    document.getElementById(tabName + '-tab').style.display = 'block';
+}
+
+function triggerSparkleEffect(element) {
+    const sparkles = ['✨', '⭐', '💫', '🌟'];
+    const sparkle = document.createElement('div');
+    sparkle.textContent = sparkles[Math.floor(Math.random() * sparkles.length)];
+    sparkle.style.position = 'absolute';
+    sparkle.style.left = Math.random() * 100 + '%';
+    sparkle.style.top = Math.random() * 100 + '%';
+    sparkle.style.fontSize = '1.5rem';
+    sparkle.style.pointerEvents = 'none';
+    sparkle.style.animation = 'sparkle 1s ease-out forwards';
+    
+    element.style.position = 'relative';
+    element.appendChild(sparkle);
+    
+    setTimeout(() => sparkle.remove(), 1000);
+}
+
+function triggerConfetti() {
+    const colors = ['#ff69b4', '#8b5cf6', '#00ff88', '#ffaa00', '#00aaff'];
+    const confettiCount = 50;
+    
+    for (let i = 0; i < confettiCount; i++) {
+        setTimeout(() => {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            confetti.textContent = Math.random() > 0.5 ? '✨' : '🎉';
+            confetti.style.left = Math.random() * 100 + 'vw';
+            confetti.style.color = colors[Math.floor(Math.random() * colors.length)];
+            confetti.style.fontSize = Math.random() * 20 + 10 + 'px';
+            
+            document.body.appendChild(confetti);
+            
+            setTimeout(() => confetti.remove(), 3000);
+        }, i * 50);
+    }
+}
+
+function saveJournalEntry() {
+    const entryData = {
+        date: new Date().toISOString(),
+        mood: selectedMood,
+        confidence: document.getElementById('confidenceSlider').value,
+        numTrades: document.getElementById('numTrades').value,
+        winRate: document.getElementById('winRate').value,
+        rrRatio: document.getElementById('rrRatio').value,
+        behaviors: Array.from(selectedTags),
+        highlights: document.getElementById('tradeHighlights').value,
+        learnings: document.getElementById('keyLearnings').value,
+        stickers: placedStickers.map(s => ({ emoji: s.emoji, x: s.x, y: s.y })),
+        theme: currentTheme
+    };
+    
+    // Save to backend
+    fetch('/add_trade', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(entryData)
+    }).then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            triggerConfetti();
+            showSuccessMessage('Journal entry saved! ✨');
+        }
+    }).catch(error => {
+        console.error('Error saving entry:', error);
+    });
+    
+    // Save to localStorage as backup
+    localStorage.setItem('tradingJournalEntry', JSON.stringify(entryData));
+}
+
+function loadSavedEntry() {
+    const saved = localStorage.getItem('tradingJournalEntry');
+    if (saved) {
+        const data = JSON.parse(saved);
+        // Restore form values
+        if (data.mood) {
+            document.querySelector(`[data-mood="${data.mood}"]`).click();
+        }
+        if (data.confidence) {
+            document.getElementById('confidenceSlider').value = data.confidence;
+            document.getElementById('confidenceSlider').dispatchEvent(new Event('input'));
+        }
+        // Restore other fields...
+    }
+}
+
+function toggleVoiceJournal() {
+    const btn = event.target;
+    
+    if (btn.classList.contains('recording')) {
+        // Stop recording
+        btn.classList.remove('recording');
+        btn.innerHTML = '🎤 Voice Journal';
+        if (window.recognition) {
+            window.recognition.stop();
+        }
+    } else {
+        // Start recording
+        if ('webkitSpeechRecognition' in window) {
+            const recognition = new webkitSpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            
+            recognition.onstart = function() {
+                btn.classList.add('recording');
+                btn.innerHTML = '🔴 Recording...';
+            };
+            
+            recognition.onresult = function(event) {
+                const transcript = event.results[event.results.length - 1][0].transcript;
+                document.getElementById('tradeHighlights').value += transcript + ' ';
+            };
+            
+            recognition.onerror = function() {
+                btn.classList.remove('recording');
+                btn.innerHTML = '🎤 Voice Journal';
+            };
+            
+            window.recognition = recognition;
+            recognition.start();
+        } else {
+            alert('Voice recognition not supported in this browser 😅');
+        }
+    }
+}
+
+function viewPastPatterns() {
+    // Navigate to journal history view
+    window.location.href = '/journal/history';
+}
+
+function showSuccessMessage(message) {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(45deg, #00ff88, #00aaff);
+        color: white;
+        padding: 15px 20px;
+        border-radius: 15px;
+        font-family: 'Kalam', cursive;
+        font-weight: 600;
+        z-index: 1000;
+        animation: slideIn 0.3s ease-out;
+    `;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease-out forwards';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+</script>
+
+<style>
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOut {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+}
+</style>
+{% endblock %}

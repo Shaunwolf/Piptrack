@@ -188,36 +188,75 @@ def journal():
             'updated_at': trade.updated_at.isoformat() if trade.updated_at else None
         })
     
-    return render_template('journal.html', trades=trades_data, tracked_stocks=tracked_stocks)
+    return render_template('journal_new.html', trades=trades_data, tracked_stocks=tracked_stocks)
 
 @app.route('/add_trade', methods=['POST'])
 def add_trade():
-    """Add new trade to journal"""
+    """Add new trade to journal with enhanced Lisa Frank journal data"""
     try:
         data = request.json
         
-        trade = TradeJournal(
-            symbol=data['symbol'],
-            entry_price=float(data['entry_price']),
-            stop_loss=float(data['stop_loss']),
-            take_profit=float(data['take_profit']),
-            pattern_confirmed=data.get('pattern_confirmed', False),
-            screenshot_taken=data.get('screenshot_taken', False),
-            reflection=data.get('reflection', ''),
-            perfect_trade=data.get('perfect_trade', False),
-            confidence_at_entry=float(data.get('confidence_at_entry', 0))
-        )
+        # Handle both old format (individual trades) and new format (journal entries)
+        if 'mood' in data:
+            # New Lisa Frank journal entry format
+            trade = TradeJournal(
+                symbol=data.get('symbol', 'JOURNAL'),  # Use JOURNAL as default for mood entries
+                entry_price=float(data.get('entry_price', 0)),
+                stop_loss=float(data.get('stop_loss', 0)),
+                take_profit=float(data.get('take_profit', 0)),
+                pattern_confirmed=data.get('pattern_confirmed', False),
+                screenshot_taken=data.get('screenshot_taken', False),
+                reflection=data.get('highlights', ''),
+                perfect_trade=data.get('perfect_trade', False),
+                confidence_at_entry=float(data.get('confidence', 50)),
+                lessons_learned=data.get('learnings', ''),
+                # Store additional journal data as JSON in reflection field
+                outcome='journal_entry'  # Mark as journal entry vs trade
+            )
+            
+            # Create extended reflection with mood and behavior data
+            journal_data = {
+                'mood': data.get('mood'),
+                'behaviors': data.get('behaviors', []),
+                'num_trades': data.get('numTrades'),
+                'win_rate': data.get('winRate'),
+                'rr_ratio': data.get('rrRatio'),
+                'stickers': data.get('stickers', []),
+                'theme': data.get('theme', 'bubblegum'),
+                'highlights': data.get('highlights', ''),
+                'learnings': data.get('learnings', '')
+            }
+            
+            trade.reflection = f"Mood: {data.get('mood', 'unknown')} | Behaviors: {', '.join(data.get('behaviors', []))} | {data.get('highlights', '')}"
+            
+        else:
+            # Original trade format
+            trade = TradeJournal(
+                symbol=data['symbol'],
+                entry_price=float(data['entry_price']),
+                stop_loss=float(data['stop_loss']),
+                take_profit=float(data['take_profit']),
+                pattern_confirmed=data.get('pattern_confirmed', False),
+                screenshot_taken=data.get('screenshot_taken', False),
+                reflection=data.get('reflection', ''),
+                perfect_trade=data.get('perfect_trade', False),
+                confidence_at_entry=float(data.get('confidence_at_entry', 0))
+            )
         
         db.session.add(trade)
         db.session.commit()
         
-        # Submit to Google Sheets
-        sheets_integration.submit_trade(trade)
+        # Submit to Google Sheets if it's a regular trade
+        if 'mood' not in data:
+            try:
+                sheets_integration.submit_trade(trade)
+            except Exception as sheets_error:
+                logging.warning(f"Could not submit to Google Sheets: {sheets_error}")
         
-        return jsonify({'success': True, 'message': 'Trade added to journal'})
+        return jsonify({'success': True, 'message': 'Entry saved successfully!'})
     
     except Exception as e:
-        logging.error(f"Error adding trade: {e}")
+        logging.error(f"Error adding trade/journal entry: {e}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/ai_review/<symbol>')
