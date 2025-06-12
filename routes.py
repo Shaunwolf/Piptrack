@@ -10,6 +10,7 @@ from pdf_generator import PDFGenerator
 from pattern_evolution_tracker import PatternEvolutionTracker
 import json
 import logging
+from datetime import datetime
 
 # Initialize components
 stock_scanner = StockScanner()
@@ -158,7 +159,30 @@ def journal():
     """Trade journal page"""
     trades = TradeJournal.query.order_by(TradeJournal.created_at.desc()).all()
     tracked_stocks = Stock.query.filter_by(is_tracked=True).all()
-    return render_template('journal.html', trades=trades, tracked_stocks=tracked_stocks)
+    
+    # Convert trades to dictionaries for JSON serialization
+    trades_data = []
+    for trade in trades:
+        trades_data.append({
+            'id': trade.id,
+            'symbol': trade.symbol,
+            'entry_price': trade.entry_price,
+            'stop_loss': trade.stop_loss,
+            'take_profit': trade.take_profit,
+            'pattern_confirmed': trade.pattern_confirmed,
+            'screenshot_taken': trade.screenshot_taken,
+            'reflection': trade.reflection,
+            'perfect_trade': trade.perfect_trade,
+            'confidence_at_entry': trade.confidence_at_entry,
+            'outcome': trade.outcome,
+            'exit_price': trade.exit_price,
+            'pnl': trade.pnl,
+            'lessons_learned': trade.lessons_learned,
+            'created_at': trade.created_at.isoformat() if trade.created_at else None,
+            'updated_at': trade.updated_at.isoformat() if trade.updated_at else None
+        })
+    
+    return render_template('journal.html', trades=trades_data, tracked_stocks=tracked_stocks)
 
 @app.route('/add_trade', methods=['POST'])
 def add_trade():
@@ -251,4 +275,127 @@ def chart_story(symbol):
     
     except Exception as e:
         logging.error(f"Error getting chart story: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/pattern_evolution/<symbol>')
+def pattern_evolution_analysis(symbol):
+    """Get pattern evolution tracking and breakout timing predictions"""
+    try:
+        evolution_data = pattern_tracker.track_pattern_evolution(symbol)
+        
+        if evolution_data:
+            # Store in database
+            for pattern in evolution_data['patterns']:
+                existing = PatternEvolution.query.filter_by(
+                    symbol=symbol, 
+                    pattern_type=pattern['pattern_type']
+                ).first()
+                
+                breakout_pred = pattern['breakout_prediction']
+                evolution = pattern['evolution']
+                
+                if existing:
+                    # Update existing record
+                    existing.confidence_score = pattern['confidence']
+                    existing.stage = pattern['current_stage']
+                    existing.completion_percentage = pattern['completion_percentage']
+                    existing.time_in_pattern = pattern['time_in_pattern']
+                    existing.volatility_trend = evolution.get('volatility_trend', 0)
+                    existing.volume_trend = evolution.get('volume_trend', 0)
+                    existing.momentum_change = evolution.get('momentum_change', 0)
+                    existing.support_resistance_strength = evolution.get('support_resistance_strength', 0)
+                    existing.estimated_days_to_breakout = breakout_pred.get('estimated_days_to_breakout', 7)
+                    existing.breakout_probability_5_days = breakout_pred.get('breakout_probability_next_5_days', 0)
+                    existing.breakout_probability_10_days = breakout_pred.get('breakout_probability_next_10_days', 0)
+                    existing.direction_bias = breakout_pred.get('direction_bias', 0.5)
+                    existing.timing_confidence = breakout_pred.get('timing_confidence', 0.5)
+                    existing.updated_at = datetime.utcnow()
+                else:
+                    # Create new record
+                    new_evolution = PatternEvolution(
+                        symbol=symbol,
+                        pattern_type=pattern['pattern_type'],
+                        confidence_score=pattern['confidence'],
+                        stage=pattern['current_stage'],
+                        completion_percentage=pattern['completion_percentage'],
+                        time_in_pattern=pattern['time_in_pattern'],
+                        volatility_trend=evolution.get('volatility_trend', 0),
+                        volume_trend=evolution.get('volume_trend', 0),
+                        momentum_change=evolution.get('momentum_change', 0),
+                        support_resistance_strength=evolution.get('support_resistance_strength', 0),
+                        estimated_days_to_breakout=breakout_pred.get('estimated_days_to_breakout', 7),
+                        breakout_probability_5_days=breakout_pred.get('breakout_probability_next_5_days', 0),
+                        breakout_probability_10_days=breakout_pred.get('breakout_probability_next_10_days', 0),
+                        direction_bias=breakout_pred.get('direction_bias', 0.5),
+                        timing_confidence=breakout_pred.get('timing_confidence', 0.5),
+                        pattern_data=breakout_pred.get('key_levels', {})
+                    )
+                    db.session.add(new_evolution)
+                
+                db.session.commit()
+            
+            return jsonify({'success': True, 'evolution': evolution_data})
+        else:
+            return jsonify({'success': False, 'message': 'No patterns detected'})
+            
+    except Exception as e:
+        logging.error(f"Error analyzing pattern evolution for {symbol}: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/pattern_evolution/all')
+def all_pattern_evolutions():
+    """Get pattern evolution data for all tracked stocks"""
+    try:
+        tracked_stocks = Stock.query.filter_by(is_tracked=True).all()
+        all_evolutions = {}
+        
+        for stock in tracked_stocks:
+            latest_evolution = PatternEvolution.query.filter_by(
+                symbol=stock.symbol
+            ).order_by(PatternEvolution.updated_at.desc()).first()
+            
+            if latest_evolution:
+                all_evolutions[stock.symbol] = {
+                    'pattern_type': latest_evolution.pattern_type,
+                    'confidence_score': latest_evolution.confidence_score,
+                    'stage': latest_evolution.stage,
+                    'completion_percentage': latest_evolution.completion_percentage,
+                    'estimated_days_to_breakout': latest_evolution.estimated_days_to_breakout,
+                    'breakout_probability_5_days': latest_evolution.breakout_probability_5_days,
+                    'direction_bias': latest_evolution.direction_bias,
+                    'timing_confidence': latest_evolution.timing_confidence,
+                    'updated_at': latest_evolution.updated_at.isoformat()
+                }
+        
+        return jsonify({'success': True, 'evolutions': all_evolutions})
+        
+    except Exception as e:
+        logging.error(f"Error getting all pattern evolutions: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/update_pattern_evolutions', methods=['POST'])
+def update_pattern_evolutions():
+    """Update pattern evolution data for all tracked stocks"""
+    try:
+        tracked_stocks = Stock.query.filter_by(is_tracked=True).all()
+        updated_count = 0
+        
+        for stock in tracked_stocks:
+            try:
+                evolution_data = pattern_tracker.track_pattern_evolution(stock.symbol)
+                if evolution_data and evolution_data['patterns']:
+                    updated_count += 1
+                
+            except Exception as stock_error:
+                logging.error(f"Error updating pattern evolution for {stock.symbol}: {stock_error}")
+                continue
+        
+        return jsonify({
+            'success': True, 
+            'message': f'Updated pattern evolution for {updated_count} stocks',
+            'updated_count': updated_count
+        })
+        
+    except Exception as e:
+        logging.error(f"Error updating pattern evolutions: {e}")
         return jsonify({'error': str(e)}), 500
