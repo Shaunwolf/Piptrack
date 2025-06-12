@@ -117,30 +117,67 @@
                         </div>
                     </div>
                     
-                    <!-- Breakout Prediction -->
-                    <div class="breakout-prediction bg-dark-accent rounded-lg p-4 mb-4">
-                        <h4 class="font-semibold text-accent-blue mb-2">Breakout Timing Prediction</h4>
+                    <!-- Enhanced Breakout Prediction with Real-time Alerts -->
+                    <div class="breakout-prediction bg-dark-accent rounded-lg p-4 mb-4 {% if pattern_stock.evolution.estimated_days_to_breakout <= 3 and pattern_stock.evolution.timing_confidence > 0.7 %}ring-2 ring-yellow-400 ring-opacity-50{% endif %}">
+                        <div class="flex justify-between items-center mb-2">
+                            <h4 class="font-semibold text-accent-blue">Breakout Timing Prediction</h4>
+                            {% if pattern_stock.evolution.estimated_days_to_breakout <= 3 and pattern_stock.evolution.timing_confidence > 0.7 %}
+                            <div class="imminent-alert flex items-center">
+                                <div class="w-2 h-2 bg-yellow-400 rounded-full animate-pulse mr-2"></div>
+                                <span class="text-yellow-400 text-xs font-bold">IMMINENT</span>
+                            </div>
+                            {% elif pattern_stock.evolution.breakout_probability_5_days > 0.75 %}
+                            <div class="high-prob-alert flex items-center">
+                                <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse mr-2"></div>
+                                <span class="text-green-400 text-xs font-bold">HIGH PROB</span>
+                            </div>
+                            {% endif %}
+                        </div>
                         
                         <div class="grid grid-cols-2 gap-4 text-sm">
                             <div>
                                 <p class="text-gray-400">Estimated Days</p>
-                                <p class="font-semibold">{{ pattern_stock.evolution.estimated_days_to_breakout }} days</p>
+                                <p class="font-semibold {% if pattern_stock.evolution.estimated_days_to_breakout <= 3 %}text-yellow-400{% elif pattern_stock.evolution.estimated_days_to_breakout <= 7 %}text-orange-400{% else %}text-white{% endif %}">
+                                    {{ pattern_stock.evolution.estimated_days_to_breakout }} days
+                                </p>
                             </div>
                             <div>
                                 <p class="text-gray-400">5-Day Probability</p>
-                                <p class="font-semibold">{{ "%.1f"|format(pattern_stock.evolution.breakout_probability_5_days * 100) }}%</p>
+                                <p class="font-semibold {% if pattern_stock.evolution.breakout_probability_5_days > 0.75 %}text-green-400{% elif pattern_stock.evolution.breakout_probability_5_days > 0.5 %}text-yellow-400{% else %}text-white{% endif %}">
+                                    {{ "%.1f"|format(pattern_stock.evolution.breakout_probability_5_days * 100) }}%
+                                </p>
                             </div>
                             <div>
                                 <p class="text-gray-400">Direction Bias</p>
                                 <p class="font-semibold {% if pattern_stock.evolution.direction_bias > 0.6 %}text-accent-green{% elif pattern_stock.evolution.direction_bias < 0.4 %}text-accent-red{% else %}text-gray-300{% endif %}">
-                                    {% if pattern_stock.evolution.direction_bias > 0.6 %}Bullish{% elif pattern_stock.evolution.direction_bias < 0.4 %}Bearish{% else %}Neutral{% endif %}
+                                    {% if pattern_stock.evolution.direction_bias > 0.6 %}🚀 Bullish{% elif pattern_stock.evolution.direction_bias < 0.4 %}📉 Bearish{% else %}⚪ Neutral{% endif %}
                                 </p>
                             </div>
                             <div>
                                 <p class="text-gray-400">Timing Confidence</p>
-                                <p class="font-semibold">{{ "%.1f"|format(pattern_stock.evolution.timing_confidence * 100) }}%</p>
+                                <p class="font-semibold {% if pattern_stock.evolution.timing_confidence > 0.7 %}text-green-400{% elif pattern_stock.evolution.timing_confidence > 0.5 %}text-yellow-400{% else %}text-white{% endif %}">
+                                    {{ "%.1f"|format(pattern_stock.evolution.timing_confidence * 100) }}%
+                                </p>
                             </div>
                         </div>
+                        
+                        <!-- Breakout Catalyst Indicators -->
+                        {% if pattern_stock.evolution.pattern_data %}
+                        <div class="mt-3 pt-3 border-t border-gray-600">
+                            <p class="text-xs text-gray-400 mb-2">Breakout Catalysts</p>
+                            <div class="flex flex-wrap gap-1">
+                                {% if pattern_stock.evolution.completion_percentage > 0.8 %}
+                                <span class="catalyst-tag bg-blue-500 bg-opacity-20 text-blue-400 px-2 py-1 rounded text-xs">Pattern Maturity</span>
+                                {% endif %}
+                                {% if pattern_stock.evolution.volatility_trend < -0.3 %}
+                                <span class="catalyst-tag bg-purple-500 bg-opacity-20 text-purple-400 px-2 py-1 rounded text-xs">Volatility Compression</span>
+                                {% endif %}
+                                {% if pattern_stock.evolution.volume_trend > 0.3 %}
+                                <span class="catalyst-tag bg-green-500 bg-opacity-20 text-green-400 px-2 py-1 rounded text-xs">Volume Buildup</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
                     </div>
                     
                     <!-- Evolution Metrics -->
@@ -304,8 +341,12 @@ async function updateAllPatterns() {
         
         if (data.success) {
             showAlert(`Updated pattern evolution for ${data.updated_count} stocks`, 'success');
+            
+            // Check for imminent breakouts and trigger alerts
+            checkForImminentBreakouts();
+            
             // Reload the page to show updated data
-            window.location.reload();
+            setTimeout(() => window.location.reload(), 1500);
         } else {
             showAlert('Error updating patterns: ' + data.error, 'error');
         }
@@ -315,6 +356,81 @@ async function updateAllPatterns() {
         showAlert('Error updating patterns', 'error');
     } finally {
         hideLoading();
+    }
+}
+
+async function checkForImminentBreakouts() {
+    try {
+        const response = await fetch('/pattern_evolution/all');
+        const data = await response.json();
+        
+        if (data.success) {
+            let imminentCount = 0;
+            let highProbCount = 0;
+            let alertMessages = [];
+            
+            Object.entries(data.evolutions).forEach(([symbol, evolution]) => {
+                const isImminent = evolution.estimated_days_to_breakout <= 3 && evolution.timing_confidence > 0.7;
+                const isHighProb = evolution.breakout_probability_5_days > 0.75;
+                
+                if (isImminent) {
+                    imminentCount++;
+                    alertMessages.push(`${symbol}: Breakout expected in ${evolution.estimated_days_to_breakout} days (${Math.round(evolution.timing_confidence * 100)}% confidence)`);
+                } else if (isHighProb) {
+                    highProbCount++;
+                }
+            });
+            
+            // Update summary stats
+            document.getElementById('imminentBreakouts').textContent = imminentCount;
+            document.getElementById('highProbability').textContent = highProbCount;
+            
+            // Trigger voice alerts for imminent breakouts
+            if (imminentCount > 0) {
+                const alertText = `Alert: ${imminentCount} imminent breakout${imminentCount > 1 ? 's' : ''} detected. ${alertMessages.join('. ')}`;
+                triggerVoiceAlert(alertText);
+                
+                // Show prominent notification
+                showBreakoutNotification(imminentCount, alertMessages);
+            }
+        }
+    } catch (error) {
+        console.error('Error checking for imminent breakouts:', error);
+    }
+}
+
+function showBreakoutNotification(count, messages) {
+    const notification = document.createElement('div');
+    notification.className = 'fixed top-4 right-4 bg-yellow-500 text-black p-4 rounded-lg shadow-lg z-50 max-w-md';
+    notification.innerHTML = `
+        <div class="flex items-center mb-2">
+            <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse mr-2"></div>
+            <h4 class="font-bold">⚠️ IMMINENT BREAKOUTS DETECTED</h4>
+        </div>
+        <p class="text-sm mb-2">${count} pattern${count > 1 ? 's' : ''} approaching breakout</p>
+        <div class="text-xs">
+            ${messages.slice(0, 3).map(msg => `<div>• ${msg}</div>`).join('')}
+        </div>
+        <button onclick="this.parentElement.remove()" class="mt-2 px-2 py-1 bg-black text-white rounded text-xs">Dismiss</button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto-remove after 10 seconds
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.remove();
+        }
+    }, 10000);
+}
+
+function triggerVoiceAlert(text) {
+    if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 0.9;
+        utterance.pitch = 1.1;
+        utterance.volume = 0.8;
+        window.speechSynthesis.speak(utterance);
     }
 }
 
