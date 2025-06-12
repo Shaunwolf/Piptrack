@@ -4,9 +4,15 @@ import numpy as np
 import ta
 from datetime import datetime, timedelta
 import logging
+import requests
+import os
+import time
 
 class StockScanner:
     def __init__(self):
+        self.api_key = os.environ.get('ALPHA_VANTAGE_API_KEY')
+        self.base_url = 'https://www.alphavantage.co/query'
+        
         # Expanded list focusing on $1-$50 price range stocks
         self.top_gappers = [
             # Tech stocks in range
@@ -38,34 +44,87 @@ class StockScanner:
             'NEE', 'SO', 'DUK', 'AEP', 'EXC', 'XEL', 'ED', 'ETR', 'ES', 'FE'
         ]
     
-    def scan_top_gappers(self, limit=50):
+    def scan_top_gappers(self, limit=25):
         """Scan for top gapping stocks in $1-$50 price range"""
         results = []
-        processed = 0
+        
+        # Priority stocks likely in $1-$50 range
+        priority_symbols = [
+            'AMD', 'INTC', 'MU', 'BAC', 'WFC', 'F', 'PFE', 'XOM', 
+            'CVX', 'SLB', 'HAL', 'AA', 'FCX', 'CLF', 'T', 'VZ'
+        ]
         
         try:
-            for symbol in self.top_gappers:
-                if len(results) >= limit:
-                    break
-                    
-                try:
-                    stock_data = self.get_stock_data(symbol)
-                    if stock_data:
-                        price = stock_data.get('price', 0)
-                        # Filter for $1-$50 price range
-                        if 1.0 <= price <= 50.0:
-                            results.append(stock_data)
-                        processed += 1
+            # Use batch processing for faster data retrieval
+            for i in range(0, min(len(priority_symbols), limit * 2), 4):
+                batch = priority_symbols[i:i+4]
+                
+                for symbol in batch:
+                    try:
+                        # Quick data fetch with minimal history
+                        ticker = yf.Ticker(symbol)
                         
-                        # Stop after processing reasonable number to avoid timeout
-                        if processed >= 100:
+                        # Get current price from basic quote
+                        quote = ticker.fast_info
+                        if hasattr(quote, 'last_price') and quote.last_price:
+                            current_price = float(quote.last_price)
+                        else:
+                            # Fallback to history if fast_info fails
+                            hist = ticker.history(period="2d")
+                            if hist.empty:
+                                continue
+                            current_price = float(hist['Close'].iloc[-1])
+                        
+                        # Filter for $1-$50 price range
+                        if not (1.0 <= current_price <= 50.0):
+                            continue
+                        
+                        # Get basic info
+                        info = ticker.info
+                        
+                        # Calculate basic volume spike from recent data
+                        hist = ticker.history(period="5d")
+                        if not hist.empty and len(hist) >= 2:
+                            volume_current = float(hist['Volume'].iloc[-1])
+                            volume_avg = float(hist['Volume'].mean())
+                            volume_spike = (volume_current / volume_avg) * 100 if volume_avg > 0 else 100
+                            
+                            # Calculate RSI
+                            closes = hist['Close']
+                            delta = closes.diff()
+                            gain = delta.where(delta > 0, 0).mean()
+                            loss = (-delta.where(delta < 0, 0)).mean()
+                            rs = gain / loss if loss != 0 else 100
+                            rsi = 100 - (100 / (1 + rs))
+                        else:
+                            volume_spike = 100
+                            rsi = 50
+                        
+                        results.append({
+                            'symbol': symbol,
+                            'name': info.get('longName', symbol),
+                            'price': round(current_price, 2),
+                            'rsi': round(float(rsi), 2) if not pd.isna(rsi) else 50,
+                            'volume_spike': round(volume_spike, 2),
+                            'pattern_type': self.detect_pattern(hist) if not hist.empty else 'Unknown',
+                            'fibonacci_position': 50.0,
+                            'market_cap': info.get('marketCap', 0),
+                            'sector': info.get('sector', 'Unknown')
+                        })
+                        
+                        # Stop if we have enough results
+                        if len(results) >= limit:
                             break
                             
-                except Exception as e:
-                    logging.warning(f"Error scanning {symbol}: {e}")
-                    continue
+                    except Exception as e:
+                        logging.warning(f"Error scanning {symbol}: {e}")
+                        continue
+                
+                # Break if we have enough results
+                if len(results) >= limit:
+                    break
             
-            # Sort by gap percentage (volume spike as proxy)
+            # Sort by volume spike (gap indicator)
             results.sort(key=lambda x: x.get('volume_spike', 0), reverse=True)
             
         except Exception as e:
