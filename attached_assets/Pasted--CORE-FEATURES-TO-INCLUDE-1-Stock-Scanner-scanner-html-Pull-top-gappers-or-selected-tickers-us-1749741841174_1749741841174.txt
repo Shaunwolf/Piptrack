@@ -1,0 +1,95 @@
+ CORE FEATURES TO INCLUDE
+1. 🔍 Stock Scanner (scanner.html)
+Pull top gappers or selected tickers using yfinance
+
+Display key data:
+
+Price, RSI, volume spike, pattern type, Fibonacci position
+
+News tags (manually or auto-sourced)
+
+Trend-based confidence score
+
+Include “📝 Add to Journal” button per stock
+
+2. 🧾 Trade Journal (journal.html)
+After adding tickers, open trade checklist per stock:
+
+Entry/stop/take profit
+
+Pattern confirmation
+
+Screenshot taken?
+
+Reflection prompts: “Was this a perfect trade?”
+
+Submit button sends entry to Google Sheets and clears form
+
+🔄 LIVE CONFIDENCE SCORE SYSTEM
+Score updates every 1–5 minutes for selected Top 5 stocks
+
+Input metrics:
+
+RSI level
+
+Volume surge % vs average
+
+Pattern status
+
+Price relative to support/resistance
+
+Recent press or sentiment tags
+
+Display as live dial or radial bar (0–100%)
+
+Confidence active only for user-selected Top 5 tickers
+
+🧠 SPAGHETTI MODEL FORECAST ENGINE (forecast.html)
+For each selected stock, draw 3–5 probable price paths:
+
+Momentum extension
+
+Retest and run
+
+Breakdown and trap
+
+Sideways fade
+
+Use historical setups + current indicators to determine path probabilities
+
+Overlay possible outcomes with translucent colored lines (using Plotly or Chart.js)
+
+Annotate likely outcome (%), targets, and risk zones
+
+🧠 AI FEATURES TO ADD
+AI Review Button:
+
+Outputs a plain-English analysis of current setup: “This resembles a bull flag from May 2023...”
+
+Voice Alerts:
+
+When confidence hits 80+, play a voice: “$WULF has high breakout potential now.”
+
+Emoji/Mood Tags:
+
+Auto-tag each stock: 💥 breakout, 🔄 reversal, ⚠️ risky, 🔒 confirmed
+
+“Chart Story” Mode:
+
+Hover over candles to reveal AI comment: “Sellers failed at this wick – possible reversal.”
+
+📤 GOOGLE SHEETS INTEGRATION
+After each journal entry, submit structured row to connected Google Sheet
+
+Include:
+
+Ticker, entry, SL, TP, confidence score, date
+
+Was plan followed? Outcome? Lessons?
+
+📄 END-OF-WEEK PDF REPORT (optional future)
+Compile trades, outcomes, streaks, win rate
+
+Show most common mistake + most profitable setup
+
+Export via pdfkit or WeasyPrint
