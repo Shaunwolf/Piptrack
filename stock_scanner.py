@@ -131,33 +131,96 @@ class StockScanner:
         
         return {'name': symbol, 'sector': 'Unknown', 'market_cap': 0}
     
-    def scan_top_gappers(self, limit=50):
-        """Scan for top gapping stocks in $1-$25 price range with optimized processing"""
-        results = []
+    def get_market_screener_results(self):
+        """Get pre-screened stocks from Alpha Vantage in $1-$25 range"""
+        try:
+            # Use Alpha Vantage Market Intelligence endpoint for pre-filtering
+            url = 'https://www.alphavantage.co/query'
+            params = {
+                'function': 'TOP_GAINERS_LOSERS',
+                'apikey': self.api_key
+            }
+            
+            response = requests.get(url, params=params, timeout=30)
+            
+            if response.status_code == 200:
+                data = response.json()
+                symbols = []
+                
+                # Extract symbols from top gainers/losers
+                for category in ['top_gainers', 'top_losers', 'most_actively_traded']:
+                    if category in data:
+                        for item in data[category]:
+                            symbol = item.get('ticker', '')
+                            price = float(item.get('price', '0'))
+                            
+                            # Filter for $1-$25 range
+                            if 1.0 <= price <= 25.0 and symbol not in symbols:
+                                symbols.append(symbol)
+                
+                logging.info(f"Retrieved {len(symbols)} pre-filtered symbols from market screener")
+                
+                # Add some additional high-volume low-price stocks
+                additional_symbols = self.get_supplemental_symbols()
+                symbols.extend([s for s in additional_symbols if s not in symbols])
+                
+                return symbols[:200]  # Limit for performance
+                
+        except Exception as e:
+            logging.error(f"Failed to get screener results: {e}")
         
-        # Carefully selected symbols known to trade in $1-$25 range
-        scan_symbols = [
+        # Fallback to curated list
+        return self.get_fallback_symbols()
+
+    def get_supplemental_symbols(self):
+        """Get additional symbols likely to be in $1-$25 range"""
+        return [
+            # High-volume penny/small caps
+            'SNDL', 'AMC', 'GME', 'NAKD', 'CLOV', 'SOFI', 'PLTR', 'WISH',
+            # Energy sector under $25
+            'FCEL', 'PLUG', 'CLF', 'X', 'AR', 'MRO', 'OXY', 'KMI',
+            # Financial under $25  
+            'F', 'BAC', 'WFC', 'C', 'KEY', 'RF', 'ZION',
+            # Tech under $25
+            'INTC', 'AMD', 'MU', 'SIRI', 'NOK', 'HPQ',
+            # Airlines under $25
+            'AAL', 'JBLU', 'SAVE', 'SKYW',
+            # Cannabis & biotech
+            'TLRY', 'CGC', 'ACB', 'HEXO', 'TEVA'
+        ]
+
+    def get_fallback_symbols(self):
+        """Fallback symbol list when API is unavailable"""
+        return [
             # Financial - Under $25
             'F', 'T', 'BAC', 'WFC', 'C', 'KEY', 'RF', 'ZION', 'FITB', 'HBAN',
-            # Energy & Materials - Under $25  
+            # Energy & Materials
             'CLF', 'X', 'AA', 'HAL', 'SLB', 'OXY', 'KMI', 'ET', 'AR', 'MRO',
-            # Technology - Lower Priced
-            'INTC', 'AMD', 'MU', 'SIRI', 'NOK', 'HPQ', 'WDC', 'QCOM', 'TXN', 'MRVL',
-            # Airlines & Transportation
-            'DAL', 'UAL', 'AAL', 'LUV', 'JBLU', 'ALK', 'SAVE', 'SKYW', 'MESA', 'HA',
-            # Retail & Consumer
-            'M', 'KSS', 'GPS', 'ANF', 'AEO', 'URBN', 'JWN', 'EXPR', 'DDS', 'KIRK',
-            # Small-Cap Growth
-            'SOFI', 'PLTR', 'WISH', 'CLOV', 'SPCE', 'NKLA', 'RIDE', 'WKHS', 'GOEV', 'LCID',
-            # Energy Services & Exploration
+            # Technology
+            'INTC', 'AMD', 'MU', 'SIRI', 'NOK', 'HPQ', 'WDC', 'QCOM', 'MRVL',
+            # Airlines
+            'DAL', 'UAL', 'AAL', 'JBLU', 'ALK', 'SAVE', 'SKYW', 'MESA', 'HA',
+            # Retail
+            'M', 'KSS', 'GPS', 'ANF', 'AEO', 'URBN', 'JWN', 'EXPR', 'DDS',
+            # Growth
+            'SOFI', 'PLTR', 'WISH', 'CLOV', 'SPCE', 'NKLA', 'RIDE', 'WKHS', 'LCID',
+            # Energy Services
             'FANG', 'DVN', 'CNX', 'HES', 'APA', 'OVV', 'MTDR', 'SM', 'CTRA', 'EQT',
-            # Cannabis & Biotech
-            'SNDL', 'TLRY', 'CGC', 'ACB', 'HEXO', 'CRON', 'APHA', 'TEVA', 'GILD', 'BMY',
-            # Meme & Penny Stocks
-            'AMC', 'GME', 'KOSS', 'EXPR', 'NAKD', 'CINE', 'GNUS', 'IDEX', 'XSPA', 'SHIP',
-            # Clean Energy & EV
-            'FCEL', 'PLUG', 'BLDP', 'HYLN', 'QS', 'CHPT', 'BLNK', 'EVGO', 'CLSK', 'MARA'
+            # Biotech
+            'SNDL', 'TLRY', 'CGC', 'ACB', 'HEXO', 'TEVA', 'GILD', 'BMY',
+            # Meme
+            'AMC', 'GME', 'KOSS', 'EXPR', 'NAKD', 'CINE', 'GNUS', 'IDEX',
+            # Clean Energy
+            'FCEL', 'PLUG', 'BLDP', 'HYLN', 'QS', 'CHPT', 'BLNK', 'EVGO', 'CLSK'
         ]
+
+    def scan_top_gappers(self, limit=50):
+        """Scan entire market for top gapping stocks in $1-$25 price range"""
+        results = []
+        
+        # Get fresh symbol list from the market
+        logging.info("Fetching fresh market symbols...")
+        scan_symbols = self.get_market_screener_results()
         
         try:
             # Collect all candidates with price changes
