@@ -250,8 +250,16 @@ function applyFilters() {
     const minVolumeSpike = parseInt(document.getElementById('minVolumeSpike').value);
     const patternFilter = document.getElementById('patternFilter').value;
     const rsiFilter = document.getElementById('rsiFilter').value;
+    const priceFilter = document.getElementById('priceFilter').value;
     
     filteredStocks = allStocks.filter(stock => {
+        // Price range filter
+        if (priceFilter) {
+            const price = stock.price || 0;
+            const [min, max] = priceFilter.split('-').map(Number);
+            if (price < min || price > max) return false;
+        }
+        
         if (stock.confidence_score < minConfidence) return false;
         if (stock.volume_spike < minVolumeSpike) return false;
         if (patternFilter && stock.pattern_type !== patternFilter) return false;
@@ -275,6 +283,7 @@ function clearFilters() {
     document.getElementById('minConfidenceValue').textContent = '0%';
     document.getElementById('minVolumeSpike').value = 0;
     document.getElementById('minVolumeSpikeValue').textContent = '0%';
+    document.getElementById('priceFilter').value = '';
     document.getElementById('patternFilter').value = '';
     document.getElementById('rsiFilter').value = '';
     
@@ -389,6 +398,105 @@ async function trackStock(symbol) {
 // Add stock to trade journal
 function addToJournal(symbol) {
     window.location.href = `/journal?symbol=${symbol}`;
+}
+
+// Get AI review for a stock (fix for missing function)
+async function getAIReview(symbol) {
+    if (!symbol) {
+        showAlert('Symbol is required for AI analysis', 'error');
+        return;
+    }
+    
+    try {
+        showLoading();
+        
+        const response = await fetch(`/ai_review/${symbol}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            const analysis = data.analysis;
+            
+            // Create and show AI review modal
+            let modal = document.getElementById('aiReviewModal');
+            if (!modal) {
+                modal = createAIReviewModal();
+            }
+            
+            const content = document.getElementById('aiReviewContent');
+            if (content) {
+                content.innerHTML = `
+                    <div class="space-y-6">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <span class="text-4xl">🤖</span>
+                                <div>
+                                    <h4 class="text-2xl font-bold">${symbol}</h4>
+                                    <span class="px-3 py-1 rounded-full text-sm font-semibold bg-accent-blue bg-opacity-20 text-accent-blue">
+                                        ${analysis.pattern || 'AI Analysis'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-dark-accent rounded-lg p-4">
+                            <h5 class="font-semibold text-accent-blue mb-2">AI Analysis</h5>
+                            <p class="text-gray-300 leading-relaxed">${analysis.analysis_text}</p>
+                        </div>
+                        
+                        <div class="bg-dark-accent rounded-lg p-4">
+                            <h5 class="font-semibold text-accent-blue mb-2">Historical Context</h5>
+                            <p class="text-gray-300 leading-relaxed">${analysis.historical_comparison}</p>
+                        </div>
+                        
+                        <div class="flex space-x-3">
+                            <a href="/forecast/${symbol}" class="btn-primary flex-1">
+                                <i class="fas fa-chart-area mr-1"></i>View Forecast
+                            </a>
+                            <button onclick="closeModal('aiReviewModal')" class="btn-secondary">
+                                <i class="fas fa-times mr-1"></i>Close
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            showModal('aiReviewModal');
+            
+        } else {
+            showAlert('Error getting AI analysis: ' + data.error, 'error');
+        }
+        
+    } catch (error) {
+        console.error('Error getting AI review:', error);
+        showAlert('Error connecting to AI analysis service', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+// Create AI review modal if it doesn't exist
+function createAIReviewModal() {
+    const modal = document.createElement('div');
+    modal.id = 'aiReviewModal';
+    modal.className = 'modal hidden';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="text-xl font-bold">AI Setup Analysis</h3>
+                <button onclick="closeModal('aiReviewModal')" class="modal-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="aiReviewContent" class="modal-body">
+                <div class="text-center py-8">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-blue mx-auto mb-4"></div>
+                    <p>Analyzing setup...</p>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    return modal;
 }
 </script>
 {% endblock %}
