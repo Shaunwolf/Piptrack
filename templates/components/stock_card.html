@@ -1,65 +1,96 @@
-<div class="stock-card" data-symbol="{{ stock.symbol }}">
-    <div class="flex justify-between items-start mb-4">
-        <div>
-            <h3 class="font-bold text-lg">{{ stock.symbol }}</h3>
-            <p class="text-gray-400 text-sm">{{ stock.name[:30] if stock.name else '' }}{% if stock.name and stock.name|length > 30 %}...{% endif %}</p>
+{% set widget_colors = [
+    'bg-gradient-to-br from-gray-800 to-gray-900 border-gray-600',
+    'bg-gradient-to-br from-slate-800 to-slate-900 border-slate-600', 
+    'bg-gradient-to-br from-zinc-800 to-zinc-900 border-zinc-600',
+    'bg-gradient-to-br from-neutral-800 to-neutral-900 border-neutral-600',
+    'bg-gradient-to-br from-stone-800 to-stone-900 border-stone-600'
+] %}
+{% set widget_accents = [
+    'from-blue-500 to-purple-600',
+    'from-green-500 to-teal-600', 
+    'from-orange-500 to-red-600',
+    'from-purple-500 to-pink-600',
+    'from-cyan-500 to-blue-600'
+] %}
+{% set color_index = loop.index0 % 5 %}
+<div class="stock-card {{ widget_colors[color_index] }} rounded-xl shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:-translate-y-1 border-2" data-symbol="{{ stock.symbol }}">
+    <div class="flex justify-between items-start mb-6">
+        <div class="flex items-center space-x-3">
+            <div class="w-12 h-12 bg-gradient-to-br {{ widget_accents[color_index] }} rounded-lg flex items-center justify-center shadow-lg">
+                <span class="text-white font-bold text-sm">{{ stock.symbol[:3] }}</span>
+            </div>
+            <div>
+                <h3 class="font-bold text-xl text-white">{{ stock.symbol }}</h3>
+                <p class="text-gray-400 text-sm">{{ stock.name[:25] if stock.name else 'Unknown Company' }}{% if stock.name and stock.name|length > 25 %}...{% endif %}</p>
+            </div>
         </div>
         <div class="flex items-center space-x-2">
-            <div class="confidence-badge confidence-{{ 'high' if stock.confidence_score >= 70 else 'medium' if stock.confidence_score >= 40 else 'low' }}">
-                {{ stock.confidence_score }}%
+            {% set confidence = stock.confidence_score|round|int %}
+            <div class="confidence-badge confidence-{{ 'high' if confidence >= 70 else 'medium' if confidence >= 40 else 'low' }}">
+                <i class="fas fa-{{ 'fire' if confidence >= 80 else 'chart-line' if confidence >= 60 else 'chart-bar' if confidence >= 40 else 'minus' }} mr-1"></i>
+                {{ confidence }}%
             </div>
             {% if stock.is_tracked %}
-            <i class="fas fa-star text-yellow-500" title="Tracked"></i>
+            <div class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center">
+                <i class="fas fa-star text-white text-xs" title="Tracked"></i>
+            </div>
             {% endif %}
         </div>
     </div>
     
-    <div class="grid grid-cols-2 gap-4 mb-4">
-        <div>
-            <p class="text-xs text-gray-400">Price</p>
-            <p class="font-semibold">${{ stock.price }}</p>
+    <div class="grid grid-cols-2 gap-4 mb-6">
+        <div class="bg-gray-700/50 rounded-lg p-3 text-center">
+            <p class="text-xs text-gray-400 mb-1">Price</p>
+            <p class="font-bold text-lg text-green-400">${{ "%.2f"|format(stock.price) }}</p>
         </div>
-        <div>
-            <p class="text-xs text-gray-400">RSI</p>
-            <p class="font-semibold">{{ stock.rsi }}</p>
+        <div class="bg-gray-700/50 rounded-lg p-3 text-center">
+            <p class="text-xs text-gray-400 mb-1">RSI</p>
+            <p class="font-bold text-lg text-{{ 'red-400' if stock.rsi < 30 else 'green-400' if stock.rsi > 70 else 'yellow-400' }}">{{ "%.1f"|format(stock.rsi) }}</p>
         </div>
-        <div>
-            <p class="text-xs text-gray-400">Volume Spike</p>
-            <p class="font-semibold">{{ stock.volume_spike }}%</p>
+        <div class="bg-gray-700/50 rounded-lg p-3 text-center">
+            <p class="text-xs text-gray-400 mb-1">Volume Spike</p>
+            <p class="font-bold text-lg text-purple-400">{{ "%.1f"|format(stock.volume_spike) }}%</p>
         </div>
-        <div>
-            <p class="text-xs text-gray-400">Pattern</p>
-            <p class="font-semibold text-xs">{{ stock.pattern_type }}</p>
+        <div class="bg-gray-700/50 rounded-lg p-3 text-center">
+            <p class="text-xs text-gray-400 mb-1">Pattern</p>
+            <p class="font-semibold text-xs text-blue-400">{{ stock.pattern_type or 'None' }}</p>
         </div>
     </div>
     
     <!-- Fibonacci Position Indicator -->
-    <div class="mb-4">
-        <div class="flex justify-between text-xs text-gray-400 mb-1">
-            <span>Fibonacci Position</span>
-            <span>{{ stock.fibonacci_position }}%</span>
+    <div class="mb-6">
+        <div class="flex justify-between text-xs text-gray-400 mb-2">
+            <span class="font-medium">Fibonacci Position</span>
+            <span class="font-semibold text-blue-400">{{ "%.1f"|format(stock.fibonacci_position) }}%</span>
         </div>
-        <div class="w-full bg-dark-accent rounded-full h-2">
-            <div class="bg-gradient-to-r from-accent-red via-accent-blue to-accent-green h-2 rounded-full relative">
-                <div class="absolute top-0 h-2 w-1 bg-white rounded-full" 
-                     style="left: {{ stock.fibonacci_position }}%"></div>
+        <div class="w-full bg-gray-700 rounded-full h-3 overflow-hidden">
+            <div class="bg-gradient-to-r from-red-500 via-yellow-500 via-blue-500 to-green-500 h-3 rounded-full relative">
+                <div class="absolute top-0 h-3 w-1 bg-white shadow-lg rounded-full border border-gray-300" 
+                     style="left: {{ stock.fibonacci_position }}%; transform: translateX(-50%);">
+                    <div class="absolute -top-1 -left-1 w-3 h-3 bg-white rounded-full shadow-lg"></div>
+                </div>
             </div>
+        </div>
+        <div class="flex justify-between text-xs text-gray-500 mt-1">
+            <span>Support</span>
+            <span>Neutral</span>
+            <span>Resistance</span>
         </div>
     </div>
     
     <!-- Action Buttons -->
-    <div class="flex space-x-2">
-        <a href="{{ url_for('forecast', symbol=stock.symbol) }}" class="btn-primary flex-1">
-            <i class="fas fa-chart-area mr-1"></i>View Forecast
+    <div class="flex space-x-3">
+        <a href="{{ url_for('forecast', symbol=stock.symbol) }}" class="btn-gradient-primary flex-1 text-center py-3 px-4 rounded-lg font-medium transition-all duration-200 hover:scale-105 text-sm">
+            <i class="fas fa-chart-area mr-2"></i>Forecast
         </a>
-        <button onclick="getAIReview('{{ stock.symbol }}')" class="btn-secondary" title="AI Review">
+        <button onclick="getAIReview('{{ stock.symbol }}')" class="btn-gradient-secondary p-3 rounded-lg transition-all duration-200 hover:scale-105" title="AI Analysis">
             <i class="fas fa-robot"></i>
         </button>
-        <button onclick="addToJournal('{{ stock.symbol }}')" class="btn-secondary" title="Add to Journal">
+        <button onclick="addToJournal('{{ stock.symbol }}')" class="btn-gradient-secondary p-3 rounded-lg transition-all duration-200 hover:scale-105" title="Add to Journal">
             <i class="fas fa-book"></i>
         </button>
         {% if not stock.is_tracked %}
-        <button onclick="trackStock('{{ stock.symbol }}')" class="btn-secondary" title="Track Stock">
+        <button onclick="trackStock('{{ stock.symbol }}')" class="btn-gradient-secondary p-3 rounded-lg transition-all duration-200 hover:scale-105" title="Track Stock">
             <i class="fas fa-plus"></i>
         </button>
         {% endif %}
