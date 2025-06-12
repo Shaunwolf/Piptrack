@@ -295,20 +295,20 @@ def pattern_evolution_analysis(symbol):
                 evolution = pattern['evolution']
                 
                 if existing:
-                    # Update existing record
-                    existing.confidence_score = pattern['confidence']
+                    # Update existing record with numpy conversion
+                    existing.confidence_score = float(pattern['confidence'])
                     existing.stage = pattern['current_stage']
-                    existing.completion_percentage = pattern['completion_percentage']
-                    existing.time_in_pattern = pattern['time_in_pattern']
-                    existing.volatility_trend = evolution.get('volatility_trend', 0)
-                    existing.volume_trend = evolution.get('volume_trend', 0)
-                    existing.momentum_change = evolution.get('momentum_change', 0)
-                    existing.support_resistance_strength = evolution.get('support_resistance_strength', 0)
-                    existing.estimated_days_to_breakout = breakout_pred.get('estimated_days_to_breakout', 7)
-                    existing.breakout_probability_5_days = breakout_pred.get('breakout_probability_next_5_days', 0)
-                    existing.breakout_probability_10_days = breakout_pred.get('breakout_probability_next_10_days', 0)
-                    existing.direction_bias = breakout_pred.get('direction_bias', 0.5)
-                    existing.timing_confidence = breakout_pred.get('timing_confidence', 0.5)
+                    existing.completion_percentage = float(pattern['completion_percentage'])
+                    existing.time_in_pattern = int(pattern['time_in_pattern'])
+                    existing.volatility_trend = float(evolution.get('volatility_trend', 0))
+                    existing.volume_trend = float(evolution.get('volume_trend', 0))
+                    existing.momentum_change = float(evolution.get('momentum_change', 0))
+                    existing.support_resistance_strength = float(evolution.get('support_resistance_strength', 0))
+                    existing.estimated_days_to_breakout = int(breakout_pred.get('estimated_days_to_breakout', 7))
+                    existing.breakout_probability_5_days = float(breakout_pred.get('breakout_probability_next_5_days', 0))
+                    existing.breakout_probability_10_days = float(breakout_pred.get('breakout_probability_next_10_days', 0))
+                    existing.direction_bias = float(breakout_pred.get('direction_bias', 0.5))
+                    existing.timing_confidence = float(breakout_pred.get('timing_confidence', 0.5))
                     existing.updated_at = datetime.utcnow()
                 else:
                     # Create new record
@@ -399,3 +399,29 @@ def update_pattern_evolutions():
     except Exception as e:
         logging.error(f"Error updating pattern evolutions: {e}")
         return jsonify({'error': str(e)}), 500
+
+@app.route('/pattern_dashboard')
+def pattern_dashboard():
+    """Pattern evolution dashboard page"""
+    try:
+        # Get all stocks with pattern evolution data
+        pattern_stocks = []
+        
+        all_stocks = Stock.query.all()
+        
+        for stock in all_stocks:
+            recent_evolution = PatternEvolution.query.filter_by(
+                symbol=stock.symbol
+            ).order_by(PatternEvolution.updated_at.desc()).first()
+            
+            if recent_evolution:
+                pattern_stocks.append({
+                    'stock': stock,
+                    'evolution': recent_evolution
+                })
+        
+        return render_template('pattern_dashboard.html', pattern_stocks=pattern_stocks)
+        
+    except Exception as e:
+        logging.error(f"Error loading pattern dashboard: {e}")
+        return redirect(url_for('index'))

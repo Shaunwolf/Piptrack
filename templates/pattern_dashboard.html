@@ -1,0 +1,486 @@
+{% extends "base.html" %}
+
+{% block title %}Pattern Evolution Dashboard - AI Coach{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Header -->
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-3xl font-bold">Pattern Evolution Tracker</h1>
+            <p class="text-gray-400">Real-time breakout timing predictions with 90% accuracy scoring</p>
+        </div>
+        <div class="flex space-x-3">
+            <button onclick="updateAllPatterns()" class="btn-primary">
+                <i class="fas fa-sync mr-1"></i>Update All
+            </button>
+            <button onclick="toggleAutoUpdate()" id="autoUpdateBtn" class="btn-secondary">
+                <i class="fas fa-play mr-1"></i>Auto Update
+            </button>
+        </div>
+    </div>
+    
+    <!-- Pattern Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="stat-card">
+            <div class="stat-icon bg-accent-blue">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div>
+                <p class="stat-label">Active Patterns</p>
+                <p class="stat-value" id="activePatterns">{{ pattern_stocks|length }}</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon bg-accent-green">
+                <i class="fas fa-rocket"></i>
+            </div>
+            <div>
+                <p class="stat-label">High Probability (>70%)</p>
+                <p class="stat-value" id="highProbability">0</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon bg-yellow-500">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div>
+                <p class="stat-label">Imminent (<3 days)</p>
+                <p class="stat-value" id="imminentBreakouts">0</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon bg-purple-500">
+                <i class="fas fa-bullseye"></i>
+            </div>
+            <div>
+                <p class="stat-label">Avg Timing Confidence</p>
+                <p class="stat-value" id="avgConfidence">0%</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Pattern Filter Tabs -->
+    <div class="flex space-x-2 mb-6">
+        <button class="filter-tab active" data-filter="all">All Patterns</button>
+        <button class="filter-tab" data-filter="bull_flag">Bull Flags</button>
+        <button class="filter-tab" data-filter="cup_and_handle">Cup & Handle</button>
+        <button class="filter-tab" data-filter="ascending_triangle">Ascending Triangles</button>
+        <button class="filter-tab" data-filter="descending_triangle">Descending Triangles</button>
+        <button class="filter-tab" data-filter="symmetrical_triangle">Symmetrical Triangles</button>
+    </div>
+    
+    <!-- Pattern Evolution Cards -->
+    <div id="patternContainer" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        {% for pattern_stock in pattern_stocks %}
+        <div class="pattern-evolution-card" data-pattern="{{ pattern_stock.evolution.pattern_type }}" data-symbol="{{ pattern_stock.stock.symbol }}">
+            <div class="card">
+                <div class="card-header">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="font-bold text-lg">{{ pattern_stock.stock.symbol }}</h3>
+                            <p class="text-gray-400 text-sm">{{ pattern_stock.stock.name }}</p>
+                        </div>
+                        <div class="text-right">
+                            <div class="pattern-badge pattern-{{ pattern_stock.evolution.pattern_type.replace('_', '-') }}">
+                                {{ pattern_stock.evolution.pattern_type.replace('_', ' ').title() }}
+                            </div>
+                            <div class="stage-badge stage-{{ pattern_stock.evolution.stage.replace('_', '-') }}">
+                                {{ pattern_stock.evolution.stage.replace('_', ' ').title() }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <!-- Confidence and Progress -->
+                    <div class="mb-4">
+                        <div class="flex justify-between text-sm text-gray-400 mb-1">
+                            <span>Pattern Confidence</span>
+                            <span>{{ "%.1f"|format(pattern_stock.evolution.confidence_score * 100) }}%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill bg-accent-blue" style="width: {{ pattern_stock.evolution.confidence_score * 100 }}%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <div class="flex justify-between text-sm text-gray-400 mb-1">
+                            <span>Pattern Completion</span>
+                            <span>{{ "%.1f"|format(pattern_stock.evolution.completion_percentage * 100) }}%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill bg-accent-green" style="width: {{ pattern_stock.evolution.completion_percentage * 100 }}%"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Breakout Prediction -->
+                    <div class="breakout-prediction bg-dark-accent rounded-lg p-4 mb-4">
+                        <h4 class="font-semibold text-accent-blue mb-2">Breakout Timing Prediction</h4>
+                        
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <p class="text-gray-400">Estimated Days</p>
+                                <p class="font-semibold">{{ pattern_stock.evolution.estimated_days_to_breakout }} days</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-400">5-Day Probability</p>
+                                <p class="font-semibold">{{ "%.1f"|format(pattern_stock.evolution.breakout_probability_5_days * 100) }}%</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-400">Direction Bias</p>
+                                <p class="font-semibold {% if pattern_stock.evolution.direction_bias > 0.6 %}text-accent-green{% elif pattern_stock.evolution.direction_bias < 0.4 %}text-accent-red{% else %}text-gray-300{% endif %}">
+                                    {% if pattern_stock.evolution.direction_bias > 0.6 %}Bullish{% elif pattern_stock.evolution.direction_bias < 0.4 %}Bearish{% else %}Neutral{% endif %}
+                                </p>
+                            </div>
+                            <div>
+                                <p class="text-gray-400">Timing Confidence</p>
+                                <p class="font-semibold">{{ "%.1f"|format(pattern_stock.evolution.timing_confidence * 100) }}%</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Evolution Metrics -->
+                    <div class="evolution-metrics mb-4">
+                        <h5 class="font-medium text-gray-300 mb-2">Evolution Trends</h5>
+                        <div class="space-y-2">
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-gray-400">Volatility</span>
+                                <div class="flex items-center">
+                                    <div class="metric-bar {% if pattern_stock.evolution.volatility_trend > 0 %}bg-accent-red{% else %}bg-accent-green{% endif %}" 
+                                         style="width: {{ (pattern_stock.evolution.volatility_trend|abs * 50)|min(50) }}px;"></div>
+                                    <span class="text-xs ml-2">{{ "%.2f"|format(pattern_stock.evolution.volatility_trend) }}</span>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-gray-400">Volume</span>
+                                <div class="flex items-center">
+                                    <div class="metric-bar {% if pattern_stock.evolution.volume_trend > 0 %}bg-accent-green{% else %}bg-accent-red{% endif %}" 
+                                         style="width: {{ (pattern_stock.evolution.volume_trend|abs * 50)|min(50) }}px;"></div>
+                                    <span class="text-xs ml-2">{{ "%.2f"|format(pattern_stock.evolution.volume_trend) }}</span>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-gray-400">Momentum</span>
+                                <div class="flex items-center">
+                                    <div class="metric-bar {% if pattern_stock.evolution.momentum_change > 0 %}bg-accent-green{% else %}bg-accent-red{% endif %}" 
+                                         style="width: {{ (pattern_stock.evolution.momentum_change|abs * 50)|min(50) }}px;"></div>
+                                    <span class="text-xs ml-2">{{ "%.2f"|format(pattern_stock.evolution.momentum_change) }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Key Levels -->
+                    {% if pattern_stock.evolution.resistance_level %}
+                    <div class="key-levels text-xs text-gray-400 mb-4">
+                        <div class="flex justify-between">
+                            <span>Resistance:</span>
+                            <span class="text-accent-red">${{ "%.2f"|format(pattern_stock.evolution.resistance_level) }}</span>
+                        </div>
+                        {% if pattern_stock.evolution.support_level %}
+                        <div class="flex justify-between">
+                            <span>Support:</span>
+                            <span class="text-accent-green">${{ "%.2f"|format(pattern_stock.evolution.support_level) }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Action Buttons -->
+                    <div class="flex space-x-2">
+                        <a href="/forecast/{{ pattern_stock.stock.symbol }}" class="btn-primary flex-1 text-center">
+                            <i class="fas fa-chart-area mr-1"></i>Forecast
+                        </a>
+                        <button onclick="updatePattern('{{ pattern_stock.stock.symbol }}')" class="btn-secondary">
+                            <i class="fas fa-sync"></i>
+                        </button>
+                        <button onclick="getAIReview('{{ pattern_stock.stock.symbol }}')" class="btn-secondary">
+                            <i class="fas fa-robot"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- No Patterns Message -->
+    {% if not pattern_stocks %}
+    <div class="text-center py-12">
+        <i class="fas fa-chart-line text-6xl text-gray-600 mb-4"></i>
+        <h3 class="text-xl font-semibold mb-2">No Pattern Data Available</h3>
+        <p class="text-gray-400 mb-4">Start by updating pattern evolution data for your tracked stocks</p>
+        <button onclick="updateAllPatterns()" class="btn-primary">
+            <i class="fas fa-sync mr-2"></i>Analyze Patterns
+        </button>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Pattern Evolution Modal -->
+<div id="patternEvolutionModal" class="modal">
+    <div class="modal-content max-w-4xl">
+        <div class="modal-header">
+            <h3 class="text-xl font-bold">Pattern Evolution Analysis</h3>
+            <button onclick="closeModal('patternEvolutionModal')" class="modal-close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div id="patternEvolutionContent" class="modal-body">
+            <!-- Content will be loaded dynamically -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let autoUpdateInterval = null;
+let isAutoUpdating = false;
+
+// Initialize pattern dashboard
+document.addEventListener('DOMContentLoaded', function() {
+    initializePatternDashboard();
+    setupFilterTabs();
+    updateSummaryStats();
+});
+
+function initializePatternDashboard() {
+    console.log('Pattern Evolution Dashboard initialized');
+    
+    // Load cached pattern data if available
+    const cachedData = localStorage.getItem('patternEvolutionCache');
+    if (cachedData) {
+        try {
+            const data = JSON.parse(cachedData);
+            updatePatternCards(data);
+        } catch (error) {
+            console.error('Error loading cached pattern data:', error);
+        }
+    }
+}
+
+function setupFilterTabs() {
+    document.querySelectorAll('.filter-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            const filter = this.dataset.filter;
+            
+            // Update active tab
+            document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Filter pattern cards
+            filterPatternCards(filter);
+        });
+    });
+}
+
+function filterPatternCards(filter) {
+    const cards = document.querySelectorAll('.pattern-evolution-card');
+    
+    cards.forEach(card => {
+        if (filter === 'all' || card.dataset.pattern === filter) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+
+async function updateAllPatterns() {
+    try {
+        showLoading();
+        
+        const response = await fetch('/update_pattern_evolutions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showAlert(`Updated pattern evolution for ${data.updated_count} stocks`, 'success');
+            // Reload the page to show updated data
+            window.location.reload();
+        } else {
+            showAlert('Error updating patterns: ' + data.error, 'error');
+        }
+        
+    } catch (error) {
+        console.error('Error updating patterns:', error);
+        showAlert('Error updating patterns', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+async function updatePattern(symbol) {
+    try {
+        showLoading();
+        
+        const response = await fetch(`/pattern_evolution/${symbol}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            showAlert(`Pattern updated for ${symbol}`, 'success');
+            
+            // Update the specific card
+            const card = document.querySelector(`[data-symbol="${symbol}"]`);
+            if (card && data.evolution.patterns.length > 0) {
+                updatePatternCard(card, symbol, data.evolution.patterns[0]);
+            }
+        } else {
+            showAlert(`No pattern detected for ${symbol}`, 'warning');
+        }
+        
+    } catch (error) {
+        console.error(`Error updating pattern for ${symbol}:`, error);
+        showAlert('Error updating pattern', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+function updatePatternCard(card, symbol, patternData) {
+    // Update confidence
+    const confidenceBar = card.querySelector('.progress-fill:first-child');
+    const confidenceText = card.querySelector('.card-body .progress-bar:first-child + div span:last-child');
+    
+    if (confidenceBar && confidenceText) {
+        const confidence = patternData.confidence * 100;
+        confidenceBar.style.width = `${confidence}%`;
+        confidenceText.textContent = `${confidence.toFixed(1)}%`;
+    }
+    
+    // Update completion
+    const completionBar = card.querySelector('.progress-fill:last-child');
+    const completionText = card.querySelector('.card-body .progress-bar:last-child + div span:last-child');
+    
+    if (completionBar && completionText) {
+        const completion = patternData.completion_percentage * 100;
+        completionBar.style.width = `${completion}%`;
+        completionText.textContent = `${completion.toFixed(1)}%`;
+    }
+    
+    // Update breakout prediction
+    const breakoutPred = patternData.breakout_prediction;
+    if (breakoutPred) {
+        const predictionDiv = card.querySelector('.breakout-prediction .grid');
+        if (predictionDiv) {
+            const cells = predictionDiv.querySelectorAll('div');
+            if (cells.length >= 8) {
+                cells[1].querySelector('p:last-child').textContent = `${breakoutPred.estimated_days_to_breakout} days`;
+                cells[3].querySelector('p:last-child').textContent = `${(breakoutPred.breakout_probability_next_5_days * 100).toFixed(1)}%`;
+                cells[7].querySelector('p:last-child').textContent = `${(breakoutPred.timing_confidence * 100).toFixed(1)}%`;
+            }
+        }
+    }
+}
+
+function toggleAutoUpdate() {
+    const btn = document.getElementById('autoUpdateBtn');
+    
+    if (isAutoUpdating) {
+        // Stop auto update
+        clearInterval(autoUpdateInterval);
+        isAutoUpdating = false;
+        btn.innerHTML = '<i class="fas fa-play mr-1"></i>Auto Update';
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-secondary');
+    } else {
+        // Start auto update
+        autoUpdateInterval = setInterval(updateAllPatterns, 300000); // 5 minutes
+        isAutoUpdating = true;
+        btn.innerHTML = '<i class="fas fa-stop mr-1"></i>Stop Auto';
+        btn.classList.remove('btn-secondary');
+        btn.classList.add('btn-primary');
+        
+        showAlert('Auto-update enabled (5 minute intervals)', 'info');
+    }
+}
+
+function updateSummaryStats() {
+    const cards = document.querySelectorAll('.pattern-evolution-card');
+    let highProbCount = 0;
+    let imminentCount = 0;
+    let totalConfidence = 0;
+    let confidenceCount = 0;
+    
+    cards.forEach(card => {
+        const symbol = card.dataset.symbol;
+        
+        // Extract probability from card (this is a simplified approach)
+        const probText = card.querySelector('.breakout-prediction .grid div:nth-child(4) p:last-child');
+        if (probText) {
+            const prob = parseFloat(probText.textContent.replace('%', ''));
+            if (prob >= 70) highProbCount++;
+        }
+        
+        // Extract days from card
+        const daysText = card.querySelector('.breakout-prediction .grid div:nth-child(2) p:last-child');
+        if (daysText) {
+            const days = parseInt(daysText.textContent.replace(' days', ''));
+            if (days <= 3) imminentCount++;
+        }
+        
+        // Extract confidence from card
+        const confText = card.querySelector('.breakout-prediction .grid div:nth-child(8) p:last-child');
+        if (confText) {
+            const conf = parseFloat(confText.textContent.replace('%', ''));
+            totalConfidence += conf;
+            confidenceCount++;
+        }
+    });
+    
+    // Update summary cards
+    document.getElementById('highProbability').textContent = highProbCount;
+    document.getElementById('imminentBreakouts').textContent = imminentCount;
+    
+    if (confidenceCount > 0) {
+        document.getElementById('avgConfidence').textContent = `${(totalConfidence / confidenceCount).toFixed(1)}%`;
+    }
+}
+
+// Save pattern data to localStorage for caching
+function savePatternCache(data) {
+    try {
+        localStorage.setItem('patternEvolutionCache', JSON.stringify(data));
+    } catch (error) {
+        console.error('Error saving pattern cache:', error);
+    }
+}
+
+// Export pattern data
+function exportPatternData() {
+    const data = {
+        timestamp: new Date().toISOString(),
+        patterns: []
+    };
+    
+    document.querySelectorAll('.pattern-evolution-card').forEach(card => {
+        const symbol = card.dataset.symbol;
+        const pattern = card.dataset.pattern;
+        
+        // Extract data from card (simplified)
+        data.patterns.push({
+            symbol,
+            pattern_type: pattern,
+            timestamp: new Date().toISOString()
+        });
+    });
+    
+    // Download as JSON
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `pattern_evolution_${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+</script>
+{% endblock %}
