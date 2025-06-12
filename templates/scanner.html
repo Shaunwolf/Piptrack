@@ -126,19 +126,21 @@
             </div>
         </div>
         
-        <div id="scanResults" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {% for stock in stocks %}
-            {% include 'components/stock_card.html' %}
-            {% else %}
-            <div class="col-span-full text-center py-12">
-                <i class="fas fa-search text-6xl text-gray-600 mb-4"></i>
-                <h3 class="text-xl font-semibold mb-2">No Stocks Found</h3>
-                <p class="text-gray-400 mb-4">Run a scan to find potential trading opportunities</p>
-                <button onclick="scanTopGappers()" class="btn-primary">
-                    <i class="fas fa-search mr-2"></i>Start Scanning
-                </button>
+        <div class="widget-content p-6">
+            <div id="scanResults" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {% for stock in stocks %}
+                {% include 'components/stock_card.html' %}
+                {% else %}
+                <div class="col-span-full text-center py-12">
+                    <i class="fas fa-search text-6xl text-gray-600 mb-4"></i>
+                    <h3 class="text-xl font-semibold mb-2">No Stocks Found</h3>
+                    <p class="text-gray-400 mb-4">Run a scan to find potential trading opportunities</p>
+                    <button onclick="scanTopGappers()" class="btn-gradient-primary px-6 py-3 rounded-lg">
+                        <i class="fas fa-search mr-2"></i>Start Scanning
+                    </button>
+                </div>
+                {% endfor %}
             </div>
-            {% endfor %}
         </div>
     </div>
 </div>
