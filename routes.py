@@ -29,7 +29,24 @@ def index():
 def scanner():
     """Stock scanner page"""
     stocks = Stock.query.order_by(Stock.confidence_score.desc()).all()
-    return render_template('scanner.html', stocks=stocks)
+    # Convert stocks to dictionaries for JSON serialization
+    stocks_data = []
+    for stock in stocks:
+        stocks_data.append({
+            'id': stock.id,
+            'symbol': stock.symbol,
+            'name': stock.name,
+            'price': stock.price,
+            'rsi': stock.rsi,
+            'volume_spike': stock.volume_spike,
+            'pattern_type': stock.pattern_type,
+            'fibonacci_position': stock.fibonacci_position,
+            'confidence_score': stock.confidence_score,
+            'is_tracked': stock.is_tracked,
+            'created_at': stock.created_at.isoformat() if stock.created_at else None,
+            'updated_at': stock.updated_at.isoformat() if stock.updated_at else None
+        })
+    return render_template('scanner.html', stocks=stocks_data)
 
 @app.route('/scan_stocks', methods=['POST'])
 def scan_stocks():

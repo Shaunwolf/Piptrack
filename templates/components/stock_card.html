@@ -67,7 +67,7 @@
     
     <!-- Quick Stats Footer -->
     <div class="mt-3 pt-3 border-t border-dark-accent flex justify-between text-xs text-gray-400">
-        <span>Updated: {{ stock.updated_at.strftime('%H:%M') if stock.updated_at else 'N/A' }}</span>
+        <span>Updated: {{ stock.updated_at[:10] if stock.updated_at else 'N/A' }}</span>
         {% if stock.market_cap %}
         <span>Cap: {{ "${:.1f}B".format(stock.market_cap / 1e9) if stock.market_cap > 1e9 else "${:.0f}M".format(stock.market_cap / 1e6) }}</span>
         {% endif %}
