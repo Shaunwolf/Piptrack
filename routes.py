@@ -59,7 +59,7 @@ def scan_stocks():
         tickers = request.json.get('tickers', [])
         
         if scan_type == 'gappers':
-            results = stock_scanner.scan_top_gappers()
+            results = stock_scanner.scan_top_gappers(limit=50)
         else:
             results = stock_scanner.scan_selected_tickers(tickers)
         

@@ -131,40 +131,29 @@ class StockScanner:
         
         return {'name': symbol, 'sector': 'Unknown', 'market_cap': 0}
     
-    def scan_top_gappers(self, limit=15):
-        """Scan for top gapping stocks in $1-$50 price range with fallback to yfinance"""
+    def scan_top_gappers(self, limit=50):
+        """Scan for top gapping stocks in $1-$50 price range with optimized processing"""
         results = []
         
-        # Expanded list of symbols covering various sectors and price ranges
+        # Prioritized symbols known to be in $1-$50 range for efficient scanning
         scan_symbols = [
+            # High Priority - Known $1-$50 Range
+            'F', 'T', 'BAC', 'WFC', 'PFE', 'INTC', 'AMD', 'CLF', 'AA', 'HAL',
+            'SLB', 'FCX', 'VZ', 'BBY', 'GM', 'X', 'NUE', 'STLD', 'M', 'KSS',
+            # Financial Sector
+            'C', 'COF', 'USB', 'PNC', 'MS', 'GS', 'JPM', 'AXP',
+            # Energy & Materials  
+            'CVX', 'XOM', 'COP', 'EOG', 'OXY', 'KMI', 'WMB', 'EPD', 'NEM',
             # Technology
-            'INTC', 'AMD', 'MU', 'QCOM', 'TXN', 'ADI', 'MRVL', 'KLAC', 'LRCX', 'AMAT',
-            # Financial
-            'BAC', 'WFC', 'C', 'JPM', 'GS', 'MS', 'COF', 'AXP', 'USB', 'PNC',
-            # Energy  
-            'CVX', 'XOM', 'COP', 'EOG', 'SLB', 'HAL', 'OXY', 'KMI', 'WMB', 'EPD',
-            # Industrial
-            'CAT', 'DE', 'BA', 'GE', 'HON', 'MMM', 'LMT', 'RTX', 'UNP', 'CSX',
-            # Healthcare
-            'PFE', 'JNJ', 'MRK', 'ABT', 'TMO', 'DHR', 'BMY', 'AMGN', 'GILD', 'BIIB',
-            # Consumer
-            'WMT', 'HD', 'PG', 'KO', 'PEP', 'NKE', 'COST', 'TGT', 'LOW', 'SBUX',
-            # Telecommunications
-            'T', 'VZ', 'TMUS', 'CHTR', 'CMCSA',
-            # Materials
-            'LIN', 'APD', 'ECL', 'FCX', 'NEM', 'AA', 'CLF', 'X', 'NUE', 'STLD',
-            # Utilities
-            'NEE', 'DUK', 'SO', 'D', 'EXC', 'XEL', 'WEC', 'ES', 'AEP', 'PPL',
-            # REITs & Real Estate  
-            'AMT', 'PLD', 'CCI', 'EQIX', 'PSA', 'EXR', 'AVB', 'EQR', 'DLR', 'O',
-            # Transportation
-            'UPS', 'FDX', 'DAL', 'UAL', 'AAL', 'LUV', 'JBLU', 'ALK',
-            # Retail
-            'BBY', 'M', 'KSS', 'JWN', 'GPS', 'ANF', 'AEO', 'URBN',
-            # Automotive
-            'F', 'GM', 'RIVN', 'LCID', 'FSLY', 'GOEV',
-            # Small-Mid Cap Growth
-            'SOFI', 'PLTR', 'WISH', 'CLOV', 'SPCE', 'NKLA', 'RIDE', 'WKHS'
+            'MU', 'QCOM', 'TXN', 'ADI', 'MRVL', 'KLAC', 'LRCX', 'AMAT',
+            # Industrial & Transportation
+            'CAT', 'DE', 'BA', 'GE', 'HON', 'MMM', 'UPS', 'FDX', 'DAL', 'UAL',
+            # Healthcare & Consumer
+            'JNJ', 'MRK', 'ABT', 'BMY', 'AMGN', 'GILD', 'BIIB', 'PG', 'KO', 'PEP',
+            # Small-Mid Cap & Growth
+            'SOFI', 'PLTR', 'RIVN', 'LCID', 'SPCE', 'NKLA', 'RIDE', 'WKHS', 'CLOV',
+            # Additional Opportunities
+            'GPS', 'ANF', 'AEO', 'URBN', 'JWN', 'ALK', 'LUV', 'JBLU', 'AAL'
         ]
         
         try:
