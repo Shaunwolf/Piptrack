@@ -28,7 +28,18 @@
             <button onclick="clearFilters()" class="text-accent-blue hover:underline">Clear All</button>
         </div>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div>
+                <label class="block text-sm font-medium mb-1">Price Range</label>
+                <select id="priceFilter" class="form-select">
+                    <option value="">All Prices</option>
+                    <option value="1-10">$1 - $10</option>
+                    <option value="10-25" selected>$10 - $25</option>
+                    <option value="25-50">$25 - $50</option>
+                    <option value="1-50">$1 - $50 (All Range)</option>
+                </select>
+            </div>
+            
             <div>
                 <label class="block text-sm font-medium mb-1">Min Confidence</label>
                 <input type="range" id="minConfidence" min="0" max="100" value="0" class="range-input">
@@ -160,6 +171,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Select filters
+    document.getElementById('priceFilter').addEventListener('change', applyFilters);
     document.getElementById('patternFilter').addEventListener('change', applyFilters);
     document.getElementById('rsiFilter').addEventListener('change', applyFilters);
 });
