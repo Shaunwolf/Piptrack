@@ -25,52 +25,81 @@
     <div class="card">
         <div class="card-header">
             <h2 class="text-xl font-bold">Filters</h2>
-            <button onclick="clearFilters()" class="text-accent-blue hover:underline">Clear All</button>
+            <div class="flex space-x-2">
+                <button onclick="applyFilters()" class="btn-primary text-sm">
+                    <i class="fas fa-filter mr-1"></i>Apply Filters
+                </button>
+                <button onclick="clearFilters()" class="btn-secondary text-sm">
+                    <i class="fas fa-times mr-1"></i>Clear All
+                </button>
+            </div>
         </div>
         
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <div>
-                <label class="block text-sm font-medium mb-1">Price Range</label>
-                <select id="priceFilter" class="form-select">
+                <label class="block text-sm font-medium mb-2">Price Range</label>
+                <select id="priceFilter" class="form-select bg-dark-accent border-gray-600 text-white">
                     <option value="">All Prices</option>
                     <option value="1-10">$1 - $10</option>
-                    <option value="10-25" selected>$10 - $25</option>
+                    <option value="10-25">$10 - $25</option>
                     <option value="25-50">$25 - $50</option>
-                    <option value="1-50">$1 - $50 (All Range)</option>
+                    <option value="1-50" selected>$1 - $50 (Target Range)</option>
                 </select>
             </div>
             
             <div>
-                <label class="block text-sm font-medium mb-1">Min Confidence</label>
-                <input type="range" id="minConfidence" min="0" max="100" value="0" class="range-input">
-                <span id="minConfidenceValue" class="text-xs text-gray-400">0%</span>
+                <label class="block text-sm font-medium mb-2">Min Confidence Score</label>
+                <div class="relative">
+                    <input type="range" id="minConfidence" min="0" max="100" value="0" 
+                           class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider">
+                    <div class="flex justify-between text-xs text-gray-400 mt-1">
+                        <span>0%</span>
+                        <span id="minConfidenceValue" class="font-semibold text-accent-blue">0%</span>
+                        <span>100%</span>
+                    </div>
+                </div>
             </div>
             
             <div>
-                <label class="block text-sm font-medium mb-1">Min Volume Spike</label>
-                <input type="range" id="minVolumeSpike" min="0" max="200" value="0" class="range-input">
-                <span id="minVolumeSpikeValue" class="text-xs text-gray-400">0%</span>
+                <label class="block text-sm font-medium mb-2">Min Volume Spike</label>
+                <div class="relative">
+                    <input type="range" id="minVolumeSpike" min="0" max="200" value="0" 
+                           class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider">
+                    <div class="flex justify-between text-xs text-gray-400 mt-1">
+                        <span>0%</span>
+                        <span id="minVolumeSpikeValue" class="font-semibold text-accent-blue">0%</span>
+                        <span>200%</span>
+                    </div>
+                </div>
             </div>
             
             <div>
-                <label class="block text-sm font-medium mb-1">Pattern Type</label>
-                <select id="patternFilter" class="form-select">
+                <label class="block text-sm font-medium mb-2">Pattern Type</label>
+                <select id="patternFilter" class="form-select bg-dark-accent border-gray-600 text-white">
                     <option value="">All Patterns</option>
                     <option value="Bullish Trend">Bullish Trend</option>
-                    <option value="Bull Flag">Bull Flag</option>
-                    <option value="Breakout">Breakout</option>
+                    <option value="Bearish Trend">Bearish Trend</option>
                     <option value="Consolidation">Consolidation</option>
+                    <option value="Neutral">Neutral</option>
                 </select>
             </div>
             
             <div>
-                <label class="block text-sm font-medium mb-1">RSI Range</label>
-                <select id="rsiFilter" class="form-select">
+                <label class="block text-sm font-medium mb-2">RSI Range</label>
+                <select id="rsiFilter" class="form-select bg-dark-accent border-gray-600 text-white">
                     <option value="">All RSI</option>
                     <option value="oversold">Oversold (< 30)</option>
                     <option value="neutral">Neutral (30-70)</option>
                     <option value="overbought">Overbought (> 70)</option>
                 </select>
+            </div>
+        </div>
+        
+        <!-- Active Filters Display -->
+        <div id="activeFilters" class="mt-4 hidden">
+            <div class="flex items-center space-x-2 mb-2">
+                <span class="text-sm font-medium text-gray-300">Active Filters:</span>
+                <div id="filterTags" class="flex flex-wrap gap-2"></div>
             </div>
         </div>
     </div>
@@ -159,21 +188,39 @@ let filteredStocks = [...allStocks];
 
 // Initialize filter controls
 document.addEventListener('DOMContentLoaded', function() {
-    // Range input updates
+    // Range input updates with debouncing
+    let filterTimeout;
+    
     document.getElementById('minConfidence').addEventListener('input', function() {
         document.getElementById('minConfidenceValue').textContent = this.value + '%';
-        applyFilters();
+        clearTimeout(filterTimeout);
+        filterTimeout = setTimeout(applyFilters, 300);
     });
     
     document.getElementById('minVolumeSpike').addEventListener('input', function() {
         document.getElementById('minVolumeSpikeValue').textContent = this.value + '%';
-        applyFilters();
+        clearTimeout(filterTimeout);
+        filterTimeout = setTimeout(applyFilters, 300);
     });
     
-    // Select filters
-    document.getElementById('priceFilter').addEventListener('change', applyFilters);
-    document.getElementById('patternFilter').addEventListener('change', applyFilters);
-    document.getElementById('rsiFilter').addEventListener('change', applyFilters);
+    // Select filters with immediate application
+    document.getElementById('priceFilter').addEventListener('change', function() {
+        applyFilters();
+        showFilterFeedback();
+    });
+    
+    document.getElementById('patternFilter').addEventListener('change', function() {
+        applyFilters();
+        showFilterFeedback();
+    });
+    
+    document.getElementById('rsiFilter').addEventListener('change', function() {
+        applyFilters();
+        showFilterFeedback();
+    });
+    
+    // Initialize filter display
+    updateActiveFiltersDisplay();
 });
 
 // Scan for top gappers
@@ -252,29 +299,39 @@ function applyFilters() {
     const rsiFilter = document.getElementById('rsiFilter').value;
     const priceFilter = document.getElementById('priceFilter').value;
     
-    filteredStocks = allStocks.filter(stock => {
-        // Price range filter
-        if (priceFilter) {
-            const price = stock.price || 0;
-            const [min, max] = priceFilter.split('-').map(Number);
-            if (price < min || price > max) return false;
-        }
-        
-        if (stock.confidence_score < minConfidence) return false;
-        if (stock.volume_spike < minVolumeSpike) return false;
-        if (patternFilter && stock.pattern_type !== patternFilter) return false;
-        
-        if (rsiFilter) {
-            const rsi = stock.rsi || 50;
-            if (rsiFilter === 'oversold' && rsi >= 30) return false;
-            if (rsiFilter === 'neutral' && (rsi < 30 || rsi > 70)) return false;
-            if (rsiFilter === 'overbought' && rsi <= 70) return false;
-        }
-        
-        return true;
-    });
+    // Show loading state
+    const resultsContainer = document.getElementById('scanResults');
+    resultsContainer.innerHTML = '<div class="col-span-full text-center py-8"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-blue mx-auto mb-4"></div><p>Applying filters...</p></div>';
     
-    renderResults();
+    setTimeout(() => {
+        filteredStocks = allStocks.filter(stock => {
+            // Price range filter
+            if (priceFilter) {
+                const price = stock.price || 0;
+                const [min, max] = priceFilter.split('-').map(Number);
+                if (price < min || price > max) return false;
+            }
+            
+            if (stock.confidence_score < minConfidence) return false;
+            if (Math.abs(stock.volume_spike) < minVolumeSpike) return false;
+            if (patternFilter && stock.pattern_type !== patternFilter) return false;
+            
+            if (rsiFilter) {
+                const rsi = stock.rsi || 50;
+                if (rsiFilter === 'oversold' && rsi >= 30) return false;
+                if (rsiFilter === 'neutral' && (rsi < 30 || rsi > 70)) return false;
+                if (rsiFilter === 'overbought' && rsi <= 70) return false;
+            }
+            
+            return true;
+        });
+        
+        renderResults();
+        updateActiveFiltersDisplay();
+        
+        // Show success feedback
+        showAlert(`Filters applied - ${filteredStocks.length} stocks match criteria`, 'success', 2000);
+    }, 200);
 }
 
 // Clear all filters
@@ -283,12 +340,78 @@ function clearFilters() {
     document.getElementById('minConfidenceValue').textContent = '0%';
     document.getElementById('minVolumeSpike').value = 0;
     document.getElementById('minVolumeSpikeValue').textContent = '0%';
-    document.getElementById('priceFilter').value = '';
+    document.getElementById('priceFilter').value = '1-50';
     document.getElementById('patternFilter').value = '';
     document.getElementById('rsiFilter').value = '';
     
     filteredStocks = [...allStocks];
     renderResults();
+    updateActiveFiltersDisplay();
+    showAlert('Filters cleared', 'info', 1500);
+}
+
+// Show filter feedback
+function showFilterFeedback() {
+    const filterButton = document.querySelector('button[onclick="applyFilters()"]');
+    if (filterButton) {
+        filterButton.innerHTML = '<i class="fas fa-check mr-1"></i>Applied';
+        filterButton.classList.add('bg-green-600');
+        
+        setTimeout(() => {
+            filterButton.innerHTML = '<i class="fas fa-filter mr-1"></i>Apply Filters';
+            filterButton.classList.remove('bg-green-600');
+        }, 1000);
+    }
+}
+
+// Update active filters display
+function updateActiveFiltersDisplay() {
+    const activeFiltersDiv = document.getElementById('activeFilters');
+    const filterTagsDiv = document.getElementById('filterTags');
+    const tags = [];
+    
+    const minConfidence = parseInt(document.getElementById('minConfidence').value);
+    const minVolumeSpike = parseInt(document.getElementById('minVolumeSpike').value);
+    const priceFilter = document.getElementById('priceFilter').value;
+    const patternFilter = document.getElementById('patternFilter').value;
+    const rsiFilter = document.getElementById('rsiFilter').value;
+    
+    if (minConfidence > 0) {
+        tags.push(`Min Confidence: ${minConfidence}%`);
+    }
+    
+    if (minVolumeSpike > 0) {
+        tags.push(`Min Volume: ${minVolumeSpike}%`);
+    }
+    
+    if (priceFilter && priceFilter !== '1-50') {
+        const [min, max] = priceFilter.split('-');
+        tags.push(`Price: $${min}-$${max}`);
+    }
+    
+    if (patternFilter) {
+        tags.push(`Pattern: ${patternFilter}`);
+    }
+    
+    if (rsiFilter) {
+        const rsiLabels = {
+            'oversold': 'RSI < 30',
+            'neutral': 'RSI 30-70', 
+            'overbought': 'RSI > 70'
+        };
+        tags.push(rsiLabels[rsiFilter] || rsiFilter);
+    }
+    
+    if (tags.length > 0) {
+        filterTagsDiv.innerHTML = tags.map(tag => 
+            `<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-accent-blue bg-opacity-20 text-accent-blue">
+                ${tag}
+            </span>`
+        ).join('');
+        activeFiltersDiv.classList.remove('hidden');
+    } else {
+        activeFiltersDiv.classList.add('hidden');
+    }
 }
 
 // Sort results

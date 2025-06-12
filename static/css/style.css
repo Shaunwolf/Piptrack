@@ -245,6 +245,58 @@ body {
   @apply bg-dark-surface rounded-lg p-4;
 }
 
+/* Enhanced Filter Styles */
+.slider {
+  -webkit-appearance: none;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.slider::-webkit-slider-track {
+  background: #374151;
+  height: 6px;
+  border-radius: 3px;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  background: var(--color-accent-blue);
+  height: 18px;
+  width: 18px;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.4);
+  transition: all 0.2s ease;
+}
+
+.slider::-webkit-slider-thumb:hover {
+  background: #2563eb;
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.6);
+}
+
+.filter-tag {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(-10px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+.btn-filter-applied {
+  background-color: #10b981 !important;
+  transform: scale(1.02);
+  transition: all 0.3s ease;
+}
+
 /* Loading Animation */
 .loading-spinner {
   @apply inline-block animate-spin rounded-full border-4 border-solid border-gray-600 border-r-accent-blue;
