@@ -52,3 +52,37 @@ class AIAnalysis(db.Model):
     historical_comparison = Column(Text)
     chart_story = Column(JSON)  # Store hover comments for chart levels
     created_at = Column(DateTime, default=datetime.utcnow)
+
+class PatternEvolution(db.Model):
+    id = Column(Integer, primary_key=True)
+    symbol = Column(String(10), nullable=False)
+    pattern_type = Column(String(50))  # 'bull_flag', 'cup_and_handle', etc.
+    confidence_score = Column(Float)
+    stage = Column(String(30))  # 'forming', 'building', 'mature', 'apex_approaching'
+    completion_percentage = Column(Float)
+    time_in_pattern = Column(Integer)  # days
+    
+    # Evolution metrics
+    volatility_trend = Column(Float)
+    volume_trend = Column(Float)
+    momentum_change = Column(Float)
+    support_resistance_strength = Column(Float)
+    
+    # Breakout prediction
+    estimated_days_to_breakout = Column(Integer)
+    breakout_probability_5_days = Column(Float)
+    breakout_probability_10_days = Column(Float)
+    direction_bias = Column(Float)  # 0-1 (bearish to bullish)
+    timing_confidence = Column(Float)
+    
+    # Key levels
+    resistance_level = Column(Float)
+    support_level = Column(Float)
+    breakout_confirmation_level = Column(Float)
+    breakdown_confirmation_level = Column(Float)
+    
+    # Pattern specific data
+    pattern_data = Column(JSON)  # Store pattern-specific metrics
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

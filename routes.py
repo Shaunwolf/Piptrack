@@ -1,12 +1,13 @@
 from flask import render_template, request, jsonify, redirect, url_for, flash
 from app import app, db
-from models import Stock, TradeJournal, ForecastPath, AIAnalysis
+from models import Stock, TradeJournal, ForecastPath, AIAnalysis, PatternEvolution
 from stock_scanner import StockScanner
 from forecasting_engine import ForecastingEngine
 from ai_coach import AICoach
 from confidence_scorer import ConfidenceScorer
 from google_sheets_integration import GoogleSheetsIntegration
 from pdf_generator import PDFGenerator
+from pattern_evolution_tracker import PatternEvolutionTracker
 import json
 import logging
 
@@ -17,6 +18,7 @@ ai_coach = AICoach()
 confidence_scorer = ConfidenceScorer()
 sheets_integration = GoogleSheetsIntegration()
 pdf_generator = PDFGenerator()
+pattern_tracker = PatternEvolutionTracker()
 
 @app.route('/')
 def index():
