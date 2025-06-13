@@ -7,9 +7,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand:wght@400&family=Gloria+Hallelujah&family=Indie+Flower&family=Caveat:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-/* Realistic Notebook Paper Theme */
-body {
-    background-color: #FAFAF3;
+/* Realistic Notebook Paper Theme - Override base template */
+body.journal-page {
+    background-color: #FAFAF3 !important;
     background-image: 
         repeating-linear-gradient(
             transparent,
@@ -23,9 +23,10 @@ body {
             #F28B82 78px,
             #F28B82 80px,
             transparent 80px
-        );
+        ) !important;
     min-height: 100vh;
-    font-family: 'Patrick Hand', cursive;
+    font-family: 'Patrick Hand', cursive !important;
+    color: #1e3a8a !important;
 }
 
 .journal-container {
@@ -640,6 +641,9 @@ let currentTheme = 'bubblegum';
 
 // Initialize journal
 document.addEventListener('DOMContentLoaded', function() {
+    // Apply notebook paper styling to body
+    document.body.classList.add('journal-page');
+    
     initializeJournal();
     setupStickerDragDrop();
     setupMoodSelector();
@@ -655,7 +659,8 @@ function setCurrentDate() {
 }
 
 function initializeJournal() {
-    console.log('✨ Trading Journal initialized with Lisa Frank vibes!');
+    console.log('✨ Trading Journal initialized with notebook paper styling!');
+    console.log('Body classes:', document.body.className);
     loadSavedEntry();
 }
 
@@ -771,8 +776,8 @@ function switchTheme(theme) {
     
     if (theme === 'neon') {
         // Bright neon notebook paper
-        body.style.backgroundColor = '#000015';
-        body.style.backgroundImage = `
+        body.style.setProperty('background-color', '#000015', 'important');
+        body.style.setProperty('background-image', `
             repeating-linear-gradient(
                 transparent,
                 transparent 23px,
@@ -785,11 +790,12 @@ function switchTheme(theme) {
                 #ff00ff 78px,
                 #ff00ff 80px,
                 transparent 80px
-            )`;
+            )`, 'important');
+        body.style.setProperty('color', '#00ffff', 'important');
     } else if (theme === 'bubblegum') {
         // Classic notebook paper (default)
-        body.style.backgroundColor = '#FAFAF3';
-        body.style.backgroundImage = `
+        body.style.setProperty('background-color', '#FAFAF3', 'important');
+        body.style.setProperty('background-image', `
             repeating-linear-gradient(
                 transparent,
                 transparent 23px,
@@ -802,11 +808,12 @@ function switchTheme(theme) {
                 #F28B82 78px,
                 #F28B82 80px,
                 transparent 80px
-            )`;
+            )`, 'important');
+        body.style.setProperty('color', '#1e3a8a', 'important');
     } else if (theme === 'arcade') {
         // Dark mode notebook
-        body.style.backgroundColor = '#1a1a1a';
-        body.style.backgroundImage = `
+        body.style.setProperty('background-color', '#1a1a1a', 'important');
+        body.style.setProperty('background-image', `
             repeating-linear-gradient(
                 transparent,
                 transparent 23px,
@@ -819,8 +826,11 @@ function switchTheme(theme) {
                 #666666 78px,
                 #666666 80px,
                 transparent 80px
-            )`;
+            )`, 'important');
+        body.style.setProperty('color', '#cccccc', 'important');
     }
+    
+    console.log(`Switched to ${theme} theme`);
 }
 
 function switchTab(tabName) {
