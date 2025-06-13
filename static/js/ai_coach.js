@@ -115,7 +115,7 @@ function initializeAICoachUI() {
     // Add AI coach buttons to stock cards that don't have them
     document.querySelectorAll('.stock-card').forEach(card => {
         const symbol = card.dataset.symbol;
-        if (symbol && !card.querySelector('.ai-coach-btn')) {
+        if (symbol && !card.querySelector('.ai-coach-btn') && !card.querySelector('[onclick*="getAIReview"]')) {
             addAICoachButton(card, symbol);
         }
     });

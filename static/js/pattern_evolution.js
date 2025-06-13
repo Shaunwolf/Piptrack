@@ -55,8 +55,11 @@ function setupPatternEvolutionListeners() {
                 e.preventDefault();
                 const symbol = target.getAttribute('data-symbol');
                 if (symbol) {
-                showBreakoutTimingAlert(symbol);
+                    showBreakoutTimingAlert(symbol);
+                }
+                return;
             }
+            target = target.parentNode;
         }
     });
     
