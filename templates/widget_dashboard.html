@@ -1,0 +1,402 @@
+{% extends "base.html" %}
+
+{% block title %}Trading Widgets - CandleCast{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
+    <!-- Header -->
+    <div class="bg-gray-800/90 backdrop-blur-sm border-b border-gray-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-white">⚡ Trading Widgets</h1>
+                    <p class="text-gray-300 mt-1">Pre-configured scanner presets for different trading strategies</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="bg-gray-700/50 px-4 py-2 rounded-lg">
+                        <span class="text-gray-300 text-sm">Active Widgets:</span>
+                        <span class="text-blue-400 font-semibold ml-2" id="activeWidgetCount">{{ widgets|length }}</span>
+                    </div>
+                    <button onclick="refreshAllWidgets()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors">
+                        🔄 Refresh All
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Widget Grid -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {% if error %}
+        <div class="bg-red-900/50 border border-red-700 rounded-lg p-6 mb-8">
+            <div class="flex items-center">
+                <div class="text-red-400 mr-3">⚠️</div>
+                <div>
+                    <h3 class="text-red-300 font-semibold">Widget System Error</h3>
+                    <p class="text-red-200 text-sm mt-1">{{ error }}</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="widgetGrid">
+            {% for widget in widgets %}
+            <div class="widget-card bg-gradient-to-br {{ widget.color }} p-1 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105" 
+                 data-widget-id="{{ widget.id }}">
+                <div class="bg-gray-900/95 rounded-lg p-6 h-full">
+                    <!-- Widget Header -->
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="text-3xl">{{ widget.icon }}</div>
+                        <div class="widget-status bg-gray-700 px-2 py-1 rounded text-xs text-gray-300" id="status-{{ widget.id }}">
+                            Ready
+                        </div>
+                    </div>
+                    
+                    <!-- Widget Info -->
+                    <div class="mb-4">
+                        <h3 class="text-white font-bold text-lg mb-2">{{ widget.name }}</h3>
+                        <p class="text-gray-300 text-sm">{{ widget.description }}</p>
+                    </div>
+                    
+                    <!-- Widget Criteria -->
+                    <div class="mb-4">
+                        <div class="text-xs text-gray-400 mb-2">Key Criteria:</div>
+                        <div class="space-y-1">
+                            {% if widget.criteria.min_confidence %}
+                            <div class="flex justify-between text-xs">
+                                <span class="text-gray-400">Min Confidence:</span>
+                                <span class="text-white">{{ widget.criteria.min_confidence }}%</span>
+                            </div>
+                            {% endif %}
+                            {% if widget.criteria.min_volume_spike %}
+                            <div class="flex justify-between text-xs">
+                                <span class="text-gray-400">Volume Spike:</span>
+                                <span class="text-white">{{ widget.criteria.min_volume_spike }}x</span>
+                            </div>
+                            {% endif %}
+                            {% if widget.criteria.price_range %}
+                            <div class="flex justify-between text-xs">
+                                <span class="text-gray-400">Price Range:</span>
+                                <span class="text-white">${{ widget.criteria.price_range[0] }}-${{ widget.criteria.price_range[1] }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Results Container -->
+                    <div class="widget-results mb-4" id="results-{{ widget.id }}">
+                        <div class="text-center text-gray-400 text-sm py-4">
+                            Click "Scan" to find opportunities
+                        </div>
+                    </div>
+                    
+                    <!-- Widget Actions -->
+                    <div class="flex space-x-2">
+                        <button onclick="runWidgetScan('{{ widget.id }}')" 
+                                class="flex-1 bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded text-sm font-semibold transition-colors"
+                                id="scan-btn-{{ widget.id }}">
+                            🔍 Scan
+                        </button>
+                        <button onclick="viewWidgetDetails('{{ widget.id }}')" 
+                                class="bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 px-3 py-2 rounded text-sm font-semibold transition-colors">
+                            📊 Details
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        {% if not widgets %}
+        <div class="text-center py-12">
+            <div class="text-6xl text-gray-600 mb-4">🔧</div>
+            <h3 class="text-xl text-gray-300 mb-2">No Widgets Available</h3>
+            <p class="text-gray-400">Widget system is currently unavailable.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Widget Details Modal -->
+    <div id="widgetModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
+        <div class="bg-gray-900 rounded-lg p-8 max-w-4xl w-full mx-4 max-h-[90vh] overflow-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold text-white" id="modalTitle">Widget Details</h3>
+                <button onclick="closeWidgetModal()" class="text-gray-400 hover:text-white text-2xl">×</button>
+            </div>
+            <div id="modalContent">
+                <!-- Modal content will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Stats -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="bg-gray-800/80 backdrop-blur-sm rounded-xl p-6 border border-gray-700">
+            <h3 class="text-lg font-semibold text-white mb-4">📈 Widget Performance</h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6" id="performanceStats">
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-blue-400" id="totalScans">0</div>
+                    <div class="text-gray-400 text-sm">Total Scans</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-green-400" id="totalOpportunities">0</div>
+                    <div class="text-gray-400 text-sm">Opportunities Found</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-yellow-400" id="avgConfidence">--</div>
+                    <div class="text-gray-400 text-sm">Avg Confidence</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-purple-400" id="activeWidgets">{{ widgets|length }}</div>
+                    <div class="text-gray-400 text-sm">Active Widgets</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let widgetStats = {
+    totalScans: 0,
+    totalOpportunities: 0,
+    totalConfidence: 0,
+    scanCount: 0
+};
+
+async function runWidgetScan(widgetId) {
+    const statusEl = document.getElementById(`status-${widgetId}`);
+    const resultsEl = document.getElementById(`results-${widgetId}`);
+    const scanBtn = document.getElementById(`scan-btn-${widgetId}`);
+    
+    // Update UI state
+    statusEl.textContent = 'Scanning...';
+    statusEl.className = 'widget-status bg-yellow-600 px-2 py-1 rounded text-xs text-white';
+    resultsEl.innerHTML = '<div class="text-center text-gray-400 text-sm py-4">🔄 Scanning markets...</div>';
+    scanBtn.disabled = true;
+    scanBtn.textContent = '⏳ Scanning...';
+    
+    try {
+        const response = await fetch(`/api/widgets/${widgetId}/scan?limit=5`);
+        const data = await response.json();
+        
+        if (data.success) {
+            displayWidgetResults(widgetId, data);
+            statusEl.textContent = `Found ${data.total_found}`;
+            statusEl.className = 'widget-status bg-green-600 px-2 py-1 rounded text-xs text-white';
+            
+            // Update stats
+            updatePerformanceStats(data);
+        } else {
+            statusEl.textContent = 'Error';
+            statusEl.className = 'widget-status bg-red-600 px-2 py-1 rounded text-xs text-white';
+            resultsEl.innerHTML = `<div class="text-center text-red-400 text-sm py-4">Error: ${data.error}</div>`;
+        }
+    } catch (error) {
+        console.error('Scan error:', error);
+        statusEl.textContent = 'Failed';
+        statusEl.className = 'widget-status bg-red-600 px-2 py-1 rounded text-xs text-white';
+        resultsEl.innerHTML = '<div class="text-center text-red-400 text-sm py-4">Scan failed</div>';
+    } finally {
+        scanBtn.disabled = false;
+        scanBtn.textContent = '🔍 Scan';
+    }
+}
+
+function displayWidgetResults(widgetId, data) {
+    const resultsEl = document.getElementById(`results-${widgetId}`);
+    const results = data.results || [];
+    
+    if (results.length === 0) {
+        resultsEl.innerHTML = '<div class="text-center text-gray-400 text-sm py-4">No opportunities found</div>';
+        return;
+    }
+    
+    const html = results.slice(0, 3).map(stock => `
+        <div class="bg-gray-800/50 rounded p-3 mb-2 border border-gray-700">
+            <div class="flex justify-between items-center">
+                <div>
+                    <div class="font-semibold text-white">${stock.symbol}</div>
+                    <div class="text-gray-300 text-sm">$${stock.price?.toFixed(2)}</div>
+                </div>
+                <div class="text-right">
+                    <div class="font-bold ${getConfidenceColor(stock.widget_score || stock.confidence_score)}">
+                        ${(stock.widget_score || stock.confidence_score)?.toFixed(0)}%
+                    </div>
+                    <div class="text-xs text-gray-400">${stock.volume_spike?.toFixed(1)}x vol</div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+    
+    const moreCount = results.length - 3;
+    const moreText = moreCount > 0 ? `<div class="text-center text-blue-400 text-xs mt-2">+${moreCount} more</div>` : '';
+    
+    resultsEl.innerHTML = html + moreText;
+}
+
+function getConfidenceColor(score) {
+    if (score >= 80) return 'text-green-400';
+    if (score >= 60) return 'text-yellow-400';
+    if (score >= 40) return 'text-orange-400';
+    return 'text-red-400';
+}
+
+function updatePerformanceStats(data) {
+    widgetStats.totalScans++;
+    widgetStats.totalOpportunities += data.total_found || 0;
+    
+    if (data.results && data.results.length > 0) {
+        const avgScore = data.results.reduce((sum, stock) => sum + (stock.widget_score || stock.confidence_score || 0), 0) / data.results.length;
+        widgetStats.totalConfidence += avgScore;
+        widgetStats.scanCount++;
+    }
+    
+    // Update display
+    document.getElementById('totalScans').textContent = widgetStats.totalScans;
+    document.getElementById('totalOpportunities').textContent = widgetStats.totalOpportunities;
+    
+    if (widgetStats.scanCount > 0) {
+        const avgConf = widgetStats.totalConfidence / widgetStats.scanCount;
+        document.getElementById('avgConfidence').textContent = avgConf.toFixed(0) + '%';
+    }
+}
+
+async function refreshAllWidgets() {
+    const widgets = document.querySelectorAll('.widget-card');
+    for (const widget of widgets) {
+        const widgetId = widget.dataset.widgetId;
+        await runWidgetScan(widgetId);
+        // Small delay between scans to avoid overwhelming the server
+        await new Promise(resolve => setTimeout(resolve, 500));
+    }
+}
+
+function viewWidgetDetails(widgetId) {
+    const modal = document.getElementById('widgetModal');
+    const title = document.getElementById('modalTitle');
+    const content = document.getElementById('modalContent');
+    
+    // Find widget data
+    const widgets = {{ widgets|tojson }};
+    const widget = widgets.find(w => w.id === widgetId);
+    
+    if (!widget) return;
+    
+    title.textContent = widget.name + ' Details';
+    
+    const html = `
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-gray-800 rounded-lg p-6">
+                <h4 class="text-lg font-semibold text-white mb-4">${widget.icon} ${widget.name}</h4>
+                <p class="text-gray-300 mb-4">${widget.description}</p>
+                
+                <div class="space-y-3">
+                    <h5 class="font-semibold text-white">Strategy Focus:</h5>
+                    <ul class="text-gray-300 text-sm space-y-1">
+                        ${getStrategyPoints(widget.id)}
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="bg-gray-800 rounded-lg p-6">
+                <h4 class="text-lg font-semibold text-white mb-4">📊 Scan Criteria</h4>
+                <div class="space-y-3">
+                    ${Object.entries(widget.criteria).map(([key, value]) => `
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">${formatCriteriaKey(key)}:</span>
+                            <span class="text-white">${formatCriteriaValue(key, value)}</span>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <div class="mt-6">
+                    <button onclick="runWidgetScan('${widgetId}')" 
+                            class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-semibold transition-colors">
+                        🚀 Run This Widget
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    content.innerHTML = html;
+    modal.classList.remove('hidden');
+}
+
+function getStrategyPoints(widgetId) {
+    const strategies = {
+        'momentum_rockets': `
+            <li>• Targets high-momentum breakouts with explosive volume</li>
+            <li>• Focuses on stocks in strong uptrends</li>
+            <li>• Best for momentum traders and breakout plays</li>
+        `,
+        'reversal_hunters': `
+            <li>• Identifies oversold stocks showing reversal signals</li>
+            <li>• Looks for volume confirmation on potential bounces</li>
+            <li>• Ideal for contrarian and swing trading strategies</li>
+        `,
+        'gap_masters': `
+            <li>• Captures pre-market and opening gap opportunities</li>
+            <li>• Focuses on high-volume gap plays</li>
+            <li>• Perfect for day traders and gap trading strategies</li>
+        `,
+        'pattern_perfection': `
+            <li>• Finds technical patterns at optimal entry points</li>
+            <li>• Uses pattern completion and breakout probability</li>
+            <li>• Great for technical analysis enthusiasts</li>
+        `
+    };
+    
+    return strategies[widgetId] || '<li>• General market opportunities</li>';
+}
+
+function formatCriteriaKey(key) {
+    const keyMap = {
+        'min_confidence': 'Min Confidence',
+        'min_volume_spike': 'Min Volume Spike',
+        'price_range': 'Price Range',
+        'rsi_range': 'RSI Range',
+        'pattern_types': 'Pattern Types',
+        'trend_filter': 'Trend Filter'
+    };
+    return keyMap[key] || key.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+}
+
+function formatCriteriaValue(key, value) {
+    if (key === 'price_range' || key === 'rsi_range') {
+        return `$${value[0]} - $${value[1]}`;
+    }
+    if (key === 'min_confidence') {
+        return value + '%';
+    }
+    if (key === 'min_volume_spike') {
+        return value + 'x';
+    }
+    if (Array.isArray(value)) {
+        return value.join(', ');
+    }
+    return value.toString();
+}
+
+function closeWidgetModal() {
+    document.getElementById('widgetModal').classList.add('hidden');
+}
+
+// Add sparkle animation to widget cards
+document.addEventListener('DOMContentLoaded', function() {
+    const cards = document.querySelectorAll('.widget-card');
+    cards.forEach((card, index) => {
+        setTimeout(() => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            card.style.transition = 'all 0.5s ease';
+            
+            setTimeout(() => {
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, 100);
+        }, index * 100);
+    });
+});
+</script>
+{% endblock %}

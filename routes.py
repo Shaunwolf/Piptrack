@@ -25,12 +25,15 @@ pattern_tracker = PatternEvolutionTracker()
 try:
     from enhanced_journal import EnhancedTradingJournal
     from multi_timeframe_analyzer import MultiTimeframeAnalyzer
+    from scanner_widgets import ScannerWidgets
     enhanced_journal = EnhancedTradingJournal()
     mtf_analyzer = MultiTimeframeAnalyzer()
+    scanner_widgets = ScannerWidgets()
 except ImportError as e:
     logging.warning(f"Enhanced components not available: {e}")
     enhanced_journal = None
     mtf_analyzer = None
+    scanner_widgets = None
 
 @app.route('/')
 def index():
@@ -608,3 +611,49 @@ def pattern_dashboard():
     except Exception as e:
         logging.error(f"Error loading pattern dashboard: {e}")
         return redirect(url_for('index'))
+
+# Scanner Widget Routes
+
+@app.route('/widgets')
+def widget_dashboard():
+    """Scanner widget dashboard page"""
+    try:
+        if scanner_widgets is None:
+            return render_template('widget_dashboard.html', widgets=[], error="Widget system not available")
+        
+        widgets = scanner_widgets.get_widget_presets()
+        return render_template('widget_dashboard.html', widgets=widgets)
+        
+    except Exception as e:
+        logging.error(f"Error loading widget dashboard: {e}")
+        return render_template('widget_dashboard.html', widgets=[], error=str(e))
+
+@app.route('/api/widgets')
+def get_widget_presets():
+    """Get all widget presets"""
+    try:
+        if scanner_widgets is None:
+            return jsonify({'success': False, 'error': 'Widget system not available'})
+        
+        widgets = scanner_widgets.get_widget_presets()
+        return jsonify({'success': True, 'widgets': widgets})
+        
+    except Exception as e:
+        logging.error(f"Error getting widget presets: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/widgets/<widget_id>/scan')
+def run_widget_scan(widget_id):
+    """Run a specific widget scan"""
+    try:
+        if scanner_widgets is None:
+            return jsonify({'success': False, 'error': 'Widget system not available'})
+        
+        limit = request.args.get('limit', 10, type=int)
+        result = scanner_widgets.run_widget_scan(widget_id, limit)
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        logging.error(f"Error running widget scan {widget_id}: {e}")
+        return jsonify({'success': False, 'error': str(e)})
