@@ -452,19 +452,15 @@
 
     <!-- Main Journal Card -->
     <div class="journal-card" id="journalPage">
-        <!-- Corner Doodles -->
-        <div class="doodle top-left">✨</div>
-        <div class="doodle top-right">💫</div>
-        <div class="doodle bottom-left">💡</div>
-        <div class="doodle bottom-right">🌟</div>
+
         
         <div style="position: relative;">
             
             <!-- Journal Header -->
-            <div style="text-align: center; margin-bottom: 40px;">
-                <h1 class="handwritten-title">My Trading Journal ✨</h1>
+            <div style="text-align: center; margin-bottom: 30px;">
+                <h1 class="handwritten-title">My Trading Journal</h1>
                 <div class="handwritten-text" style="font-size: 1.2rem; color: #8b5cf6;">
-                    Today is <span id="currentDate">loading...</span> 🌟
+                    <span id="currentDate">loading...</span>
                 </div>
             </div>
 
@@ -481,8 +477,8 @@
                 <div style="background: rgba(255, 255, 255, 0.9); border-radius: 20px; padding: 30px; margin: 20px 0; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);">
                     
                     <!-- Mood Tracker -->
-                    <div style="text-align: center; margin-bottom: 30px;">
-                        <h3 class="handwritten-heading" style="font-size: 1.8rem; margin-bottom: 15px;">How did today feel? 💭</h3>
+                    <div style="text-align: center; margin-bottom: 25px;">
+                        <h3 class="handwritten-heading" style="font-size: 1.4rem; margin-bottom: 15px;">How did today feel?</h3>
                         <div class="mood-selector">
                             <div class="mood-emoji" data-mood="confident" title="Confident">😎</div>
                             <div class="mood-emoji" data-mood="excited" title="Excited">🚀</div>
@@ -505,8 +501,8 @@
                     </div>
 
                     <!-- Quick Stats Grid -->
-                    <div style="margin: 30px 0;">
-                        <h4 class="handwritten-heading" style="margin-bottom: 15px;">Quick Stats ⚡</h4>
+                    <div style="margin: 25px 0;">
+                        <h4 class="handwritten-heading" style="margin-bottom: 15px;">Quick Stats</h4>
                         <div class="quick-stats">
                             <div>
                                 <label class="handwritten-text" style="display: block; margin-bottom: 5px;"># of Trades</label>
@@ -524,35 +520,35 @@
                     </div>
 
                     <!-- Emotion + Behavior Tags -->
-                    <div style="margin: 30px 0;">
-                        <h4 class="handwritten-heading" style="margin-bottom: 15px;">Today's Trading Behavior 🎭</h4>
+                    <div style="margin: 25px 0;">
+                        <h4 class="handwritten-heading" style="margin-bottom: 15px;">Today's Trading Behavior</h4>
                         <div class="tag-group">
-                            <button class="tag-btn" data-tag="hesitated">😬 Hesitated</button>
-                            <button class="tag-btn" data-tag="revenge">😤 Revenge Traded</button>
-                            <button class="tag-btn" data-tag="pattern">💡 Spotted New Pattern</button>
-                            <button class="tag-btn" data-tag="plan">📈 Followed Plan</button>
-                            <button class="tag-btn" data-tag="disciplined">🧘‍♂️ Stayed Disciplined</button>
-                            <button class="tag-btn" data-tag="fomo">😵‍💫 FOMO Entry</button>
+                            <button class="tag-btn" data-tag="hesitated">Hesitated</button>
+                            <button class="tag-btn" data-tag="revenge">Revenge Traded</button>
+                            <button class="tag-btn" data-tag="pattern">Spotted New Pattern</button>
+                            <button class="tag-btn" data-tag="plan">Followed Plan</button>
+                            <button class="tag-btn" data-tag="disciplined">Stayed Disciplined</button>
+                            <button class="tag-btn" data-tag="fomo">FOMO Entry</button>
                         </div>
                     </div>
 
                     <!-- Trade Highlights -->
-                    <div style="margin: 30px 0;">
-                        <h4 class="handwritten-heading" style="margin-bottom: 15px;">What stood out about today's trades? ✨</h4>
+                    <div style="margin: 25px 0;">
+                        <h4 class="handwritten-heading" style="margin-bottom: 15px;">What stood out about today's trades?</h4>
                         <textarea class="rich-text-area" id="tradeHighlights" 
-                                  placeholder="Spill the tea... what happened today? Any epic wins or learning moments? 📝"></textarea>
+                                  placeholder="What happened today? Any epic wins or learning moments?"></textarea>
                     </div>
 
                     <!-- Key Learnings -->
-                    <div style="margin: 30px 0;">
-                        <h4 class="handwritten-heading" style="margin-bottom: 15px;">Key Learnings 🔑</h4>
-                        <div style="background: linear-gradient(45deg, rgba(255, 105, 180, 0.1), rgba(139, 92, 246, 0.1)); border-radius: 15px; padding: 20px; margin-bottom: 15px;">
+                    <div style="margin: 25px 0;">
+                        <h4 class="handwritten-heading" style="margin-bottom: 15px;">Key Learnings</h4>
+                        <div style="background: rgba(139, 92, 246, 0.1); border-radius: 8px; padding: 15px; margin-bottom: 15px;">
                             <div class="handwritten-text" style="font-style: italic; color: #8b5cf6;">
-                                💭 AI Prompt: "What would a better version of you have done differently?"
+                                AI Prompt: "What would a better version of you have done differently?"
                             </div>
                         </div>
                         <textarea class="rich-text-area" id="keyLearnings" 
-                                  placeholder="Reflect on today's performance... what insights did you gain? 🌱"></textarea>
+                                  placeholder="Reflect on today's performance... what insights did you gain?"></textarea>
                     </div>
 
                 </div>
@@ -561,11 +557,11 @@
             <!-- Wins Tab -->
             <div class="tab-content" id="wins-tab" style="display: none;">
                 <div style="background: rgba(255, 255, 255, 0.9); border-radius: 20px; padding: 30px; margin: 20px 0;">
-                    <h2 class="handwritten-heading" style="font-size: 2rem; color: #10b981; text-align: center; margin-bottom: 30px;">🏆 Victory Collection 🏆</h2>
+                    <h2 class="handwritten-heading" style="font-size: 1.8rem; color: #10b981; text-align: center; margin-bottom: 25px;">Victory Collection</h2>
                     
                     <!-- Best Trade of the Day -->
-                    <div style="margin: 30px 0;">
-                        <h4 class="handwritten-heading" style="margin-bottom: 15px;">Best Trade Today ⭐</h4>
+                    <div style="margin: 25px 0;">
+                        <h4 class="handwritten-heading" style="margin-bottom: 15px;">Best Trade Today</h4>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
                             <div>
                                 <label class="handwritten-text" style="display: block; margin-bottom: 5px;">Symbol</label>
@@ -577,27 +573,27 @@
                             </div>
                         </div>
                         <textarea class="rich-text-area" id="bestTradeStory" 
-                                  placeholder="What made this trade special? Tell the story of your victory! 🎉"></textarea>
+                                  placeholder="What made this trade special? Tell the story of your victory!"></textarea>
                     </div>
 
                     <!-- Achievements -->
-                    <div style="margin: 30px 0;">
-                        <h4 class="handwritten-heading" style="margin-bottom: 15px;">Today's Achievements 🎯</h4>
+                    <div style="margin: 25px 0;">
+                        <h4 class="handwritten-heading" style="margin-bottom: 15px;">Today's Achievements</h4>
                         <div class="tag-group">
-                            <button class="tag-btn achievement-tag" data-achievement="streak">🔥 Win Streak</button>
-                            <button class="tag-btn achievement-tag" data-achievement="discipline">🧘‍♂️ Perfect Discipline</button>
-                            <button class="tag-btn achievement-tag" data-achievement="patience">⏰ Perfect Timing</button>
-                            <button class="tag-btn achievement-tag" data-achievement="pattern">👁️ Spotted Great Pattern</button>
-                            <button class="tag-btn achievement-tag" data-achievement="risk">⚖️ Perfect Risk Management</button>
-                            <button class="tag-btn achievement-tag" data-achievement="profit">💰 Hit Profit Target</button>
+                            <button class="tag-btn achievement-tag" data-achievement="streak">Win Streak</button>
+                            <button class="tag-btn achievement-tag" data-achievement="discipline">Perfect Discipline</button>
+                            <button class="tag-btn achievement-tag" data-achievement="patience">Perfect Timing</button>
+                            <button class="tag-btn achievement-tag" data-achievement="pattern">Spotted Great Pattern</button>
+                            <button class="tag-btn achievement-tag" data-achievement="risk">Perfect Risk Management</button>
+                            <button class="tag-btn achievement-tag" data-achievement="profit">Hit Profit Target</button>
                         </div>
                     </div>
 
                     <!-- Celebration Notes -->
-                    <div style="margin: 30px 0;">
-                        <h4 class="handwritten-heading" style="margin-bottom: 15px;">Celebration Notes 🎊</h4>
+                    <div style="margin: 25px 0;">
+                        <h4 class="handwritten-heading" style="margin-bottom: 15px;">Celebration Notes</h4>
                         <textarea class="rich-text-area" id="celebrationNotes" 
-                                  placeholder="What are you proud of today? Celebrate your wins, big and small! 🌟"></textarea>
+                                  placeholder="What are you proud of today? Celebrate your wins, big and small!"></textarea>
                     </div>
                 </div>
             </div>
@@ -605,38 +601,38 @@
             <!-- Lessons Tab -->
             <div class="tab-content" id="losses-tab" style="display: none;">
                 <div style="background: rgba(255, 255, 255, 0.9); border-radius: 20px; padding: 30px; margin: 20px 0;">
-                    <h2 class="handwritten-heading" style="font-size: 2rem; color: #f59e0b; text-align: center; margin-bottom: 30px;">📚 Learning Library 📚</h2>
+                    <h2 class="handwritten-heading" style="font-size: 1.8rem; color: #f59e0b; text-align: center; margin-bottom: 25px;">Learning Library</h2>
                     
                     <!-- Mistake Analysis -->
-                    <div style="margin: 30px 0;">
-                        <h4 class="handwritten-heading" style="margin-bottom: 15px;">What Went Wrong? 🔍</h4>
+                    <div style="margin: 25px 0;">
+                        <h4 class="handwritten-heading" style="margin-bottom: 15px;">What Went Wrong?</h4>
                         <div class="tag-group">
-                            <button class="tag-btn mistake-tag" data-mistake="entry">🚪 Poor Entry</button>
-                            <button class="tag-btn mistake-tag" data-mistake="exit">🚶‍♂️ Poor Exit</button>
-                            <button class="tag-btn mistake-tag" data-mistake="size">📏 Wrong Size</button>
-                            <button class="tag-btn mistake-tag" data-mistake="fomo">😵‍💫 FOMO Trade</button>
-                            <button class="tag-btn mistake-tag" data-mistake="revenge">😤 Revenge Trade</button>
-                            <button class="tag-btn mistake-tag" data-mistake="plan">📋 Ignored Plan</button>
+                            <button class="tag-btn mistake-tag" data-mistake="entry">Poor Entry</button>
+                            <button class="tag-btn mistake-tag" data-mistake="exit">Poor Exit</button>
+                            <button class="tag-btn mistake-tag" data-mistake="size">Wrong Size</button>
+                            <button class="tag-btn mistake-tag" data-mistake="fomo">FOMO Trade</button>
+                            <button class="tag-btn mistake-tag" data-mistake="revenge">Revenge Trade</button>
+                            <button class="tag-btn mistake-tag" data-mistake="plan">Ignored Plan</button>
                         </div>
                     </div>
 
                     <!-- Lesson Learned -->
-                    <div style="margin: 30px 0;">
-                        <h4 class="handwritten-heading" style="margin-bottom: 15px;">Key Lesson Learned 💡</h4>
-                        <div style="background: linear-gradient(45deg, rgba(245, 158, 11, 0.1), rgba(139, 92, 246, 0.1)); border-radius: 15px; padding: 20px; margin-bottom: 15px;">
+                    <div style="margin: 25px 0;">
+                        <h4 class="handwritten-heading" style="margin-bottom: 15px;">Key Lesson Learned</h4>
+                        <div style="background: rgba(245, 158, 11, 0.1); border-radius: 8px; padding: 15px; margin-bottom: 15px;">
                             <div class="handwritten-text" style="font-style: italic; color: #f59e0b;">
-                                🧠 Remember: Every loss is a lesson in disguise. What did the market teach you today?
+                                Remember: Every loss is a lesson in disguise. What did the market teach you today?
                             </div>
                         </div>
                         <textarea class="rich-text-area" id="lessonLearned" 
-                                  placeholder="What specific lesson did you learn? How will you apply this going forward? 📖"></textarea>
+                                  placeholder="What specific lesson did you learn? How will you apply this going forward?"></textarea>
                     </div>
 
                     <!-- Prevention Strategy -->
-                    <div style="margin: 30px 0;">
-                        <h4 class="handwritten-heading" style="margin-bottom: 15px;">How to Prevent This Next Time 🛡️</h4>
+                    <div style="margin: 25px 0;">
+                        <h4 class="handwritten-heading" style="margin-bottom: 15px;">How to Prevent This Next Time</h4>
                         <textarea class="rich-text-area" id="preventionStrategy" 
-                                  placeholder="What specific steps will you take to avoid this mistake in the future? 🎯"></textarea>
+                                  placeholder="What specific steps will you take to avoid this mistake in the future?"></textarea>
                     </div>
                 </div>
             </div>
@@ -644,53 +640,53 @@
             <!-- Ideas Tab -->
             <div class="tab-content" id="ideas-tab" style="display: none;">
                 <div style="background: rgba(255, 255, 255, 0.9); border-radius: 20px; padding: 30px; margin: 20px 0;">
-                    <h2 class="handwritten-heading" style="font-size: 2rem; color: #8b5cf6; text-align: center; margin-bottom: 30px;">💡 Bright Ideas 💡</h2>
+                    <h2 class="handwritten-heading" style="font-size: 1.8rem; color: #8b5cf6; text-align: center; margin-bottom: 25px;">Bright Ideas</h2>
                     
                     <!-- New Pattern Spotted -->
-                    <div style="margin: 30px 0;">
-                        <h4 class="handwritten-heading" style="margin-bottom: 15px;">New Patterns Discovered 🔍</h4>
+                    <div style="margin: 25px 0;">
+                        <h4 class="handwritten-heading" style="margin-bottom: 15px;">New Patterns Discovered</h4>
                         <textarea class="rich-text-area" id="newPatterns" 
-                                  placeholder="Did you notice any new chart patterns or market behaviors today? Document them here! 📈"></textarea>
+                                  placeholder="Did you notice any new chart patterns or market behaviors today? Document them here!"></textarea>
                     </div>
 
                     <!-- Strategy Ideas -->
-                    <div style="margin: 30px 0;">
-                        <h4 class="handwritten-heading" style="margin-bottom: 15px;">Strategy Improvements 🚀</h4>
+                    <div style="margin: 25px 0;">
+                        <h4 class="handwritten-heading" style="margin-bottom: 15px;">Strategy Improvements</h4>
                         <textarea class="rich-text-area" id="strategyIdeas" 
-                                  placeholder="What improvements can you make to your trading strategy? Any new approaches to test? 💭"></textarea>
+                                  placeholder="What improvements can you make to your trading strategy? Any new approaches to test?"></textarea>
                     </div>
 
                     <!-- Market Observations -->
-                    <div style="margin: 30px 0;">
-                        <h4 class="handwritten-heading" style="margin-bottom: 15px;">Market Observations 👁️</h4>
+                    <div style="margin: 25px 0;">
+                        <h4 class="handwritten-heading" style="margin-bottom: 15px;">Market Observations</h4>
                         <textarea class="rich-text-area" id="marketObservations" 
-                                  placeholder="What did you notice about market conditions today? Any insights about sector rotation, volatility, or trends? 🌊"></textarea>
+                                  placeholder="What did you notice about market conditions today? Any insights about sector rotation, volatility, or trends?"></textarea>
                     </div>
 
                     <!-- Tomorrow's Plan -->
-                    <div style="margin: 30px 0;">
-                        <h4 class="handwritten-heading" style="margin-bottom: 15px;">Tomorrow's Game Plan 📋</h4>
-                        <div style="background: linear-gradient(45deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1)); border-radius: 15px; padding: 20px; margin-bottom: 15px;">
+                    <div style="margin: 25px 0;">
+                        <h4 class="handwritten-heading" style="margin-bottom: 15px;">Tomorrow's Game Plan</h4>
+                        <div style="background: rgba(139, 92, 246, 0.1); border-radius: 8px; padding: 15px; margin-bottom: 15px;">
                             <div class="handwritten-text" style="font-style: italic; color: #8b5cf6;">
-                                ⭐ Pro Tip: End each day by planning the next. What will you focus on tomorrow?
+                                Pro Tip: End each day by planning the next. What will you focus on tomorrow?
                             </div>
                         </div>
                         <textarea class="rich-text-area" id="tomorrowPlan" 
-                                  placeholder="What are your specific goals and focus areas for tomorrow's trading session? 🎯"></textarea>
+                                  placeholder="What are your specific goals and focus areas for tomorrow's trading session?"></textarea>
                     </div>
                 </div>
             </div>
 
             <!-- Bottom Action Bar -->
-            <div style="display: flex; justify-content: center; gap: 20px; margin-top: 40px; flex-wrap: wrap;">
+            <div style="display: flex; justify-content: center; gap: 20px; margin-top: 30px; flex-wrap: wrap;">
                 <button class="save-btn" id="saveBtn" onclick="saveJournalEntry()">
-                    💾 Save Entry
+                    Save Entry
                 </button>
                 <button class="voice-btn" onclick="toggleVoiceJournal()">
-                    🎤 Voice Journal
+                    Voice Journal
                 </button>
                 <button class="voice-btn" onclick="viewPastPatterns()">
-                    📊 View Past Patterns
+                    View Past Patterns
                 </button>
             </div>
 
