@@ -824,58 +824,74 @@ window.testAIFunction = function() {
 
 // Render historical comparison chart
 function renderHistoricalChart(chartData) {
+    console.log('renderHistoricalChart called with data:', chartData);
+    
     if (!chartData || !chartData.dates || !chartData.prices) {
-        return '';
+        console.log('Missing required chart data:', {
+            hasData: !!chartData,
+            hasDates: chartData && !!chartData.dates,
+            hasPrices: chartData && !!chartData.prices
+        });
+        return '<div class="mt-4 text-gray-400 text-sm">No historical chart data available</div>';
     }
     
     const chartId = `historicalChart_${Date.now()}`;
+    console.log('Creating chart with ID:', chartId);
     
     // Create chart container
     const chartHtml = `
         <div class="mt-4">
-            <h6 class="text-sm font-medium text-gray-400 mb-2">${chartData.title}</h6>
-            <div id="${chartId}" class="h-64 bg-gray-800 rounded-lg"></div>
+            <h6 class="text-sm font-medium text-gray-400 mb-2">Historical Pattern Comparison</h6>
+            <div id="${chartId}" class="h-64 bg-gray-800 rounded-lg border border-gray-600"></div>
         </div>
     `;
     
     // Render chart after DOM update
     setTimeout(() => {
+        console.log('Rendering chart for element:', chartId);
         renderHistoricalPlotlyChart(chartId, chartData);
-    }, 100);
+    }, 200);
     
     return chartHtml;
 }
 
 // Render the actual Plotly chart
 function renderHistoricalPlotlyChart(chartId, chartData) {
+    console.log('renderHistoricalPlotlyChart called with:', chartId, chartData);
+    
     const element = document.getElementById(chartId);
-    if (!element) return;
+    if (!element) {
+        console.error('Chart element not found:', chartId);
+        return;
+    }
+    
+    console.log('Chart element found, preparing data...');
     
     const trace = {
         x: chartData.dates,
         y: chartData.prices,
         type: 'scatter',
         mode: 'lines',
-        name: chartData.symbol,
+        name: chartData.symbol || 'Historical Pattern',
         line: {
             color: '#3b82f6',
             width: 2
-        },
-        fill: 'tonexty',
-        fillcolor: 'rgba(59, 130, 246, 0.1)'
+        }
     };
     
     const layout = {
         title: {
-            text: chartData.title,
+            text: 'Historical Pattern Comparison',
             font: { color: '#d1d5db', size: 14 }
         },
-        paper_bgcolor: 'rgba(0,0,0,0)',
-        plot_bgcolor: 'rgba(0,0,0,0)',
+        paper_bgcolor: '#1f2937',
+        plot_bgcolor: '#1f2937',
         xaxis: {
             gridcolor: '#374151',
             color: '#9ca3af',
-            tickfont: { size: 10 }
+            tickfont: { size: 10 },
+            showline: true,
+            linecolor: '#374151'
         },
         yaxis: {
             gridcolor: '#374151',
