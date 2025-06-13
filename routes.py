@@ -27,16 +27,19 @@ try:
     from multi_timeframe_analyzer import MultiTimeframeAnalyzer
     from scanner_widgets import ScannerWidgets
     from physics_market_engine import PhysicsMarketEngine
+    from animated_sparklines import AnimatedSparklines
     enhanced_journal = EnhancedTradingJournal()
     mtf_analyzer = MultiTimeframeAnalyzer()
     scanner_widgets = ScannerWidgets()
     physics_engine = PhysicsMarketEngine()
+    sparklines_engine = AnimatedSparklines()
 except ImportError as e:
     logging.warning(f"Enhanced components not available: {e}")
     enhanced_journal = None
     mtf_analyzer = None
     scanner_widgets = None
     physics_engine = None
+    sparklines_engine = None
 
 @app.route('/')
 def index():
@@ -521,31 +524,71 @@ def all_pattern_evolutions():
 
 @app.route('/api/sparkline/<symbol>')
 def get_sparkline_data(symbol):
-    """Get sparkline data for a stock symbol"""
+    """Get enhanced animated sparkline data for a stock symbol"""
     try:
-        import yfinance as yf
-        from datetime import datetime, timedelta
-        
-        # Get 7 days of price data
-        ticker = yf.Ticker(symbol)
-        hist = ticker.history(period="7d", interval="1d")
-        
-        if hist.empty:
-            return jsonify({
-                'error': 'No data available',
-                'symbol': symbol
-            }), 404
-        
-        # Extract price data
-        prices = hist['Close'].tolist()
-        dates = [date.strftime('%Y-%m-%d') for date in hist.index]
-        
-        # Calculate change percentage
-        if len(prices) >= 2:
-            change = ((prices[-1] - prices[0]) / prices[0]) * 100
+        if sparklines_engine is None:
+            # Fallback to basic implementation
+            import yfinance as yf
+            from datetime import datetime, timedelta
+            
+            ticker = yf.Ticker(symbol)
+            hist = ticker.history(period="7d", interval="1d")
+            
+            if hist.empty:
+                return jsonify({
+                    'error': 'No data available',
+                    'symbol': symbol
+                }), 404
+            
+            prices = hist['Close'].tolist()
+            dates = [date.strftime('%Y-%m-%d') for date in hist.index]
+            
+            if len(prices) >= 2:
+                change = ((prices[-1] - prices[0]) / prices[0]) * 100
+            else:
+                change = 0
         else:
-            change = 0
+            # Use enhanced animated sparklines engine
+            period = request.args.get('period', '1d')
+            interval = request.args.get('interval', '5m')
+            
+            sparkline_data = sparklines_engine.generate_sparkline_data(symbol, period, interval)
+            
+            if 'error' in sparkline_data:
+                return jsonify({
+                    'error': sparkline_data['error'],
+                    'symbol': symbol
+                }), 404
+            
+            # Convert to format expected by existing frontend
+            prices = sparkline_data['prices']
+            dates = [pd.Timestamp(ts, unit='ms').strftime('%Y-%m-%d') for ts in sparkline_data['timestamps']]
+            change = sparkline_data['price_change_pct']
+            
+            # Add enhanced sparkline features to response
+            response = {
+                'symbol': symbol,
+                'prices': prices,
+                'dates': dates,
+                'change': round(change, 2),
+                'high': round(max(prices), 2),
+                'low': round(min(prices), 2)
+            }
+            
+            # Include enhanced animated features if available
+            if 'animation_frames' in sparkline_data:
+                response.update({
+                    'animation_frames': sparkline_data['animation_frames'],
+                    'volatility_bands': sparkline_data.get('volatility_bands', {}),
+                    'price_events': sparkline_data.get('price_events', []),
+                    'momentum_indicators': sparkline_data.get('momentum_indicators', {}),
+                    'candle_guy_mood': sparkline_data.get('candle_guy_mood', 'neutral'),
+                    'animation_speed': sparkline_data.get('animation_speed', 1.0)
+                })
+            
+            return jsonify(response)
         
+        # Basic fallback response format
         return jsonify({
             'symbol': symbol,
             'prices': prices,
@@ -756,4 +799,76 @@ def quantum_tunneling_analysis(symbol):
         
     except Exception as e:
         logging.error(f"Error in quantum tunneling analysis for {symbol}: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+# Enhanced Animated Sparklines Routes
+
+@app.route('/api/sparkline/summary/<symbol>')
+def get_sparkline_summary(symbol):
+    """Get condensed sparkline summary for dashboard widgets"""
+    try:
+        if sparklines_engine is None:
+            return jsonify({'success': False, 'error': 'Sparklines engine not available'})
+        
+        summary = sparklines_engine.get_sparkline_summary(symbol)
+        
+        if 'error' in summary:
+            return jsonify({'success': False, 'error': summary['error']})
+        
+        return jsonify({'success': True, 'summary': summary})
+        
+    except Exception as e:
+        logging.error(f"Error getting sparkline summary for {symbol}: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/sparklines/multiple')
+def get_multiple_sparklines():
+    """Get sparklines for multiple symbols"""
+    try:
+        if sparklines_engine is None:
+            return jsonify({'success': False, 'error': 'Sparklines engine not available'})
+        
+        symbols = request.args.get('symbols', '').split(',')
+        symbols = [s.strip().upper() for s in symbols if s.strip()]
+        
+        if not symbols:
+            return jsonify({'success': False, 'error': 'No symbols provided'})
+        
+        period = request.args.get('period', '1d')
+        interval = request.args.get('interval', '15m')
+        
+        sparklines_data = sparklines_engine.generate_multiple_sparklines(symbols, period, interval)
+        
+        return jsonify({'success': True, 'data': sparklines_data})
+        
+    except Exception as e:
+        logging.error(f"Error getting multiple sparklines: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/sparklines/cache/stats')
+def get_sparklines_cache_stats():
+    """Get sparklines cache statistics"""
+    try:
+        if sparklines_engine is None:
+            return jsonify({'success': False, 'error': 'Sparklines engine not available'})
+        
+        stats = sparklines_engine.get_cache_stats()
+        return jsonify({'success': True, 'cache_stats': stats})
+        
+    except Exception as e:
+        logging.error(f"Error getting cache stats: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/sparklines/cache/clear', methods=['POST'])
+def clear_sparklines_cache():
+    """Clear sparklines cache"""
+    try:
+        if sparklines_engine is None:
+            return jsonify({'success': False, 'error': 'Sparklines engine not available'})
+        
+        sparklines_engine.clear_cache()
+        return jsonify({'success': True, 'message': 'Cache cleared successfully'})
+        
+    except Exception as e:
+        logging.error(f"Error clearing cache: {e}")
         return jsonify({'success': False, 'error': str(e)})
