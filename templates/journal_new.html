@@ -5,77 +5,99 @@
 {% block head %}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@300;400;700&family=Caveat:wght@400;500;600;700&family=Indie+Flower&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Patrick+Hand:wght@400&family=Gloria+Hallelujah&family=Indie+Flower&family=Caveat:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-/* Lisa Frank + Teen Journal Theme */
+/* Realistic Notebook Paper Theme */
+body {
+    background-color: #FAFAF3;
+    background-image: 
+        linear-gradient(to bottom, #A0C5E8 1px, transparent 1px),
+        linear-gradient(to right, #F28B82 1px, transparent 1px);
+    background-size: 100% 24px, 80px 100%;
+    background-position: 0 0, 0 0;
+    min-height: 100vh;
+    font-family: 'Patrick Hand', cursive;
+}
+
 .journal-container {
-    background: linear-gradient(135deg, #ff6b9d, #c44eb0, #8b5cf6, #06b6d4);
     min-height: 100vh;
     position: relative;
-    overflow-x: hidden;
+    padding-left: 100px; /* Space for ring binding */
 }
 
-.journal-container::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-    animation: float 20s infinite linear;
+/* Ring Binding Holes */
+.ring-holes {
+    position: fixed;
+    left: 16px;
+    top: 60px;
+    z-index: 10;
 }
 
-@keyframes float {
-    0% { transform: translateY(0px) rotate(0deg); }
-    100% { transform: translateY(-60px) rotate(360deg); }
+.hole {
+    width: 16px;
+    height: 16px;
+    background: radial-gradient(circle, #333 30%, #666 70%, #999 100%);
+    border-radius: 50%;
+    margin: 32px 0;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+    transition: transform 0.2s;
 }
 
-/* Notebook Paper Effect */
-.journal-page {
-    background: linear-gradient(to right, #ff69b4 0px, #ff69b4 2px, transparent 2px), 
-                repeating-linear-gradient(transparent, transparent 24px, #ffc0cb 24px, #ffc0cb 26px);
-    background-color: #fff5f8;
-    margin: 20px auto;
-    max-width: 900px;
-    border-radius: 15px;
-    box-shadow: 0 20px 40px rgba(255, 105, 180, 0.3);
+.hole:hover {
+    transform: scale(1.1);
+    cursor: pointer;
+}
+
+/* Journal Card - Translucent overlay on notebook paper */
+.journal-card {
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(2px);
+    border-radius: 12px;
+    padding: 32px;
+    max-width: 800px;
+    margin: 40px auto;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.05);
     position: relative;
-    overflow: hidden;
 }
 
-.journal-page::before {
-    content: '';
+/* Corner Doodles */
+.doodle {
     position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 40px;
-    background: linear-gradient(90deg, #ff1493, #ff69b4);
-    border-radius: 15px 0 0 15px;
+    font-size: 1.5rem;
+    opacity: 0.4;
+    pointer-events: none;
 }
+
+.doodle.top-left { top: 10px; left: 10px; }
+.doodle.top-right { top: 10px; right: 10px; }
+.doodle.bottom-left { bottom: 10px; left: 10px; }
+.doodle.bottom-right { bottom: 10px; right: 10px; }
 
 /* Handwritten Fonts */
 .handwritten-title {
-    font-family: 'Caveat', cursive;
-    font-weight: 700;
-    font-size: 3rem;
-    color: #ff1493;
-    text-shadow: 2px 2px 4px rgba(255, 20, 147, 0.3);
-    transform: rotate(-2deg);
+    font-family: 'Gloria Hallelujah', cursive;
+    font-size: 2.5rem;
+    color: #2563eb;
+    text-decoration: underline;
+    text-decoration-color: #ef4444;
+    text-decoration-thickness: 3px;
+    transform: rotate(-1deg);
+    margin-bottom: 20px;
 }
 
 .handwritten-heading {
-    font-family: 'Kalam', cursive;
-    font-weight: 600;
-    color: #8b5cf6;
+    font-family: 'Patrick Hand', cursive;
+    font-size: 1.4rem;
+    color: #1e40af;
+    margin-bottom: 12px;
+    transform: rotate(-0.5deg);
 }
 
 .handwritten-text {
-    font-family: 'Indie Flower', cursive;
+    font-family: 'Patrick Hand', cursive;
     font-size: 1.1rem;
-    color: #4c1d95;
-    line-height: 26px;
+    color: #1e3a8a;
+    line-height: 24px; /* Match notebook lines */
 }
 
 /* Theme Switcher */
@@ -243,46 +265,46 @@
     transform: scale(1.05);
 }
 
-/* Rich Text Area */
+/* Rich Text Area - Notebook Style */
 .rich-text-area {
     background: transparent;
-    border: 2px dashed #ff69b4;
-    border-radius: 15px;
-    padding: 20px;
-    min-height: 150px;
-    font-family: 'Indie Flower', cursive;
+    border: none;
+    border-bottom: 2px dotted #A0C5E8;
+    padding: 10px 5px;
+    min-height: 120px;
+    font-family: 'Patrick Hand', cursive;
     font-size: 1.1rem;
-    color: #4c1d95;
-    line-height: 26px;
+    color: #1e3a8a;
+    line-height: 24px; /* Match notebook lines */
     resize: vertical;
+    width: 100%;
 }
 
 .rich-text-area:focus {
     outline: none;
-    border-color: #8b5cf6;
-    box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+    border-bottom-color: #2563eb;
+    background: rgba(37, 99, 235, 0.05);
 }
 
-/* Save Button with Sparkles */
+/* Save Button - Notebook Style */
 .save-btn {
-    background: linear-gradient(45deg, #ff69b4, #8b5cf6);
-    border: none;
+    background: #2563eb;
+    border: 2px solid #1e40af;
     color: white;
-    padding: 15px 30px;
-    border-radius: 25px;
-    font-family: 'Caveat', cursive;
-    font-size: 1.5rem;
-    font-weight: 600;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-family: 'Patrick Hand', cursive;
+    font-size: 1.2rem;
     cursor: pointer;
     position: relative;
-    overflow: hidden;
-    transition: all 0.3s;
-    box-shadow: 0 8px 20px rgba(255, 105, 180, 0.4);
+    transition: all 0.2s;
+    box-shadow: 0 4px 8px rgba(37, 99, 235, 0.2);
 }
 
 .save-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 12px 25px rgba(255, 105, 180, 0.6);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(37, 99, 235, 0.4);
+    background: #1e40af;
 }
 
 .save-btn::before {
@@ -413,12 +435,26 @@
 
 {% block content %}
 <div class="journal-container">
+    <!-- Ring Binding Holes -->
+    <div class="ring-holes">
+        <div class="hole"></div>
+        <div class="hole"></div>
+        <div class="hole"></div>
+        <div class="hole"></div>
+        <div class="hole"></div>
+        <div class="hole"></div>
+        <div class="hole"></div>
+        <div class="hole"></div>
+        <div class="hole"></div>
+        <div class="hole"></div>
+    </div>
+
     <!-- Theme Switcher -->
     <div class="theme-switcher">
-        <div class="handwritten-text" style="font-size: 0.8rem; margin-bottom: 10px; text-align: center;">Vibes</div>
-        <div class="theme-btn theme-neon" onclick="switchTheme('neon')" title="80s Neon"></div>
-        <div class="theme-btn theme-bubblegum active" onclick="switchTheme('bubblegum')" title="Bubblegum Pink"></div>
-        <div class="theme-btn theme-arcade" onclick="switchTheme('arcade')" title="Dark Arcade"></div>
+        <div class="handwritten-text" style="font-size: 0.8rem; margin-bottom: 10px; text-align: center;">Paper Style</div>
+        <div class="theme-btn theme-neon" onclick="switchTheme('neon')" title="Bright Colors"></div>
+        <div class="theme-btn theme-bubblegum active" onclick="switchTheme('bubblegum')" title="Classic Notebook"></div>
+        <div class="theme-btn theme-arcade" onclick="switchTheme('arcade')" title="Dark Mode"></div>
     </div>
 
     <!-- Sticker Zone -->
@@ -436,9 +472,15 @@
         <div class="sticker" draggable="true" data-sticker="💎">💎</div>
     </div>
 
-    <!-- Main Journal Page -->
-    <div class="journal-page" id="journalPage">
-        <div style="padding: 60px 80px 40px 80px; position: relative;">
+    <!-- Main Journal Card -->
+    <div class="journal-card" id="journalPage">
+        <!-- Corner Doodles -->
+        <div class="doodle top-left">✨</div>
+        <div class="doodle top-right">💫</div>
+        <div class="doodle bottom-left">💡</div>
+        <div class="doodle bottom-right">🌟</div>
+        
+        <div style="position: relative;">
             
             <!-- Journal Header -->
             <div style="text-align: center; margin-bottom: 40px;">
