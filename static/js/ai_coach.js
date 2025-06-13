@@ -1072,11 +1072,131 @@ function renderHistoricalPlotlyChart(chartId, chartData) {
         }
         
         Plotly.newPlot(chartId, [trace], layout, config);
+        
+        // Add click-to-enlarge functionality
+        element.style.cursor = 'pointer';
+        element.title = 'Click to enlarge';
+        element.addEventListener('click', () => {
+            openAICoachChartModal(chartData, [trace], layout);
+        });
+        
         console.log('Historical comparison chart with similarity highlighting rendered successfully');
     } catch (error) {
         console.error('Error rendering historical chart:', error);
         element.innerHTML = '<div class="text-center text-gray-500 py-8">Chart unavailable</div>';
     }
+}
+
+// Open AI coach chart in enlarged modal
+function openAICoachChartModal(chartData, traces, layout) {
+    // Create modal overlay
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[60]';
+    modal.style.backdropFilter = 'blur(4px)';
+    
+    // Create modal content
+    const modalContent = document.createElement('div');
+    modalContent.className = 'bg-gray-900 rounded-lg p-6 max-w-6xl w-full mx-4 max-h-[90vh] overflow-auto';
+    
+    // Create modal header
+    const header = document.createElement('div');
+    header.className = 'flex justify-between items-center mb-4';
+    header.innerHTML = `
+        <h3 class="text-xl font-bold text-white">${chartData.title || 'Historical Pattern Analysis'}</h3>
+        <button id="closeAIChartModal" class="text-gray-400 hover:text-white text-2xl font-bold">×</button>
+    `;
+    
+    // Create enlarged chart container
+    const enlargedChart = document.createElement('div');
+    enlargedChart.id = 'enlargedAIChart';
+    enlargedChart.style.height = '600px';
+    enlargedChart.style.width = '100%';
+    
+    // Create pattern legend
+    const legendPanel = document.createElement('div');
+    legendPanel.className = 'mt-4 bg-gray-800 rounded-lg p-4';
+    legendPanel.innerHTML = `
+        <h4 class="text-lg font-semibold text-white mb-3">Pattern Recognition Guide</h4>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+            <div class="flex items-center space-x-2">
+                <div class="w-4 h-4 rounded-full bg-red-500"></div>
+                <span class="text-gray-300">Pattern Bottom - Reversal zone</span>
+            </div>
+            <div class="flex items-center space-x-2">
+                <div class="w-4 h-4 bg-yellow-500"></div>
+                <span class="text-gray-300">Accumulation - Base building</span>
+            </div>
+            <div class="flex items-center space-x-2">
+                <div class="w-4 h-4 rounded-full bg-green-500"></div>
+                <span class="text-gray-300">Breakout - Momentum target</span>
+            </div>
+            <div class="flex items-center space-x-2">
+                <div class="w-4 h-4 rounded-full bg-purple-500"></div>
+                <span class="text-gray-300">Confirmation - Final target</span>
+            </div>
+        </div>
+        <div class="mt-4 p-3 bg-gray-700 rounded">
+            <p class="text-gray-300 text-sm">
+                <strong class="text-white">Trading Insight:</strong> This ${chartData.symbol} pattern demonstrates 
+                a complete reversal cycle. Look for similar price action, volume patterns, and technical 
+                indicators in current market conditions to identify high-probability setups.
+            </p>
+        </div>
+    `;
+    
+    // Assemble modal
+    modalContent.appendChild(header);
+    modalContent.appendChild(enlargedChart);
+    modalContent.appendChild(legendPanel);
+    modal.appendChild(modalContent);
+    
+    // Add to page
+    document.body.appendChild(modal);
+    
+    // Enhanced layout for larger chart
+    const enlargedLayout = {
+        ...layout,
+        height: 600,
+        title: {
+            ...layout.title,
+            font: { color: '#d1d5db', size: 18 }
+        },
+        margin: { l: 80, r: 40, t: 80, b: 80 }
+    };
+    
+    const enlargedConfig = {
+        displayModeBar: true,
+        displaylogo: false,
+        modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d'],
+        responsive: true
+    };
+    
+    // Render enlarged chart
+    try {
+        Plotly.newPlot(enlargedChart, traces, enlargedLayout, enlargedConfig);
+    } catch (error) {
+        console.error('Error rendering enlarged AI chart:', error);
+        enlargedChart.innerHTML = '<div class="text-center text-gray-500 py-8">Chart rendering failed</div>';
+    }
+    
+    // Close modal functionality
+    const closeModal = () => {
+        document.body.removeChild(modal);
+    };
+    
+    document.getElementById('closeAIChartModal').addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    
+    // ESC key to close
+    const handleEscape = (e) => {
+        if (e.key === 'Escape') {
+            closeModal();
+            document.removeEventListener('keydown', handleEscape);
+        }
+    };
+    document.addEventListener('keydown', handleEscape);
 }
 
 // Debug function to test AI review
