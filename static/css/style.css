@@ -49,6 +49,273 @@
   z-index: 10;
 }
 
+/* Mobile-First Responsive Design */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Touch-friendly tap targets (44px minimum) */
+button, .btn, .nav-link, .card, .stock-item {
+  min-height: 44px;
+  min-width: 44px;
+  touch-action: manipulation;
+}
+
+/* Mobile Navigation */
+.mobile-menu-btn {
+  display: none;
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 60;
+  background: rgba(15, 20, 25, 0.9);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 0.75rem;
+  color: #e2e8f0;
+}
+
+.mobile-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 40;
+  backdrop-filter: blur(2px);
+}
+
+@media (max-width: 768px) {
+  .mobile-menu-btn {
+    display: block;
+  }
+  
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease-in-out;
+    position: fixed;
+    z-index: 50;
+    height: 100vh;
+    width: 280px;
+    overflow-y: auto;
+  }
+  
+  .sidebar.open {
+    transform: translateX(0);
+  }
+  
+  .mobile-overlay.active {
+    display: block;
+  }
+  
+  .main-content {
+    margin-left: 0 !important;
+    padding: 1rem;
+  }
+  
+  /* Stack navigation vertically on mobile */
+  .nav-link {
+    padding: 1rem;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  /* Mobile-optimized cards */
+  .stat-card, .card {
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  /* Responsive grid adjustments */
+  .grid-cols-4 {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+  
+  .grid-cols-2 {
+    grid-template-columns: 1fr;
+  }
+  
+  /* Chart responsiveness */
+  .chart-container {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Mobile sparklines */
+  .sparkline-container {
+    min-height: 60px;
+    padding: 0.5rem;
+  }
+  
+  /* Touch-friendly buttons */
+  .btn {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    min-height: 48px;
+  }
+  
+  /* Mobile form inputs */
+  input, select, textarea {
+    min-height: 48px;
+    font-size: 16px; /* Prevents zoom on iOS */
+    padding: 0.75rem;
+  }
+  
+  /* Stock list mobile optimization */
+  .stock-item {
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .stock-symbol {
+    font-size: 1.25rem;
+    font-weight: bold;
+  }
+  
+  .stock-price {
+    font-size: 1.1rem;
+  }
+  
+  /* Mobile tables */
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  table {
+    min-width: 100%;
+    font-size: 0.875rem;
+  }
+  
+  th, td {
+    padding: 0.5rem;
+    white-space: nowrap;
+  }
+}
+
+/* Tablet optimizations */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .sidebar {
+    width: 240px;
+  }
+  
+  .main-content {
+    margin-left: 240px;
+    padding: 1.5rem;
+  }
+  
+  .grid-cols-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .stat-card {
+    padding: 1.25rem;
+  }
+}
+
+/* Large screen optimizations */
+@media (min-width: 1025px) {
+  .main-content {
+    margin-left: 280px;
+    padding: 2rem;
+  }
+  
+  .container {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+}
+
+/* Mobile-specific chart adjustments */
+@media (max-width: 768px) {
+  .plotly-graph-div {
+    width: 100% !important;
+    height: 300px !important;
+  }
+  
+  /* Reduce chart margins on mobile */
+  .js-plotly-plot .plotly .main-svg {
+    margin: 0 !important;
+  }
+}
+
+/* Touch gesture improvements */
+.swipeable {
+  touch-action: pan-y;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Mobile loading states */
+.loading-mobile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  gap: 1rem;
+}
+
+/* Mobile notifications */
+@media (max-width: 768px) {
+  .notification {
+    position: fixed;
+    top: 70px;
+    left: 1rem;
+    right: 1rem;
+    z-index: 70;
+    margin: 0;
+  }
+}
+
+/* Dark mode mobile optimizations */
+@media (max-width: 768px) and (prefers-color-scheme: dark) {
+  .sidebar {
+    background: rgba(15, 20, 25, 0.95);
+    backdrop-filter: blur(20px);
+  }
+  
+  .mobile-menu-btn {
+    background: rgba(15, 20, 25, 0.95);
+  }
+}
+
+/* Accessibility improvements for mobile */
+@media (max-width: 768px) {
+  /* Larger focus indicators */
+  button:focus, .btn:focus, input:focus {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+  }
+  
+  /* Better contrast for mobile */
+  .text-gray-400 {
+    color: #94a3b8;
+  }
+  
+  /* Improved spacing for readability */
+  p, .text-sm {
+    line-height: 1.6;
+  }
+}
+
 /* AIvest Dark Theme Styles */
 :root {
   --color-dark-bg: #0f1419;
