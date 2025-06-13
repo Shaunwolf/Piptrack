@@ -172,7 +172,8 @@ function addGutCheckPrompts() {
 
 // Get AI review for a stock
 async function getAIReview(symbol) {
-    console.log('getAIReview called with symbol:', symbol);
+    console.log('=== AI REVIEW FUNCTION CALLED ===');
+    console.log('Symbol:', symbol);
     if (!symbol) {
         showAlert('Symbol is required for AI analysis', 'error');
         return;
@@ -820,6 +821,12 @@ window.testAIFunction = function() {
     if (typeof window.getAIReview === 'function') {
         window.getAIReview('RSLS');
     }
+};
+
+// Add direct button click test
+window.testButtonClick = function() {
+    console.log('Testing button click directly...');
+    getAIReview('RSLS');
 };
 
 // Render historical comparison chart
