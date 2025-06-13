@@ -811,6 +811,15 @@ window.exportAnalysis = exportAnalysis;
 window.speakAnalysis = speakAnalysis;
 window.aiCoachState = window.aiCoachState;
 
+// Test function to verify AI review functionality
+window.testAIFunction = function() {
+    console.log('AI function test - getAIReview available:', typeof window.getAIReview);
+    console.log('Calling getAIReview with test symbol...');
+    if (typeof window.getAIReview === 'function') {
+        window.getAIReview('RSLS');
+    }
+};
+
 // Render historical comparison chart
 function renderHistoricalChart(chartData) {
     if (!chartData || !chartData.dates || !chartData.prices) {
