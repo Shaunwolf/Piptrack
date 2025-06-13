@@ -117,16 +117,69 @@ def track_stock(symbol):
 @app.route('/forecast/<symbol>')
 def forecast(symbol):
     """Forecast page for specific stock"""
-    stock = Stock.query.filter_by(symbol=symbol).first()
-    if not stock:
-        flash(f'Stock {symbol} not found', 'error')
-        return redirect(url_for('scanner'))
+    symbol = symbol.upper()
     
-    # Generate forecast paths
-    forecast_paths = forecasting_engine.generate_spaghetti_model(symbol)
-    ai_analysis = ai_coach.analyze_setup(symbol)
-    
-    return render_template('forecast.html', stock=stock, forecast_paths=forecast_paths, ai_analysis=ai_analysis)
+    # Try to get stock data first to validate ticker
+    try:
+        scanner = StockScanner()
+        stock_data = scanner.get_stock_data(symbol)
+        
+        if not stock_data or stock_data.get('error'):
+            # Create a user-friendly error page
+            error_message = f"Unable to find data for ticker '{symbol}'"
+            suggestions = [
+                "Check if the ticker symbol is correct",
+                "The stock may be delisted or suspended", 
+                "OTC/Pink Sheet stocks have limited data",
+                "Try a different ticker symbol"
+            ]
+            
+            return render_template('ticker_error.html', 
+                                 symbol=symbol, 
+                                 error_message=error_message,
+                                 suggestions=suggestions)
+        
+        # Get or create stock entry
+        stock = Stock.query.filter_by(symbol=symbol).first()
+        if not stock:
+            # Create new stock entry with the validated data
+            from confidence_scorer import ConfidenceScorer
+            confidence_scorer = ConfidenceScorer()
+            confidence_score = confidence_scorer.calculate_score(stock_data)
+            
+            stock = Stock(
+                symbol=symbol,
+                name=stock_data.get('name', 'Unknown Company'),
+                price=stock_data.get('price', 0),
+                rsi=stock_data.get('rsi', 50),
+                volume_spike=stock_data.get('volume_spike', 0),
+                pattern_type=stock_data.get('pattern_type', 'Unknown'),
+                fibonacci_position=stock_data.get('fibonacci_position', 50),
+                confidence_score=confidence_score
+            )
+            db.session.add(stock)
+            db.session.commit()
+        
+        # Generate forecast paths
+        forecast_paths = forecasting_engine.generate_spaghetti_model(symbol)
+        ai_analysis = ai_coach.analyze_setup(symbol)
+        
+        return render_template('forecast.html', stock=stock, forecast_paths=forecast_paths, ai_analysis=ai_analysis)
+        
+    except Exception as e:
+        logging.error(f"Error in forecast route for {symbol}: {e}")
+        error_message = f"Unable to analyze ticker '{symbol}' due to a data retrieval error"
+        suggestions = [
+            "Verify the ticker symbol is correct",
+            "Try again in a few moments",
+            "Use the scanner to find valid tickers",
+            "Search for a different stock symbol"
+        ]
+        
+        return render_template('ticker_error.html', 
+                             symbol=symbol, 
+                             error_message=error_message,
+                             suggestions=suggestions)
 
 @app.route('/generate_forecast', methods=['POST'])
 def generate_forecast():

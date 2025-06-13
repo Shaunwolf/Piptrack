@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}Ticker Not Found - {{ symbol }} - CandleCast{% endblock %}
+
+{% block content %}
+<div class="min-h-[60vh] flex items-center justify-center">
+    <div class="max-w-2xl mx-auto text-center">
+        <!-- Error Icon -->
+        <div class="mb-8">
+            <div class="w-24 h-24 mx-auto bg-red-500 bg-opacity-20 rounded-full flex items-center justify-center">
+                <i class="fas fa-exclamation-triangle text-4xl text-red-400"></i>
+            </div>
+        </div>
+        
+        <!-- Error Message -->
+        <h1 class="text-3xl font-bold mb-4">Ticker Symbol Not Found</h1>
+        <p class="text-xl text-gray-400 mb-8">{{ error_message }}</p>
+        
+        <!-- Suggestions -->
+        <div class="bg-dark-surface rounded-lg p-6 mb-8 text-left">
+            <h3 class="text-lg font-semibold mb-4 flex items-center">
+                <i class="fas fa-lightbulb text-yellow-500 mr-2"></i>
+                Possible Reasons:
+            </h3>
+            <ul class="space-y-2">
+                {% for suggestion in suggestions %}
+                <li class="flex items-start">
+                    <i class="fas fa-chevron-right text-accent-blue mr-3 mt-1 text-sm"></i>
+                    <span class="text-gray-300">{{ suggestion }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="space-y-4">
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="{{ url_for('index') }}" class="btn-gradient-primary">
+                    <i class="fas fa-home mr-2"></i>Back to Dashboard
+                </a>
+                <a href="{{ url_for('scanner') }}" class="btn-gradient-secondary">
+                    <i class="fas fa-search mr-2"></i>Browse Scanner
+                </a>
+            </div>
+            
+            <!-- Quick Search -->
+            <div class="max-w-md mx-auto">
+                <form id="quickSearchForm" class="flex items-center space-x-2">
+                    <input 
+                        type="text" 
+                        id="quickSearchInput" 
+                        placeholder="Try another ticker..."
+                        class="flex-1 px-4 py-2 bg-dark-accent border border-dark-accent rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-blue uppercase"
+                        maxlength="10"
+                    />
+                    <button type="submit" class="btn-gradient-primary px-6 py-2">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Popular Alternatives -->
+        <div class="mt-8">
+            <p class="text-gray-400 mb-4">Or try these popular stocks:</p>
+            <div class="flex flex-wrap justify-center gap-2">
+                <button onclick="searchTicker('AAPL')" class="ticker-tag">AAPL</button>
+                <button onclick="searchTicker('TSLA')" class="ticker-tag">TSLA</button>
+                <button onclick="searchTicker('NVDA')" class="ticker-tag">NVDA</button>
+                <button onclick="searchTicker('MSFT')" class="ticker-tag">MSFT</button>
+                <button onclick="searchTicker('GOOGL')" class="ticker-tag">GOOGL</button>
+                <button onclick="searchTicker('AMZN')" class="ticker-tag">AMZN</button>
+                <button onclick="searchTicker('META')" class="ticker-tag">META</button>
+                <button onclick="searchTicker('AMD')" class="ticker-tag">AMD</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('quickSearchForm');
+    const input = document.getElementById('quickSearchInput');
+    
+    if (form && input) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const ticker = input.value.trim();
+            if (ticker) {
+                window.location.href = `/forecast/${ticker.toUpperCase()}`;
+            }
+        });
+        
+        input.addEventListener('input', function(e) {
+            e.target.value = e.target.value.toUpperCase();
+        });
+    }
+});
+
+function searchTicker(ticker) {
+    window.location.href = `/forecast/${ticker}`;
+}
+</script>
+{% endblock %}
