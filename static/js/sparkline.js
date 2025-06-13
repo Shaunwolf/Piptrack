@@ -71,14 +71,21 @@ async function initializeSparklineChart(symbol) {
         // Fetch sparkline data for the symbol
         const data = await fetchSparklineData(symbol);
         
-        if (data && data.prices && data.prices.length > 0) {
+        if (data && !data.error && data.prices && data.prices.length > 0) {
             createSparklineChart(symbol, data);
+            updateSparklineInfo(symbol, data);
+            
+            // Add enhanced CandleCast features if available
+            if (data.candle_guy_mood) {
+                addCandleGuyToSparkline(symbol, createCandleGuyAnimation(data.candle_guy_mood, data.animation_speed));
+            }
         } else {
-            showSparklineError(symbol, 'No data available');
+            console.log(`No valid data for ${symbol}, using fallback display`);
+            showSparklineError(symbol, 'Loading...');
         }
     } catch (error) {
         console.error(`Error initializing sparkline for ${symbol}:`, error);
-        showSparklineError(symbol, 'Failed to load');
+        showSparklineError(symbol, 'Error loading data');
     }
 }
 
@@ -87,19 +94,26 @@ async function fetchSparklineData(symbol) {
     try {
         const response = await fetch(`/api/sparkline/${symbol}?period=1d&interval=5m`);
         if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
+            console.log(`Failed to fetch sparkline data for ${symbol}: ${response.status}`);
+            return null;
         }
         const data = await response.json();
         
-        // Check if we have enhanced animated features
-        if (data.animation_frames && data.candle_guy_mood) {
-            return enhanceSparklineWithAnimation(data);
+        if (data.error) {
+            console.log(`Sparkline error for ${symbol}:`, data.error);
+            return null;
+        }
+        
+        // Ensure we have basic required data
+        if (!data.prices || !Array.isArray(data.prices) || data.prices.length === 0) {
+            console.log(`No valid price data for ${symbol}`);
+            return null;
         }
         
         return data;
     } catch (error) {
-        console.error(`Error fetching sparkline data for ${symbol}:`, error);
-        throw error;
+        console.log(`Network error fetching sparkline for ${symbol}:`, error.message);
+        return null;
     }
 }
 

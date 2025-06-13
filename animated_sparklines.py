@@ -30,32 +30,52 @@ class AnimatedSparklines:
             if hist.empty:
                 return {'error': f'No data available for {symbol}'}
             
-            # Calculate sparkline metrics
-            prices = hist['Close'].values
-            volumes = hist['Volume'].values
-            timestamps = [int(ts.timestamp() * 1000) for ts in hist.index]
-            
-            # Calculate performance metrics
-            start_price = prices[0]
-            current_price = prices[-1]
-            high_price = np.max(prices)
-            low_price = np.min(prices)
+            # Calculate sparkline metrics with proper error handling
+            try:
+                prices = hist['Close'].values
+                volumes = hist['Volume'].values
+                timestamps = [int(ts.timestamp() * 1000) for ts in hist.index]
+                
+                # Ensure we have valid data
+                if len(prices) == 0:
+                    return {'error': f'No price data available for {symbol}'}
+                
+                # Calculate performance metrics
+                start_price = float(prices[0])
+                current_price = float(prices[-1])
+                high_price = float(np.max(prices))
+                low_price = float(np.min(prices))
+            except Exception as e:
+                return {'error': f'Error processing data for {symbol}: {str(e)}'}
             
             price_change = current_price - start_price
             price_change_pct = (price_change / start_price) * 100
             
-            # Generate animation keyframes
-            animation_frames = self._generate_animation_frames(prices, timestamps)
+            # Generate simplified animation data
+            try:
+                animation_frames = self._generate_animation_frames(np.array(prices), timestamps)
+                volatility_bands = self._calculate_volatility_bands(np.array(prices))
+                price_events = self._detect_price_events(np.array(prices), timestamps)
+                momentum_data = self._calculate_momentum_indicators(hist)
+            except Exception as e:
+                # Fallback to basic data if animation features fail
+                animation_frames = []
+                volatility_bands = {'trend': 'stable', 'upper': high_price, 'lower': low_price}
+                price_events = []
+                momentum_data = {'rsi': 50, 'trend_strength': 0.5}
             
-            # Calculate volatility bands
-            volatility_bands = self._calculate_volatility_bands(prices)
-            
-            # Detect significant price movements
-            price_events = self._detect_price_events(prices, timestamps)
-            
-            # Calculate momentum indicators for animation speed
-            momentum_data = self._calculate_momentum_indicators(hist)
-            
+            # Determine candle guy mood based on price movement
+            if price_change_pct > 5:
+                candle_guy_mood = 'excited'
+            elif price_change_pct > 2:
+                candle_guy_mood = 'bullish'
+            elif price_change_pct < -5:
+                candle_guy_mood = 'bearish'
+            elif price_change_pct < -2:
+                candle_guy_mood = 'confused'
+            else:
+                candle_guy_mood = 'neutral'
+
             sparkline_data = {
                 'symbol': symbol,
                 'period': period,
@@ -66,16 +86,18 @@ class AnimatedSparklines:
                 'low_price': float(low_price),
                 'price_change': float(price_change),
                 'price_change_pct': float(price_change_pct),
-                'prices': prices.tolist(),
-                'volumes': volumes.tolist(),
+                'prices': [float(p) for p in prices],
+                'volumes': [float(v) for v in volumes],
                 'timestamps': timestamps,
                 'animation_frames': animation_frames,
                 'volatility_bands': volatility_bands,
                 'price_events': price_events,
                 'momentum_data': momentum_data,
+                'candle_guy_mood': candle_guy_mood,
+                'animation_speed': min(2.0, abs(price_change_pct) / 5),
                 'trend_direction': 'up' if price_change > 0 else 'down' if price_change < 0 else 'flat',
-                'volatility_score': float(np.std(prices) / np.mean(prices) * 100),
-                'volume_trend': self._calculate_volume_trend(volumes),
+                'volatility_score': float(abs(price_change_pct)),
+                'volume_trend': 'increasing' if len(volumes) > 1 and volumes[-1] > volumes[0] else 'decreasing',
                 'generated_at': current_time.isoformat()
             }
             
