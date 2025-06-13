@@ -7,32 +7,11 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand:wght@400&family=Gloria+Hallelujah&family=Indie+Flower&family=Caveat:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-/* Realistic Notebook Paper Theme - Override base template */
-body.journal-page {
-    background-color: #FAFAF3 !important;
-    background-image: 
-        repeating-linear-gradient(
-            transparent,
-            transparent 23px,
-            #A0C5E8 23px,
-            #A0C5E8 25px
-        ),
-        linear-gradient(
-            to right,
-            transparent 78px,
-            #F28B82 78px,
-            #F28B82 80px,
-            transparent 80px
-        ) !important;
-    min-height: 100vh;
-    font-family: 'Patrick Hand', cursive !important;
-    color: #1e3a8a !important;
-}
-
+/* Journal Container - Normal site background */
 .journal-container {
     min-height: 100vh;
     position: relative;
-    padding-left: 100px; /* Space for ring binding */
+    padding: 20px;
 }
 
 /* Ring Binding Holes */
@@ -58,17 +37,32 @@ body.journal-page {
     cursor: pointer;
 }
 
-/* Journal Card - Translucent overlay on notebook paper */
+/* Journal Card - Notebook paper styling */
 .journal-card {
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(1px);
+    background: #FAFAF3;
+    background-image: 
+        repeating-linear-gradient(
+            transparent,
+            transparent 23px,
+            #A0C5E8 23px,
+            #A0C5E8 25px
+        ),
+        linear-gradient(
+            to right,
+            transparent 78px,
+            #F28B82 78px,
+            #F28B82 80px,
+            transparent 80px
+        );
     border-radius: 8px;
     padding: 40px 60px;
     max-width: 900px;
-    margin: 20px auto 40px 120px; /* Leave space for ring holes */
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    margin: 20px auto; /* Centered positioning */
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
     position: relative;
-    border: 1px solid rgba(160, 197, 232, 0.3);
+    border: 2px solid #A0C5E8;
+    font-family: 'Patrick Hand', cursive;
+    color: #1e3a8a;
 }
 
 /* Corner Doodles */
@@ -448,19 +442,7 @@ body.journal-page {
 
 {% block content %}
 <div class="journal-container">
-    <!-- Ring Binding Holes -->
-    <div class="ring-holes">
-        <div class="hole"></div>
-        <div class="hole"></div>
-        <div class="hole"></div>
-        <div class="hole"></div>
-        <div class="hole"></div>
-        <div class="hole"></div>
-        <div class="hole"></div>
-        <div class="hole"></div>
-        <div class="hole"></div>
-        <div class="hole"></div>
-    </div>
+
 
     <!-- Theme Switcher -->
     <div class="theme-switcher">
@@ -653,32 +635,29 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function applyNotebookStyling() {
-    const body = document.body;
-    
-    // Remove base template classes
-    body.classList.remove('dark', 'bg-dark-bg', 'text-white');
-    
-    // Apply notebook styling with highest priority
-    body.style.setProperty('background-color', '#FAFAF3', 'important');
-    body.style.setProperty('background-image', `
-        repeating-linear-gradient(
-            transparent,
-            transparent 23px,
-            #A0C5E8 23px,
-            #A0C5E8 25px
-        ),
-        linear-gradient(
-            to right,
-            transparent 78px,
-            #F28B82 78px,
-            #F28B82 80px,
-            transparent 80px
-        )`, 'important');
-    body.style.setProperty('color', '#1e3a8a', 'important');
-    body.style.setProperty('font-family', '"Patrick Hand", cursive', 'important');
-    body.style.setProperty('min-height', '100vh', 'important');
-    
-    console.log('Applied notebook paper styling');
+    // Apply notebook paper styling only to the journal card
+    const journalCard = document.querySelector('.journal-card');
+    if (journalCard) {
+        journalCard.style.setProperty('background-color', '#FAFAF3', 'important');
+        journalCard.style.setProperty('background-image', `
+            repeating-linear-gradient(
+                transparent,
+                transparent 23px,
+                #A0C5E8 23px,
+                #A0C5E8 25px
+            ),
+            linear-gradient(
+                to right,
+                transparent 78px,
+                #F28B82 78px,
+                #F28B82 80px,
+                transparent 80px
+            )`, 'important');
+        journalCard.style.setProperty('color', '#1e3a8a', 'important');
+        journalCard.style.setProperty('font-family', '"Patrick Hand", cursive', 'important');
+        
+        console.log('Applied notebook paper styling to journal card only');
+    }
 }
 
 function setCurrentDate() {
