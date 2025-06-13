@@ -275,10 +275,10 @@ function displayAIAnalysis(analysis, symbol) {
             <!-- Historical Comparison -->
             <div class="bg-dark-accent rounded-lg p-4">
                 <h5 class="font-semibold text-accent-blue mb-2">Historical Context</h5>
-                <p class="text-gray-300 leading-relaxed">${analysis.historical_comparison?.text || analysis.historical_comparison}</p>
+                <p class="text-gray-300 leading-relaxed">${typeof analysis.historical_comparison === 'object' ? analysis.historical_comparison.text : analysis.historical_comparison}</p>
                 
-                <!-- Historical Chart -->
-                ${analysis.historical_comparison?.chart_data ? renderHistoricalChart(analysis.historical_comparison.chart_data) : ''}
+                <!-- Historical Chart Container -->
+                <div id="historical-chart-container-${symbol}"></div>
             </div>
             
             <!-- Key Insights -->
@@ -301,6 +301,16 @@ function displayAIAnalysis(analysis, symbol) {
     
     // Show the modal
     modal.classList.remove('hidden');
+    
+    // Render historical chart if chart data is available
+    if (analysis.historical_comparison && typeof analysis.historical_comparison === 'object' && analysis.historical_comparison.chart_data) {
+        setTimeout(() => {
+            const chartContainer = document.getElementById(`historical-chart-container-${symbol}`);
+            if (chartContainer) {
+                chartContainer.innerHTML = renderHistoricalChart(analysis.historical_comparison.chart_data);
+            }
+        }, 200);
+    }
     modal.classList.add('show');
     
     // Prevent body scrolling
