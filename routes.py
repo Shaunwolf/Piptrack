@@ -810,7 +810,21 @@ def get_sparkline_summary(symbol):
         if sparklines_engine is None:
             return jsonify({'success': False, 'error': 'Sparklines engine not available'})
         
-        summary = sparklines_engine.get_sparkline_summary(symbol)
+        # Use the simple sparkline generator for summary data
+        sparkline_data = sparklines_engine.generate_sparkline(symbol)
+        if 'error' in sparkline_data:
+            return jsonify({'success': False, 'error': sparkline_data['error']})
+        
+        # Create summary from sparkline data
+        summary = {
+            'symbol': symbol,
+            'current_price': sparkline_data.get('current_price', 0),
+            'price_change': sparkline_data.get('price_change', 0),
+            'price_change_pct': sparkline_data.get('price_change_pct', 0),
+            'candle_guy_mood': sparkline_data.get('candle_guy_mood', 'neutral'),
+            'trend_direction': sparkline_data.get('trend_direction', 'flat'),
+            'volatility_score': sparkline_data.get('volatility_score', 0)
+        }
         
         if 'error' in summary:
             return jsonify({'success': False, 'error': summary['error']})

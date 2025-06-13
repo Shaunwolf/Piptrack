@@ -92,7 +92,7 @@ async function initializeSparklineChart(symbol) {
 // Fetch sparkline data from backend
 async function fetchSparklineData(symbol) {
     try {
-        const response = await fetch(`/api/sparkline/${symbol}?period=1d&interval=5m`);
+        const response = await fetch(`/api/sparkline/${symbol}`);
         if (!response.ok) {
             console.log(`Failed to fetch sparkline data for ${symbol}: ${response.status}`);
             return null;
