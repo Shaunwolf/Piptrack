@@ -200,13 +200,29 @@ class AICoach:
                 start_date = period_dates[0]
                 end_date = period_dates[1]
                 
-                # Get 4-hour candlestick data for more detailed analysis
-                hist = ticker.history(start=start_date, end=end_date, interval='4h')
+                # Try 4-hour data first, fall back to daily for older periods
+                try:
+                    hist = ticker.history(start=start_date, end=end_date, interval='4h')
+                    if hist.empty:
+                        # Fall back to daily data for older periods
+                        hist = ticker.history(start=start_date, end=end_date, interval='1d')
+                        chart_type = 'daily_candlestick'
+                    else:
+                        chart_type = 'candlestick'
+                except Exception as e:
+                    print(f"4h data failed, falling back to daily: {e}")
+                    hist = ticker.history(start=start_date, end=end_date, interval='1d')
+                    chart_type = 'daily_candlestick'
                 
                 if not hist.empty:
-                    # Prepare candlestick chart data
+                    # Prepare candlestick chart data with appropriate date formatting
+                    date_format = '%Y-%m-%d %H:%M' if chart_type == 'candlestick' else '%Y-%m-%d'
+                    
+                    # Calculate pattern stages for similarity matching
+                    pattern_stages = self._calculate_pattern_stages(hist, example['example_symbol'])
+                    
                     chart_data = {
-                        'dates': [date.strftime('%Y-%m-%d %H:%M') for date in hist.index],
+                        'dates': [date.strftime(date_format) for date in hist.index],
                         'opens': hist['Open'].tolist(),
                         'highs': hist['High'].tolist(),
                         'lows': hist['Low'].tolist(),
@@ -214,7 +230,8 @@ class AICoach:
                         'volumes': hist['Volume'].tolist(),
                         'symbol': example['example_symbol'],
                         'title': example['chart_title'],
-                        'chart_type': 'candlestick'
+                        'chart_type': chart_type,
+                        'pattern_stages': pattern_stages
                     }
                     
                     return {
@@ -378,3 +395,47 @@ class AICoach:
         except Exception as e:
             logging.error(f"Error generating chart story for {symbol}: {e}")
             return []
+    
+    def _calculate_pattern_stages(self, hist, symbol):
+        """Calculate pattern stages for similarity highlighting"""
+        if symbol != 'META':
+            return {}
+        
+        try:
+            closes = hist['Close']
+            dates = [date.strftime('%Y-%m-%d') for date in hist.index]
+            
+            # Find key stages in META's 2022-2023 reversal pattern
+            stages = {}
+            
+            # Find the crash bottom (lowest point)
+            bottom_idx = closes.idxmin()
+            bottom_date = bottom_idx.strftime('%Y-%m-%d')
+            stages['bottom'] = bottom_date
+            
+            # Find accumulation period (2-3 weeks after bottom)
+            bottom_position = list(hist.index).index(bottom_idx)
+            if bottom_position + 14 < len(hist):
+                accumulation_date = hist.index[bottom_position + 14].strftime('%Y-%m-%d')
+                stages['accumulation'] = accumulation_date
+            
+            # Find first breakout attempt (significant move up from bottom)
+            bottom_price = closes[bottom_idx]
+            for i in range(bottom_position + 1, len(closes)):
+                if closes.iloc[i] > bottom_price * 1.15:  # 15% above bottom
+                    breakout_date = hist.index[i].strftime('%Y-%m-%d')
+                    stages['first_breakout'] = breakout_date
+                    break
+            
+            # Find confirmation (sustained move above key resistance)
+            for i in range(bottom_position + 20, len(closes)):
+                if closes.iloc[i] > bottom_price * 1.30:  # 30% above bottom
+                    confirmation_date = hist.index[i].strftime('%Y-%m-%d')
+                    stages['confirmation'] = confirmation_date
+                    break
+            
+            return stages
+            
+        except Exception as e:
+            print(f"Error calculating pattern stages: {e}")
+            return {}

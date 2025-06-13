@@ -895,7 +895,7 @@ function renderHistoricalPlotlyChart(chartId, chartData) {
     console.log('Chart element found, preparing data...');
     
     // Create candlestick chart if we have OHLC data
-    const trace = chartData.chart_type === 'candlestick' ? {
+    const trace = (chartData.chart_type === 'candlestick' || chartData.chart_type === 'daily_candlestick') ? {
         x: chartData.dates,
         open: chartData.opens,
         high: chartData.highs,
