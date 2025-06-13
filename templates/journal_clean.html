@@ -1,0 +1,438 @@
+{% extends "base.html" %}
+
+{% block title %}Trading Journal - AIvest Scanner{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-white mb-4">Trading Journal</h1>
+            <p class="text-gray-300" id="currentDate">Loading...</p>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="flex flex-wrap justify-center mb-8 bg-gray-800 rounded-lg p-2">
+            <button class="tab-btn active" onclick="switchTab('today')" data-tab="today">
+                📝 Today's Session
+            </button>
+            <button class="tab-btn" onclick="switchTab('wins')" data-tab="wins">
+                🏆 Wins
+            </button>
+            <button class="tab-btn" onclick="switchTab('lessons')" data-tab="lessons">
+                📚 Lessons
+            </button>
+            <button class="tab-btn" onclick="switchTab('ideas')" data-tab="ideas">
+                💡 Ideas
+            </button>
+        </div>
+
+        <!-- Today's Session Tab -->
+        <div class="tab-content" id="today-tab">
+            <div class="bg-gray-800 rounded-lg p-6 mb-6">
+                <!-- Mood Tracker -->
+                <div class="mb-6">
+                    <h3 class="text-xl font-semibold text-white mb-4">How did today feel?</h3>
+                    <div class="flex justify-center space-x-4">
+                        <button class="mood-btn" data-mood="confident" title="Confident">😎</button>
+                        <button class="mood-btn" data-mood="excited" title="Excited">🚀</button>
+                        <button class="mood-btn" data-mood="neutral" title="Neutral">😐</button>
+                        <button class="mood-btn" data-mood="frustrated" title="Frustrated">😩</button>
+                        <button class="mood-btn" data-mood="angry" title="Angry">😡</button>
+                    </div>
+                </div>
+
+                <!-- Confidence Slider -->
+                <div class="mb-6">
+                    <h4 class="text-lg font-semibold text-white mb-3">Trading Confidence</h4>
+                    <div class="relative">
+                        <input type="range" class="w-full h-2 bg-gray-700 rounded-lg appearance-none slider" 
+                               id="confidenceSlider" min="0" max="100" value="50">
+                        <div class="text-center mt-2 text-purple-400">
+                            <span id="confidenceValue">50</span>% confidence
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="mb-6">
+                    <h4 class="text-lg font-semibold text-white mb-3">Quick Stats</h4>
+                    <div class="grid grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-gray-300 text-sm mb-1"># of Trades</label>
+                            <input type="number" class="form-input" id="numTrades" placeholder="0">
+                        </div>
+                        <div>
+                            <label class="block text-gray-300 text-sm mb-1">Win Rate %</label>
+                            <input type="number" class="form-input" id="winRate" placeholder="0">
+                        </div>
+                        <div>
+                            <label class="block text-gray-300 text-sm mb-1">Avg R:R</label>
+                            <input type="number" class="form-input" id="rrRatio" placeholder="1:1" step="0.1">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Behavior Tags -->
+                <div class="mb-6">
+                    <h4 class="text-lg font-semibold text-white mb-3">Trading Behavior</h4>
+                    <div class="flex flex-wrap gap-2">
+                        <button class="tag-btn" data-tag="hesitated">Hesitated</button>
+                        <button class="tag-btn" data-tag="revenge">Revenge Traded</button>
+                        <button class="tag-btn" data-tag="pattern">Spotted Pattern</button>
+                        <button class="tag-btn" data-tag="plan">Followed Plan</button>
+                        <button class="tag-btn" data-tag="disciplined">Stayed Disciplined</button>
+                        <button class="tag-btn" data-tag="fomo">FOMO Entry</button>
+                    </div>
+                </div>
+
+                <!-- Trade Highlights -->
+                <div class="mb-6">
+                    <h4 class="text-lg font-semibold text-white mb-3">Trade Highlights</h4>
+                    <textarea class="form-textarea" id="tradeHighlights" rows="4"
+                              placeholder="What happened today? Any notable wins or learning moments?"></textarea>
+                </div>
+
+                <!-- Key Learnings -->
+                <div class="mb-6">
+                    <h4 class="text-lg font-semibold text-white mb-3">Key Learnings</h4>
+                    <div class="bg-purple-900 bg-opacity-20 rounded-lg p-4 mb-3">
+                        <p class="text-purple-300 text-sm italic">
+                            What would a better version of you have done differently?
+                        </p>
+                    </div>
+                    <textarea class="form-textarea" id="keyLearnings" rows="4"
+                              placeholder="Reflect on today's performance and insights gained..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Wins Tab -->
+        <div class="tab-content hidden" id="wins-tab">
+            <div class="bg-gray-800 rounded-lg p-6 mb-6">
+                <h2 class="text-2xl font-bold text-green-400 text-center mb-6">Victory Collection</h2>
+                
+                <!-- Best Trade -->
+                <div class="mb-6">
+                    <h4 class="text-lg font-semibold text-white mb-3">Best Trade Today</h4>
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-gray-300 text-sm mb-1">Symbol</label>
+                            <input type="text" class="form-input" id="bestTradeSymbol" placeholder="AAPL">
+                        </div>
+                        <div>
+                            <label class="block text-gray-300 text-sm mb-1">P&L</label>
+                            <input type="number" class="form-input" id="bestTradePnL" placeholder="250" step="0.01">
+                        </div>
+                    </div>
+                    <textarea class="form-textarea" id="bestTradeStory" rows="3"
+                              placeholder="What made this trade special?"></textarea>
+                </div>
+
+                <!-- Achievements -->
+                <div class="mb-6">
+                    <h4 class="text-lg font-semibold text-white mb-3">Today's Achievements</h4>
+                    <div class="flex flex-wrap gap-2">
+                        <button class="achievement-btn" data-achievement="streak">Win Streak</button>
+                        <button class="achievement-btn" data-achievement="discipline">Perfect Discipline</button>
+                        <button class="achievement-btn" data-achievement="timing">Perfect Timing</button>
+                        <button class="achievement-btn" data-achievement="pattern">Great Pattern</button>
+                        <button class="achievement-btn" data-achievement="risk">Risk Management</button>
+                        <button class="achievement-btn" data-achievement="target">Hit Target</button>
+                    </div>
+                </div>
+
+                <!-- Celebration Notes -->
+                <div class="mb-6">
+                    <h4 class="text-lg font-semibold text-white mb-3">Celebration Notes</h4>
+                    <textarea class="form-textarea" id="celebrationNotes" rows="3"
+                              placeholder="What are you proud of today?"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lessons Tab -->
+        <div class="tab-content hidden" id="lessons-tab">
+            <div class="bg-gray-800 rounded-lg p-6 mb-6">
+                <h2 class="text-2xl font-bold text-yellow-400 text-center mb-6">Learning Library</h2>
+                
+                <!-- Mistakes -->
+                <div class="mb-6">
+                    <h4 class="text-lg font-semibold text-white mb-3">What Went Wrong?</h4>
+                    <div class="flex flex-wrap gap-2">
+                        <button class="mistake-btn" data-mistake="entry">Poor Entry</button>
+                        <button class="mistake-btn" data-mistake="exit">Poor Exit</button>
+                        <button class="mistake-btn" data-mistake="size">Wrong Size</button>
+                        <button class="mistake-btn" data-mistake="fomo">FOMO Trade</button>
+                        <button class="mistake-btn" data-mistake="revenge">Revenge Trade</button>
+                        <button class="mistake-btn" data-mistake="plan">Ignored Plan</button>
+                    </div>
+                </div>
+
+                <!-- Lesson -->
+                <div class="mb-6">
+                    <h4 class="text-lg font-semibold text-white mb-3">Key Lesson</h4>
+                    <div class="bg-yellow-900 bg-opacity-20 rounded-lg p-4 mb-3">
+                        <p class="text-yellow-300 text-sm italic">
+                            Every loss is a lesson in disguise. What did the market teach you?
+                        </p>
+                    </div>
+                    <textarea class="form-textarea" id="lessonLearned" rows="4"
+                              placeholder="What specific lesson did you learn?"></textarea>
+                </div>
+
+                <!-- Prevention -->
+                <div class="mb-6">
+                    <h4 class="text-lg font-semibold text-white mb-3">Prevention Strategy</h4>
+                    <textarea class="form-textarea" id="preventionStrategy" rows="3"
+                              placeholder="How will you avoid this mistake in the future?"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ideas Tab -->
+        <div class="tab-content hidden" id="ideas-tab">
+            <div class="bg-gray-800 rounded-lg p-6 mb-6">
+                <h2 class="text-2xl font-bold text-purple-400 text-center mb-6">Bright Ideas</h2>
+                
+                <!-- New Patterns -->
+                <div class="mb-6">
+                    <h4 class="text-lg font-semibold text-white mb-3">New Patterns</h4>
+                    <textarea class="form-textarea" id="newPatterns" rows="3"
+                              placeholder="Any new chart patterns or market behaviors noticed?"></textarea>
+                </div>
+
+                <!-- Strategy Ideas -->
+                <div class="mb-6">
+                    <h4 class="text-lg font-semibold text-white mb-3">Strategy Improvements</h4>
+                    <textarea class="form-textarea" id="strategyIdeas" rows="3"
+                              placeholder="What improvements can you make to your strategy?"></textarea>
+                </div>
+
+                <!-- Market Observations -->
+                <div class="mb-6">
+                    <h4 class="text-lg font-semibold text-white mb-3">Market Observations</h4>
+                    <textarea class="form-textarea" id="marketObservations" rows="3"
+                              placeholder="What did you notice about market conditions today?"></textarea>
+                </div>
+
+                <!-- Tomorrow's Plan -->
+                <div class="mb-6">
+                    <h4 class="text-lg font-semibold text-white mb-3">Tomorrow's Plan</h4>
+                    <div class="bg-purple-900 bg-opacity-20 rounded-lg p-4 mb-3">
+                        <p class="text-purple-300 text-sm italic">
+                            End each day by planning the next. What will you focus on?
+                        </p>
+                    </div>
+                    <textarea class="form-textarea" id="tomorrowPlan" rows="4"
+                              placeholder="What are your goals for tomorrow's session?"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex justify-center space-x-4 mt-8">
+            <button class="btn btn-primary" onclick="saveJournalEntry()">
+                Save Entry
+            </button>
+            <button class="btn btn-secondary" onclick="toggleVoiceJournal()">
+                Voice Journal
+            </button>
+            <button class="btn btn-secondary" onclick="viewPastPatterns()">
+                Past Patterns
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Tab Buttons */
+.tab-btn {
+    @apply px-4 py-2 rounded-lg text-gray-300 hover:text-white transition-colors;
+}
+
+.tab-btn.active {
+    @apply bg-purple-600 text-white;
+}
+
+/* Mood Buttons */
+.mood-btn {
+    @apply w-12 h-12 text-2xl rounded-full bg-gray-700 hover:bg-gray-600 transition-colors;
+}
+
+.mood-btn.selected {
+    @apply bg-purple-600 ring-2 ring-purple-400;
+}
+
+/* Form Elements */
+.form-input {
+    @apply w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-500;
+}
+
+.form-textarea {
+    @apply w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 resize-vertical;
+}
+
+/* Tag Buttons */
+.tag-btn, .achievement-btn, .mistake-btn {
+    @apply px-3 py-1 bg-gray-700 text-gray-300 rounded-full text-sm hover:bg-gray-600 transition-colors cursor-pointer;
+}
+
+.tag-btn.selected, .achievement-btn.selected, .mistake-btn.selected {
+    @apply bg-purple-600 text-white;
+}
+
+/* Action Buttons */
+.btn {
+    @apply px-6 py-3 rounded-lg font-semibold transition-colors;
+}
+
+.btn-primary {
+    @apply bg-purple-600 text-white hover:bg-purple-700;
+}
+
+.btn-secondary {
+    @apply bg-gray-600 text-white hover:bg-gray-700;
+}
+
+/* Slider */
+.slider::-webkit-slider-thumb {
+    @apply appearance-none w-4 h-4 bg-purple-500 rounded-full cursor-pointer;
+}
+
+.slider::-moz-range-thumb {
+    @apply w-4 h-4 bg-purple-500 rounded-full cursor-pointer border-0;
+}
+</style>
+
+<script>
+// Journal State
+let selectedMood = null;
+let selectedTags = new Set();
+let currentTab = 'today';
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    setCurrentDate();
+    setupEventListeners();
+});
+
+function setCurrentDate() {
+    const now = new Date();
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', options);
+}
+
+function setupEventListeners() {
+    // Mood selector
+    document.querySelectorAll('.mood-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
+            this.classList.add('selected');
+            selectedMood = this.dataset.mood;
+        });
+    });
+
+    // Tag buttons
+    document.querySelectorAll('.tag-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const tag = this.dataset.tag;
+            if (selectedTags.has(tag)) {
+                selectedTags.delete(tag);
+                this.classList.remove('selected');
+            } else {
+                selectedTags.add(tag);
+                this.classList.add('selected');
+            }
+        });
+    });
+
+    // Achievement buttons
+    document.querySelectorAll('.achievement-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            this.classList.toggle('selected');
+        });
+    });
+
+    // Mistake buttons
+    document.querySelectorAll('.mistake-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            this.classList.toggle('selected');
+        });
+    });
+
+    // Confidence slider
+    const slider = document.getElementById('confidenceSlider');
+    const valueDisplay = document.getElementById('confidenceValue');
+    
+    slider.addEventListener('input', function() {
+        valueDisplay.textContent = this.value;
+    });
+}
+
+function switchTab(tabName) {
+    // Hide all tabs
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.add('hidden');
+    });
+    
+    // Remove active from all buttons
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Show selected tab
+    document.getElementById(tabName + '-tab').classList.remove('hidden');
+    
+    // Activate button
+    document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+    
+    currentTab = tabName;
+}
+
+function saveJournalEntry() {
+    // Collect all form data
+    const journalData = {
+        mood: selectedMood,
+        confidence: document.getElementById('confidenceSlider').value,
+        numTrades: document.getElementById('numTrades').value,
+        winRate: document.getElementById('winRate').value,
+        rrRatio: document.getElementById('rrRatio').value,
+        tags: Array.from(selectedTags),
+        tradeHighlights: document.getElementById('tradeHighlights').value,
+        keyLearnings: document.getElementById('keyLearnings').value,
+        // Add other fields as needed
+    };
+    
+    // Send to backend (implement the endpoint)
+    fetch('/journal/save', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(journalData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Journal entry saved successfully!');
+        }
+    })
+    .catch(error => {
+        console.error('Error saving journal:', error);
+        alert('Error saving journal entry');
+    });
+}
+
+function toggleVoiceJournal() {
+    // Implement voice journal functionality
+    alert('Voice journal feature coming soon!');
+}
+
+function viewPastPatterns() {
+    // Navigate to patterns view
+    window.location.href = '/patterns';
+}
+</script>
+
+{% endblock %}

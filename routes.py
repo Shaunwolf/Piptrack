@@ -188,7 +188,38 @@ def journal():
             'updated_at': trade.updated_at.isoformat() if trade.updated_at else None
         })
     
-    return render_template('journal_new.html', trades=trades_data, tracked_stocks=tracked_stocks)
+    return render_template('journal_clean.html', trades=trades_data, tracked_stocks=tracked_stocks)
+
+@app.route('/journal/save', methods=['POST'])
+def save_journal_entry():
+    """Save journal entry from clean journal interface"""
+    try:
+        data = request.json
+        
+        # Create new journal entry
+        trade = TradeJournal(
+            symbol=data.get('symbol', 'JOURNAL'),
+            entry_price=float(data.get('entry_price', 0)),
+            stop_loss=float(data.get('stop_loss', 0)),
+            take_profit=float(data.get('take_profit', 0)),
+            pattern_confirmed=data.get('pattern_confirmed', False),
+            screenshot_taken=data.get('screenshot_taken', False),
+            reflection=data.get('tradeHighlights', ''),
+            perfect_trade=data.get('perfect_trade', False),
+            confidence_at_entry=float(data.get('confidence', 50)),
+            lessons_learned=data.get('keyLearnings', ''),
+            outcome='journal_entry'
+        )
+        
+        db.session.add(trade)
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': 'Journal entry saved successfully'})
+        
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Error saving journal entry: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/add_trade', methods=['POST'])
 def add_trade():
