@@ -1,0 +1,714 @@
+{% extends "base.html" %}
+
+{% block title %}Physics Analysis - {{ symbol }} - CandleCast{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-black">
+    <!-- Header -->
+    <div class="bg-gray-800/90 backdrop-blur-sm border-b border-gray-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="text-4xl">⚛️</div>
+                    <div>
+                        <h1 class="text-3xl font-bold text-white">Physics Engine Analysis</h1>
+                        <p class="text-blue-300 mt-1">{{ symbol }} - Market Forces in Action</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="bg-purple-600/20 px-4 py-2 rounded-lg border border-purple-500/30">
+                        <span class="text-purple-300 text-sm">⚡ Quantum Mode</span>
+                    </div>
+                    <button onclick="refreshAllAnalysis()" 
+                            class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-2 rounded-lg font-semibold transition-all duration-300">
+                        🔄 Refresh
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Physics Dashboard -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Main Physics Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- Gravitational Wells -->
+            <div class="physics-panel bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-xl p-6 border border-blue-500/20">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-bold text-white flex items-center">
+                        🌌 Gravitational Wells
+                        <span class="ml-2 text-xs bg-blue-600/20 px-2 py-1 rounded text-blue-300">Support/Resistance</span>
+                    </h3>
+                    <div class="gravity-status text-gray-400 text-sm" id="gravityStatus">Analyzing...</div>
+                </div>
+                
+                <div id="gravityVisualization" class="h-64 bg-black/50 rounded-lg mb-4 relative overflow-hidden">
+                    <canvas id="gravityCanvas" class="absolute inset-0 w-full h-full"></canvas>
+                    <div class="absolute inset-0 flex items-center justify-center text-gray-400">
+                        Loading gravitational field...
+                    </div>
+                </div>
+                
+                <div id="gravityData" class="space-y-3">
+                    <!-- Gravity wells data will be populated here -->
+                </div>
+            </div>
+
+            <!-- Momentum Particles -->
+            <div class="physics-panel bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-xl p-6 border border-green-500/20">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-bold text-white flex items-center">
+                        ⚡ Momentum Particles
+                        <span class="ml-2 text-xs bg-green-600/20 px-2 py-1 rounded text-green-300">Price Dynamics</span>
+                    </h3>
+                    <div class="momentum-status text-gray-400 text-sm" id="momentumStatus">Analyzing...</div>
+                </div>
+                
+                <div id="momentumVisualization" class="h-64 bg-black/50 rounded-lg mb-4 relative overflow-hidden">
+                    <canvas id="momentumCanvas" class="absolute inset-0 w-full h-full"></canvas>
+                    <div class="absolute inset-0 flex items-center justify-center text-gray-400">
+                        Simulating particle physics...
+                    </div>
+                </div>
+                
+                <div id="momentumData" class="space-y-3">
+                    <!-- Momentum particles data will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Secondary Physics Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- Magnetic Fields -->
+            <div class="physics-panel bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-xl p-6 border border-purple-500/20">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-bold text-white flex items-center">
+                        🧲 Magnetic Fields
+                        <span class="ml-2 text-xs bg-purple-600/20 px-2 py-1 rounded text-purple-300">Trend Strength</span>
+                    </h3>
+                    <div class="magnetic-status text-gray-400 text-sm" id="magneticStatus">Analyzing...</div>
+                </div>
+                
+                <div id="magneticVisualization" class="h-64 bg-black/50 rounded-lg mb-4 relative overflow-hidden">
+                    <canvas id="magneticCanvas" class="absolute inset-0 w-full h-full"></canvas>
+                    <div class="absolute inset-0 flex items-center justify-center text-gray-400">
+                        Mapping magnetic field lines...
+                    </div>
+                </div>
+                
+                <div id="magneticData" class="space-y-3">
+                    <!-- Magnetic fields data will be populated here -->
+                </div>
+            </div>
+
+            <!-- Weather Patterns -->
+            <div class="physics-panel bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-xl p-6 border border-yellow-500/20">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-bold text-white flex items-center">
+                        🌦️ Weather Patterns
+                        <span class="ml-2 text-xs bg-yellow-600/20 px-2 py-1 rounded text-yellow-300">Market Climate</span>
+                    </h3>
+                    <div class="weather-status text-gray-400 text-sm" id="weatherStatus">Analyzing...</div>
+                </div>
+                
+                <div id="weatherVisualization" class="h-64 bg-black/50 rounded-lg mb-4 relative overflow-hidden">
+                    <div class="weather-display h-full flex items-center justify-center">
+                        <div class="weather-icon text-6xl" id="weatherIcon">🌥️</div>
+                    </div>
+                </div>
+                
+                <div id="weatherData" class="space-y-3">
+                    <!-- Weather patterns data will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Quantum Tunneling Analysis -->
+        <div class="physics-panel bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-xl p-6 border border-cyan-500/20 mb-8">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-bold text-white flex items-center">
+                    🌀 Quantum Tunneling
+                    <span class="ml-2 text-xs bg-cyan-600/20 px-2 py-1 rounded text-cyan-300">Breakthrough Probability</span>
+                </h3>
+                <div class="quantum-status text-gray-400 text-sm" id="quantumStatus">Analyzing...</div>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div id="quantumVisualization" class="h-64 bg-black/50 rounded-lg relative overflow-hidden">
+                    <canvas id="quantumCanvas" class="absolute inset-0 w-full h-full"></canvas>
+                    <div class="absolute inset-0 flex items-center justify-center text-gray-400">
+                        Calculating quantum probabilities...
+                    </div>
+                </div>
+                
+                <div id="quantumData" class="space-y-3">
+                    <!-- Quantum tunneling data will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Physics Summary Dashboard -->
+        <div class="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-xl p-6 border border-gray-700">
+            <h3 class="text-xl font-bold text-white mb-6">🔬 Physics Summary</h3>
+            
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-blue-400" id="netGravity">--</div>
+                    <div class="text-gray-400 text-sm">Net Gravity</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-green-400" id="totalMomentum">--</div>
+                    <div class="text-gray-400 text-sm">Total Momentum</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-purple-400" id="fieldStrength">--</div>
+                    <div class="text-gray-400 text-sm">Field Strength</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-cyan-400" id="tunnelProb">--</div>
+                    <div class="text-gray-400 text-sm">Tunnel Probability</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const symbol = '{{ symbol }}';
+let physicsData = {
+    gravity: null,
+    momentum: null,
+    magnetic: null,
+    weather: null,
+    quantum: null
+};
+
+// Animation variables
+let animationFrames = {};
+
+async function loadPhysicsAnalysis() {
+    const analyses = [
+        { type: 'gravity', endpoint: `/api/physics/gravity/${symbol}` },
+        { type: 'momentum', endpoint: `/api/physics/momentum/${symbol}` },
+        { type: 'magnetic', endpoint: `/api/physics/magnetic/${symbol}` },
+        { type: 'weather', endpoint: `/api/physics/weather/${symbol}` },
+        { type: 'quantum', endpoint: `/api/physics/quantum/${symbol}` }
+    ];
+
+    // Load all analyses in parallel
+    const promises = analyses.map(async (analysis) => {
+        try {
+            const response = await fetch(analysis.endpoint);
+            const data = await response.json();
+            
+            if (data.success) {
+                physicsData[analysis.type] = data.analysis;
+                displayAnalysis(analysis.type, data.analysis);
+            } else {
+                console.error(`Error loading ${analysis.type}:`, data.error);
+                displayError(analysis.type, data.error);
+            }
+        } catch (error) {
+            console.error(`Network error for ${analysis.type}:`, error);
+            displayError(analysis.type, 'Network error');
+        }
+    });
+
+    await Promise.all(promises);
+    updateSummaryDashboard();
+}
+
+function displayAnalysis(type, data) {
+    switch (type) {
+        case 'gravity':
+            displayGravityWells(data);
+            break;
+        case 'momentum':
+            displayMomentumParticles(data);
+            break;
+        case 'magnetic':
+            displayMagneticFields(data);
+            break;
+        case 'weather':
+            displayWeatherPatterns(data);
+            break;
+        case 'quantum':
+            displayQuantumTunneling(data);
+            break;
+    }
+}
+
+function displayGravityWells(data) {
+    const statusEl = document.getElementById('gravityStatus');
+    const dataEl = document.getElementById('gravityData');
+    
+    statusEl.textContent = `${data.gravity_wells?.length || 0} Wells Found`;
+    statusEl.className = 'text-blue-400 text-sm';
+    
+    const html = `
+        <div class="grid grid-cols-2 gap-4 mb-4">
+            <div class="bg-gray-700/50 p-3 rounded">
+                <div class="text-xs text-gray-400">Current Price</div>
+                <div class="text-lg font-bold text-white">$${data.current_price?.toFixed(2)}</div>
+            </div>
+            <div class="bg-gray-700/50 p-3 rounded">
+                <div class="text-xs text-gray-400">Field Direction</div>
+                <div class="text-lg font-bold ${data.field_direction === 'bullish' ? 'text-green-400' : 'text-red-400'}">
+                    ${data.field_direction?.toUpperCase()}
+                </div>
+            </div>
+        </div>
+        
+        ${data.gravity_wells?.slice(0, 3).map(well => `
+            <div class="bg-gray-700/30 p-3 rounded border-l-4 ${well.type === 'support' ? 'border-green-500' : 'border-red-500'}">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <div class="font-semibold text-white">${well.type.toUpperCase()}</div>
+                        <div class="text-gray-300">$${well.price?.toFixed(2)}</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm text-gray-400">Strength</div>
+                        <div class="font-bold text-blue-400">${well.strength?.toFixed(1)}</div>
+                    </div>
+                </div>
+            </div>
+        `).join('') || '<div class="text-gray-400">No significant gravity wells detected</div>'}
+    `;
+    
+    dataEl.innerHTML = html;
+    
+    // Start gravity visualization
+    animateGravityWells(data);
+}
+
+function displayMomentumParticles(data) {
+    const statusEl = document.getElementById('momentumStatus');
+    const dataEl = document.getElementById('momentumData');
+    
+    statusEl.textContent = `${data.momentum_particles?.length || 0} Particles`;
+    statusEl.className = 'text-green-400 text-sm';
+    
+    const html = `
+        <div class="grid grid-cols-2 gap-4 mb-4">
+            <div class="bg-gray-700/50 p-3 rounded">
+                <div class="text-xs text-gray-400">Total Field</div>
+                <div class="text-lg font-bold text-green-400">${data.total_momentum_field?.toFixed(3) || '0.000'}</div>
+            </div>
+            <div class="bg-gray-700/50 p-3 rounded">
+                <div class="text-xs text-gray-400">Dominant Type</div>
+                <div class="text-lg font-bold text-white">${data.dominant_particle_type?.toUpperCase() || 'NEUTRAL'}</div>
+            </div>
+        </div>
+        
+        ${data.momentum_particles?.slice(-3).map(particle => `
+            <div class="bg-gray-700/30 p-3 rounded">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <div class="font-semibold text-white">${particle.particle_type?.toUpperCase()}</div>
+                        <div class="text-gray-300">$${particle.price?.toFixed(2)}</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm text-gray-400">Momentum</div>
+                        <div class="font-bold ${particle.momentum > 0 ? 'text-green-400' : 'text-red-400'}">
+                            ${particle.momentum?.toFixed(3)}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).join('') || '<div class="text-gray-400">No momentum particles detected</div>'}
+    `;
+    
+    dataEl.innerHTML = html;
+    
+    // Start momentum visualization
+    animateMomentumParticles(data);
+}
+
+function displayMagneticFields(data) {
+    const statusEl = document.getElementById('magneticStatus');
+    const dataEl = document.getElementById('magneticData');
+    
+    statusEl.textContent = `${data.magnetic_field_lines?.length || 0} Field Lines`;
+    statusEl.className = 'text-purple-400 text-sm';
+    
+    const html = `
+        <div class="grid grid-cols-2 gap-4 mb-4">
+            <div class="bg-gray-700/50 p-3 rounded">
+                <div class="text-xs text-gray-400">Field Strength</div>
+                <div class="text-lg font-bold text-purple-400">${data.total_field_strength?.toFixed(2) || '0.00'}</div>
+            </div>
+            <div class="bg-gray-700/50 p-3 rounded">
+                <div class="text-xs text-gray-400">Direction</div>
+                <div class="text-lg font-bold ${data.net_magnetic_direction === 'bullish' ? 'text-green-400' : 'text-red-400'}">
+                    ${data.net_magnetic_direction?.toUpperCase() || 'NEUTRAL'}
+                </div>
+            </div>
+        </div>
+        
+        ${data.magnetic_field_lines?.map(line => `
+            <div class="bg-gray-700/30 p-3 rounded">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <div class="font-semibold text-white">${line.ma_period}</div>
+                        <div class="text-gray-300">$${line.ma_value?.toFixed(2)}</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm text-gray-400">Field Strength</div>
+                        <div class="font-bold text-purple-400">${line.field_strength?.toFixed(2)}</div>
+                    </div>
+                </div>
+            </div>
+        `).join('') || '<div class="text-gray-400">No magnetic field lines detected</div>'}
+    `;
+    
+    dataEl.innerHTML = html;
+    
+    // Start magnetic visualization
+    animateMagneticFields(data);
+}
+
+function displayWeatherPatterns(data) {
+    const statusEl = document.getElementById('weatherStatus');
+    const dataEl = document.getElementById('weatherData');
+    const iconEl = document.getElementById('weatherIcon');
+    
+    statusEl.textContent = data.weather_type?.toUpperCase() || 'UNKNOWN';
+    statusEl.className = 'text-yellow-400 text-sm';
+    
+    // Update weather icon
+    const weatherIcons = {
+        'sunny': '☀️',
+        'cloudy': '☁️',
+        'stormy': '⛈️',
+        'thunderstorm': '🌩️',
+        'calm': '🌤️'
+    };
+    iconEl.textContent = weatherIcons[data.weather_type] || '🌥️';
+    
+    const html = `
+        <div class="grid grid-cols-2 gap-4 mb-4">
+            <div class="bg-gray-700/50 p-3 rounded">
+                <div class="text-xs text-gray-400">Temperature (RSI)</div>
+                <div class="text-lg font-bold text-yellow-400">${data.current_weather?.temperature?.toFixed(0) || '--'}°</div>
+            </div>
+            <div class="bg-gray-700/50 p-3 rounded">
+                <div class="text-xs text-gray-400">Storm Risk</div>
+                <div class="text-lg font-bold text-red-400">${data.storm_probability?.toFixed(0) || '--'}%</div>
+            </div>
+        </div>
+        
+        <div class="space-y-2">
+            <div class="bg-gray-700/30 p-3 rounded">
+                <div class="text-sm text-gray-400">5-Day Forecast</div>
+                <div class="flex space-x-2 mt-2">
+                    ${data.forecast?.map(day => `
+                        <div class="text-center">
+                            <div class="text-xs text-gray-400">Day ${day.day}</div>
+                            <div class="text-lg">${weatherIcons[day.weather_type] || '🌥️'}</div>
+                            <div class="text-xs text-white">${day.temperature?.toFixed(0)}°</div>
+                        </div>
+                    `).join('') || ''}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    dataEl.innerHTML = html;
+}
+
+function displayQuantumTunneling(data) {
+    const statusEl = document.getElementById('quantumStatus');
+    const dataEl = document.getElementById('quantumData');
+    
+    const bestTunnel = data.most_likely_tunnel;
+    statusEl.textContent = bestTunnel ? `${bestTunnel.tunneling_probability?.toFixed(1)}% Max` : 'No Tunnels';
+    statusEl.className = 'text-cyan-400 text-sm';
+    
+    const html = `
+        <div class="space-y-4">
+            ${data.tunneling_probabilities?.slice(0, 3).map(tunnel => `
+                <div class="bg-gray-700/30 p-4 rounded border-l-4 border-cyan-500">
+                    <div class="flex justify-between items-center mb-2">
+                        <div class="font-semibold text-white">Resistance $${tunnel.resistance_level?.toFixed(2)}</div>
+                        <div class="text-cyan-400 font-bold">${tunnel.tunneling_probability?.toFixed(1)}%</div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 text-sm">
+                        <div>
+                            <span class="text-gray-400">Barrier Height:</span>
+                            <span class="text-white ml-1">${tunnel.barrier_height?.toFixed(2)}</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-400">Coherence:</span>
+                            <span class="text-white ml-1">${tunnel.quantum_coherence?.toFixed(1)}%</span>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <div class="bg-gray-800 rounded h-2">
+                            <div class="bg-cyan-500 h-2 rounded transition-all duration-1000" 
+                                 style="width: ${tunnel.tunneling_probability}%"></div>
+                        </div>
+                    </div>
+                </div>
+            `).join('') || '<div class="text-gray-400">No quantum tunneling opportunities detected</div>'}
+        </div>
+    `;
+    
+    dataEl.innerHTML = html;
+    
+    // Start quantum visualization
+    animateQuantumTunneling(data);
+}
+
+function animateGravityWells(data) {
+    const canvas = document.getElementById('gravityCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    
+    let time = 0;
+    
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw gravitational field visualization
+        const wells = data.gravity_wells || [];
+        
+        wells.forEach((well, index) => {
+            const x = (canvas.width / (wells.length + 1)) * (index + 1);
+            const y = canvas.height / 2;
+            const radius = Math.max(10, well.strength / 10);
+            
+            // Draw gravity well
+            const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius * 2);
+            gradient.addColorStop(0, well.type === 'support' ? 'rgba(34, 197, 94, 0.8)' : 'rgba(239, 68, 68, 0.8)');
+            gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(x, y, radius * 2, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Draw pulsing center
+            ctx.fillStyle = well.type === 'support' ? '#22c55e' : '#ef4444';
+            ctx.beginPath();
+            ctx.arc(x, y, radius * (1 + 0.3 * Math.sin(time + index)), 0, Math.PI * 2);
+            ctx.fill();
+        });
+        
+        time += 0.05;
+        animationFrames.gravity = requestAnimationFrame(animate);
+    }
+    
+    animate();
+}
+
+function animateMomentumParticles(data) {
+    const canvas = document.getElementById('momentumCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    
+    const particles = [];
+    const particleCount = 20;
+    
+    // Initialize particles
+    for (let i = 0; i < particleCount; i++) {
+        particles.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            vx: (Math.random() - 0.5) * 4,
+            vy: (Math.random() - 0.5) * 4,
+            size: Math.random() * 3 + 1,
+            type: Math.random() > 0.5 ? 'bull' : 'bear'
+        });
+    }
+    
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        particles.forEach(particle => {
+            // Update position
+            particle.x += particle.vx;
+            particle.y += particle.vy;
+            
+            // Bounce off walls
+            if (particle.x <= 0 || particle.x >= canvas.width) particle.vx *= -1;
+            if (particle.y <= 0 || particle.y >= canvas.height) particle.vy *= -1;
+            
+            // Draw particle
+            ctx.fillStyle = particle.type === 'bull' ? '#22c55e' : '#ef4444';
+            ctx.beginPath();
+            ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Draw particle trail
+            ctx.strokeStyle = particle.type === 'bull' ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(particle.x, particle.y);
+            ctx.lineTo(particle.x - particle.vx * 5, particle.y - particle.vy * 5);
+            ctx.stroke();
+        });
+        
+        animationFrames.momentum = requestAnimationFrame(animate);
+    }
+    
+    animate();
+}
+
+function animateMagneticFields(data) {
+    const canvas = document.getElementById('magneticCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    
+    let time = 0;
+    
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw magnetic field lines
+        const fieldLines = data.magnetic_field_lines || [];
+        
+        for (let i = 0; i < 10; i++) {
+            const y = (canvas.height / 11) * (i + 1);
+            
+            ctx.strokeStyle = `rgba(147, 51, 234, ${0.3 + 0.3 * Math.sin(time + i * 0.5)})`;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            
+            for (let x = 0; x <= canvas.width; x += 10) {
+                const waveY = y + 20 * Math.sin((x / 50) + time + i * 0.3);
+                if (x === 0) {
+                    ctx.moveTo(x, waveY);
+                } else {
+                    ctx.lineTo(x, waveY);
+                }
+            }
+            
+            ctx.stroke();
+        }
+        
+        time += 0.02;
+        animationFrames.magnetic = requestAnimationFrame(animate);
+    }
+    
+    animate();
+}
+
+function animateQuantumTunneling(data) {
+    const canvas = document.getElementById('quantumCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    
+    let time = 0;
+    
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw quantum wave function
+        ctx.strokeStyle = '#06b6d4';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        
+        for (let x = 0; x <= canvas.width; x += 2) {
+            const y = canvas.height / 2 + 30 * Math.sin((x / 20) + time * 2);
+            if (x === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+        }
+        
+        ctx.stroke();
+        
+        // Draw barrier
+        const barrierX = canvas.width * 0.7;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.fillRect(barrierX, 0, 20, canvas.height);
+        
+        // Draw tunneling probability
+        const prob = data.most_likely_tunnel?.tunneling_probability || 0;
+        ctx.fillStyle = `rgba(6, 182, 212, ${prob / 100})`;
+        ctx.fillRect(barrierX + 25, 0, canvas.width - barrierX - 25, canvas.height);
+        
+        time += 0.05;
+        animationFrames.quantum = requestAnimationFrame(animate);
+    }
+    
+    animate();
+}
+
+function updateSummaryDashboard() {
+    // Update summary metrics
+    if (physicsData.gravity) {
+        document.getElementById('netGravity').textContent = 
+            physicsData.gravity.net_gravitational_force?.toFixed(2) || '--';
+    }
+    
+    if (physicsData.momentum) {
+        document.getElementById('totalMomentum').textContent = 
+            physicsData.momentum.total_momentum_field?.toFixed(3) || '--';
+    }
+    
+    if (physicsData.magnetic) {
+        document.getElementById('fieldStrength').textContent = 
+            physicsData.magnetic.total_field_strength?.toFixed(2) || '--';
+    }
+    
+    if (physicsData.quantum && physicsData.quantum.most_likely_tunnel) {
+        document.getElementById('tunnelProb').textContent = 
+            physicsData.quantum.most_likely_tunnel.tunneling_probability?.toFixed(1) + '%' || '--';
+    }
+}
+
+function displayError(type, error) {
+    const statusEl = document.getElementById(`${type}Status`);
+    const dataEl = document.getElementById(`${type}Data`);
+    
+    statusEl.textContent = 'Error';
+    statusEl.className = 'text-red-400 text-sm';
+    
+    dataEl.innerHTML = `<div class="text-red-400">Error: ${error}</div>`;
+}
+
+async function refreshAllAnalysis() {
+    // Clear existing animations
+    Object.values(animationFrames).forEach(frame => {
+        if (frame) cancelAnimationFrame(frame);
+    });
+    
+    // Reset status indicators
+    ['gravity', 'momentum', 'magnetic', 'weather', 'quantum'].forEach(type => {
+        document.getElementById(`${type}Status`).textContent = 'Refreshing...';
+        document.getElementById(`${type}Status`).className = 'text-gray-400 text-sm';
+    });
+    
+    await loadPhysicsAnalysis();
+}
+
+// Initialize physics analysis on page load
+document.addEventListener('DOMContentLoaded', loadPhysicsAnalysis);
+
+// Add physics panel hover effects
+document.addEventListener('DOMContentLoaded', function() {
+    const panels = document.querySelectorAll('.physics-panel');
+    
+    panels.forEach(panel => {
+        panel.addEventListener('mouseenter', function() {
+            this.style.transform = 'scale(1.02)';
+            this.style.transition = 'transform 0.3s ease';
+        });
+        
+        panel.addEventListener('mouseleave', function() {
+            this.style.transform = 'scale(1)';
+        });
+    });
+});
+</script>
+{% endblock %}

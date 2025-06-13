@@ -26,14 +26,17 @@ try:
     from enhanced_journal import EnhancedTradingJournal
     from multi_timeframe_analyzer import MultiTimeframeAnalyzer
     from scanner_widgets import ScannerWidgets
+    from physics_market_engine import PhysicsMarketEngine
     enhanced_journal = EnhancedTradingJournal()
     mtf_analyzer = MultiTimeframeAnalyzer()
     scanner_widgets = ScannerWidgets()
+    physics_engine = PhysicsMarketEngine()
 except ImportError as e:
     logging.warning(f"Enhanced components not available: {e}")
     enhanced_journal = None
     mtf_analyzer = None
     scanner_widgets = None
+    physics_engine = None
 
 @app.route('/')
 def index():
@@ -656,4 +659,101 @@ def run_widget_scan(widget_id):
         
     except Exception as e:
         logging.error(f"Error running widget scan {widget_id}: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+# Physics-Based Market Analysis Routes
+
+@app.route('/physics/<symbol>')
+def physics_analysis(symbol):
+    """Physics-based stock analysis page"""
+    return render_template('physics_analysis.html', symbol=symbol.upper())
+
+@app.route('/api/physics/gravity/<symbol>')
+def gravity_wells_analysis(symbol):
+    """Get gravitational wells analysis"""
+    try:
+        if physics_engine is None:
+            return jsonify({'success': False, 'error': 'Physics engine not available'})
+        
+        analysis = physics_engine.analyze_gravity_wells(symbol)
+        
+        if 'error' in analysis:
+            return jsonify({'success': False, 'error': analysis['error']})
+        
+        return jsonify({'success': True, 'analysis': analysis})
+        
+    except Exception as e:
+        logging.error(f"Error in gravity wells analysis for {symbol}: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/physics/momentum/<symbol>')
+def momentum_particles_analysis(symbol):
+    """Get momentum particles simulation"""
+    try:
+        if physics_engine is None:
+            return jsonify({'success': False, 'error': 'Physics engine not available'})
+        
+        analysis = physics_engine.simulate_momentum_particles(symbol)
+        
+        if 'error' in analysis:
+            return jsonify({'success': False, 'error': analysis['error']})
+        
+        return jsonify({'success': True, 'analysis': analysis})
+        
+    except Exception as e:
+        logging.error(f"Error in momentum particles analysis for {symbol}: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/physics/magnetic/<symbol>')
+def magnetic_fields_analysis(symbol):
+    """Get magnetic fields analysis"""
+    try:
+        if physics_engine is None:
+            return jsonify({'success': False, 'error': 'Physics engine not available'})
+        
+        analysis = physics_engine.analyze_magnetic_fields(symbol)
+        
+        if 'error' in analysis:
+            return jsonify({'success': False, 'error': analysis['error']})
+        
+        return jsonify({'success': True, 'analysis': analysis})
+        
+    except Exception as e:
+        logging.error(f"Error in magnetic fields analysis for {symbol}: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/physics/weather/<symbol>')
+def weather_patterns_analysis(symbol):
+    """Get weather patterns simulation"""
+    try:
+        if physics_engine is None:
+            return jsonify({'success': False, 'error': 'Physics engine not available'})
+        
+        analysis = physics_engine.simulate_weather_patterns(symbol)
+        
+        if 'error' in analysis:
+            return jsonify({'success': False, 'error': analysis['error']})
+        
+        return jsonify({'success': True, 'analysis': analysis})
+        
+    except Exception as e:
+        logging.error(f"Error in weather patterns analysis for {symbol}: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/physics/quantum/<symbol>')
+def quantum_tunneling_analysis(symbol):
+    """Get quantum tunneling analysis"""
+    try:
+        if physics_engine is None:
+            return jsonify({'success': False, 'error': 'Physics engine not available'})
+        
+        analysis = physics_engine.calculate_quantum_tunneling(symbol)
+        
+        if 'error' in analysis:
+            return jsonify({'success': False, 'error': analysis['error']})
+        
+        return jsonify({'success': True, 'analysis': analysis})
+        
+    except Exception as e:
+        logging.error(f"Error in quantum tunneling analysis for {symbol}: {e}")
         return jsonify({'success': False, 'error': str(e)})
