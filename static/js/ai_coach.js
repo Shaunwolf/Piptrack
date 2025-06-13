@@ -172,6 +172,7 @@ function addGutCheckPrompts() {
 
 // Get AI review for a stock
 async function getAIReview(symbol) {
+    console.log('getAIReview called with symbol:', symbol);
     if (!symbol) {
         showAlert('Symbol is required for AI analysis', 'error');
         return;
@@ -190,9 +191,11 @@ async function getAIReview(symbol) {
         
         const response = await fetch(`/ai_review/${symbol}`);
         const data = await response.json();
+        console.log('AI Review API response:', data);
         
         if (data.success) {
             const analysis = data.analysis;
+            console.log('Analysis data received:', analysis);
             
             // Cache the analysis
             window.aiCoachState.analysisCache.set(cacheKey, analysis);
