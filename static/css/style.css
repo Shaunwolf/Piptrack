@@ -368,6 +368,27 @@ body {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
+/* Ticker Tag Styles */
+.ticker-tag {
+  background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
+  color: #d1d5db;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid #4b5563;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ticker-tag:hover {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+  border-color: #3b82f6;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
 /* Card Styles */
 .card {
   @apply bg-dark-surface rounded-lg shadow-lg border border-dark-accent;

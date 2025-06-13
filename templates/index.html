@@ -53,6 +53,54 @@
         </div>
     </div>
     
+    <!-- Quick Ticker Search -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="text-2xl font-bold flex items-center">
+                <i class="fas fa-search mr-3 text-accent-blue"></i>
+                Quick Forecast Lookup
+            </h2>
+            <p class="text-gray-400 text-sm">Enter any ticker symbol to get instant AI-powered forecasting</p>
+        </div>
+        
+        <div class="card-body">
+            <form id="tickerSearchForm" class="flex items-center space-x-4">
+                <div class="flex-1 relative">
+                    <input 
+                        type="text" 
+                        id="tickerInput" 
+                        name="ticker" 
+                        placeholder="Enter ticker symbol (e.g., AAPL, TSLA, NVDA)" 
+                        class="w-full px-4 py-3 bg-dark-accent border border-dark-accent rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-blue focus:border-transparent text-lg font-semibold uppercase"
+                        autocomplete="off"
+                        maxlength="10"
+                        required
+                    />
+                    <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                        <i class="fas fa-chart-line text-gray-400"></i>
+                    </div>
+                </div>
+                <button 
+                    type="submit" 
+                    class="btn-gradient-primary px-8 py-3 font-semibold text-lg flex items-center space-x-2 hover:scale-105 transition-transform duration-200"
+                >
+                    <i class="fas fa-rocket"></i>
+                    <span>Analyze</span>
+                </button>
+            </form>
+            
+            <div class="mt-4 flex flex-wrap gap-2">
+                <span class="text-sm text-gray-400">Popular tickers:</span>
+                <button onclick="searchTicker('AAPL')" class="ticker-tag">AAPL</button>
+                <button onclick="searchTicker('TSLA')" class="ticker-tag">TSLA</button>
+                <button onclick="searchTicker('NVDA')" class="ticker-tag">NVDA</button>
+                <button onclick="searchTicker('AMD')" class="ticker-tag">AMD</button>
+                <button onclick="searchTicker('MSFT')" class="ticker-tag">MSFT</button>
+                <button onclick="searchTicker('GOOGL')" class="ticker-tag">GOOGL</button>
+            </div>
+        </div>
+    </div>
+    
     <!-- Top 5 Tracked Stocks -->
     <div class="card">
         <div class="card-header">

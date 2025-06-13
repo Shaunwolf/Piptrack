@@ -35,6 +35,9 @@ function initializeApp() {
     
     // Initialize tooltips
     initializeTooltips();
+    
+    // Initialize ticker search
+    initializeTickerSearch();
 }
 
 // Setup global event listeners
@@ -80,6 +83,50 @@ function closeModal(modalId) {
     if (modal) {
         modal.classList.remove('show');
         document.body.style.overflow = '';
+    }
+}
+
+// Ticker search functionality
+function searchTicker(ticker) {
+    if (ticker) {
+        // Uppercase and trim the ticker
+        const cleanTicker = ticker.toString().toUpperCase().trim();
+        
+        // Navigate to forecast page
+        window.location.href = `/forecast/${cleanTicker}`;
+    }
+}
+
+// Initialize ticker search form
+function initializeTickerSearch() {
+    const form = document.getElementById('tickerSearchForm');
+    const input = document.getElementById('tickerInput');
+    
+    if (form && input) {
+        // Handle form submission
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const ticker = input.value.trim();
+            if (ticker) {
+                searchTicker(ticker);
+            }
+        });
+        
+        // Auto-uppercase input
+        input.addEventListener('input', function(e) {
+            e.target.value = e.target.value.toUpperCase();
+        });
+        
+        // Enter key handling
+        input.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const ticker = input.value.trim();
+                if (ticker) {
+                    searchTicker(ticker);
+                }
+            }
+        });
     }
 }
 
