@@ -1,0 +1,423 @@
+{% extends "base.html" %}
+
+{% block title %}Enhanced Scanner - CandleCast{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
+    <!-- Header -->
+    <div class="bg-gray-800/90 backdrop-blur-sm border-b border-gray-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-white">🔍 Enhanced Scanner</h1>
+                    <p class="text-gray-300 mt-1">Multi-timeframe analysis with pattern recognition</p>
+                </div>
+                <div class="flex space-x-4">
+                    <select id="scanType" class="bg-gray-700 text-white px-4 py-2 rounded-lg border border-gray-600">
+                        <option value="gappers">Top Gappers</option>
+                        <option value="custom">Custom Symbols</option>
+                        <option value="sectors">Sector Analysis</option>
+                    </select>
+                    <button onclick="runEnhancedScan()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors">
+                        🚀 Run Scan
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Market Overview -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <!-- Market Indices -->
+            <div class="bg-gray-800/80 backdrop-blur-sm rounded-xl p-6 border border-gray-700">
+                <h3 class="text-lg font-semibold text-white mb-4">📊 Market Indices</h3>
+                <div id="marketIndices" class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-300">Loading...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Market Sentiment -->
+            <div class="bg-gray-800/80 backdrop-blur-sm rounded-xl p-6 border border-gray-700">
+                <h3 class="text-lg font-semibold text-white mb-4">🌡️ Market Sentiment</h3>
+                <div id="marketSentiment" class="text-center">
+                    <div class="text-3xl font-bold text-blue-400" id="sentimentScore">--</div>
+                    <div class="text-gray-300" id="sentimentLabel">Loading...</div>
+                </div>
+            </div>
+
+            <!-- Top Sectors -->
+            <div class="bg-gray-800/80 backdrop-blur-sm rounded-xl p-6 border border-gray-700">
+                <h3 class="text-lg font-semibold text-white mb-4">🏆 Top Sectors</h3>
+                <div id="topSectors" class="space-y-2">
+                    <div class="text-gray-300">Loading...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scan Results -->
+        <div class="bg-gray-800/80 backdrop-blur-sm rounded-xl p-6 border border-gray-700">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-semibold text-white">📈 Scan Results</h3>
+                <div id="scanStats" class="text-gray-400 text-sm"></div>
+            </div>
+
+            <!-- Results Grid -->
+            <div id="scanResults" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                <!-- Results will be populated here -->
+                <div class="col-span-full text-center text-gray-400 py-12">
+                    Click "Run Scan" to discover trading opportunities
+                </div>
+            </div>
+        </div>
+
+        <!-- Multi-timeframe Analysis Modal -->
+        <div id="mtfModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
+            <div class="bg-gray-900 rounded-lg p-8 max-w-6xl w-full mx-4 max-h-[90vh] overflow-auto">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-2xl font-bold text-white" id="mtfModalTitle">Multi-timeframe Analysis</h3>
+                    <button onclick="closeMTFModal()" class="text-gray-400 hover:text-white text-2xl">×</button>
+                </div>
+                <div id="mtfContent">
+                    <!-- MTF analysis content will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentScanResults = [];
+
+async function runEnhancedScan() {
+    const scanType = document.getElementById('scanType').value;
+    const resultsContainer = document.getElementById('scanResults');
+    const statsContainer = document.getElementById('scanStats');
+    
+    // Show loading state
+    resultsContainer.innerHTML = '<div class="col-span-full text-center text-gray-400 py-12">🔄 Scanning markets...</div>';
+    
+    try {
+        // Load market overview first
+        await loadMarketOverview();
+        
+        // Run enhanced scan
+        const response = await fetch(`/enhanced_scan?type=${scanType}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            currentScanResults = data.scan_results.results || data.scan_results;
+            displayScanResults(currentScanResults);
+            
+            // Update stats
+            const metadata = data.scan_results.metadata;
+            if (metadata) {
+                statsContainer.innerHTML = `
+                    Scanned ${metadata.total_symbols_scanned} symbols | 
+                    Found ${metadata.qualified_results} opportunities | 
+                    Avg confidence: ${metadata.average_confidence?.toFixed(1)}%
+                `;
+            }
+        } else {
+            resultsContainer.innerHTML = `<div class="col-span-full text-center text-red-400 py-12">Error: ${data.error}</div>`;
+        }
+    } catch (error) {
+        console.error('Scan error:', error);
+        resultsContainer.innerHTML = '<div class="col-span-full text-center text-red-400 py-12">Scan failed. Please try again.</div>';
+    }
+}
+
+async function loadMarketOverview() {
+    try {
+        const response = await fetch('/market_overview');
+        const data = await response.json();
+        
+        if (data.success) {
+            const overview = data.market_overview;
+            
+            // Update market indices
+            const indicesContainer = document.getElementById('marketIndices');
+            const indicesHtml = Object.entries(overview.market_indices || {}).map(([symbol, data]) => `
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-300">${symbol}</span>
+                    <div class="text-right">
+                        <div class="text-white">$${data.price?.toFixed(2)}</div>
+                        <div class="text-sm ${data.change_pct >= 0 ? 'text-green-400' : 'text-red-400'}">
+                            ${data.change_pct >= 0 ? '+' : ''}${data.change_pct?.toFixed(2)}%
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            indicesContainer.innerHTML = indicesHtml;
+            
+            // Update sentiment
+            const sentiment = overview.market_sentiment;
+            if (sentiment) {
+                document.getElementById('sentimentScore').textContent = sentiment.score?.toFixed(0);
+                document.getElementById('sentimentLabel').textContent = sentiment.sentiment?.replace('_', ' ').toUpperCase();
+                
+                // Color based on sentiment
+                const scoreElement = document.getElementById('sentimentScore');
+                if (sentiment.sentiment?.includes('bullish')) {
+                    scoreElement.className = 'text-3xl font-bold text-green-400';
+                } else if (sentiment.sentiment?.includes('bearish')) {
+                    scoreElement.className = 'text-3xl font-bold text-red-400';
+                } else {
+                    scoreElement.className = 'text-3xl font-bold text-yellow-400';
+                }
+            }
+            
+            // Update top sectors
+            const sectorsContainer = document.getElementById('topSectors');
+            const sectorsHtml = (overview.top_sectors || []).slice(0, 3).map(([sector, data]) => `
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-300 text-sm">${sector}</span>
+                    <span class="text-sm ${data.change_pct >= 0 ? 'text-green-400' : 'text-red-400'}">
+                        ${data.change_pct >= 0 ? '+' : ''}${data.change_pct?.toFixed(1)}%
+                    </span>
+                </div>
+            `).join('');
+            sectorsContainer.innerHTML = sectorsHtml;
+        }
+    } catch (error) {
+        console.error('Error loading market overview:', error);
+    }
+}
+
+function displayScanResults(results) {
+    const container = document.getElementById('scanResults');
+    
+    if (!results || results.length === 0) {
+        container.innerHTML = '<div class="col-span-full text-center text-gray-400 py-12">No opportunities found</div>';
+        return;
+    }
+    
+    const html = results.map(stock => `
+        <div class="bg-gray-700/50 rounded-lg p-6 border border-gray-600 hover:border-blue-500 transition-colors">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <h4 class="text-lg font-semibold text-white">${stock.symbol}</h4>
+                    <p class="text-gray-300">$${stock.price?.toFixed(2)}</p>
+                </div>
+                <div class="text-right">
+                    <div class="text-2xl font-bold ${getConfidenceColor(stock.enhanced_score || stock.confidence_score)}">
+                        ${(stock.enhanced_score || stock.confidence_score)?.toFixed(0)}%
+                    </div>
+                    <div class="text-xs text-gray-400">Enhanced Score</div>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <div class="text-xs text-gray-400">Volume Spike</div>
+                    <div class="text-white">${stock.volume_spike?.toFixed(1)}x</div>
+                </div>
+                <div>
+                    <div class="text-xs text-gray-400">RSI</div>
+                    <div class="text-white">${stock.rsi?.toFixed(0)}</div>
+                </div>
+                <div>
+                    <div class="text-xs text-gray-400">Pattern</div>
+                    <div class="text-white">${stock.pattern_type || 'None'}</div>
+                </div>
+                <div>
+                    <div class="text-xs text-gray-400">Alignment</div>
+                    <div class="text-white">${stock.alignment_score?.toFixed(0) || '--'}%</div>
+                </div>
+            </div>
+            
+            ${stock.dominant_trend ? `
+                <div class="mb-4">
+                    <span class="px-2 py-1 rounded text-xs font-semibold ${getTrendColor(stock.dominant_trend)}">
+                        ${stock.dominant_trend.toUpperCase()}
+                    </span>
+                </div>
+            ` : ''}
+            
+            <div class="flex space-x-2">
+                <button onclick="openMTFAnalysis('${stock.symbol}')" 
+                        class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm font-semibold transition-colors">
+                    📊 MTF Analysis
+                </button>
+                <button onclick="window.open('/forecast/${stock.symbol}', '_blank')" 
+                        class="flex-1 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-sm font-semibold transition-colors">
+                    📈 Forecast
+                </button>
+            </div>
+        </div>
+    `).join('');
+    
+    container.innerHTML = html;
+}
+
+function getConfidenceColor(score) {
+    if (score >= 80) return 'text-green-400';
+    if (score >= 60) return 'text-yellow-400';
+    if (score >= 40) return 'text-orange-400';
+    return 'text-red-400';
+}
+
+function getTrendColor(trend) {
+    if (trend === 'bullish') return 'bg-green-600 text-white';
+    if (trend === 'bearish') return 'bg-red-600 text-white';
+    return 'bg-gray-600 text-white';
+}
+
+async function openMTFAnalysis(symbol) {
+    const modal = document.getElementById('mtfModal');
+    const title = document.getElementById('mtfModalTitle');
+    const content = document.getElementById('mtfContent');
+    
+    title.textContent = `Multi-timeframe Analysis - ${symbol}`;
+    content.innerHTML = '<div class="text-center text-gray-400 py-8">Loading analysis...</div>';
+    modal.classList.remove('hidden');
+    
+    try {
+        const response = await fetch(`/multi_timeframe_analysis/${symbol}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            displayMTFAnalysis(data.analysis);
+        } else {
+            content.innerHTML = `<div class="text-center text-red-400 py-8">Error: ${data.error}</div>`;
+        }
+    } catch (error) {
+        console.error('MTF analysis error:', error);
+        content.innerHTML = '<div class="text-center text-red-400 py-8">Failed to load analysis</div>';
+    }
+}
+
+function displayMTFAnalysis(analysis) {
+    const content = document.getElementById('mtfContent');
+    
+    const html = `
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Overall Summary -->
+            <div class="lg:col-span-2 bg-gray-800 rounded-lg p-6">
+                <h4 class="text-lg font-semibold text-white mb-4">Overall Assessment</h4>
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold ${getConfidenceColor(analysis.alignment_score)}">${analysis.alignment_score?.toFixed(0)}%</div>
+                        <div class="text-gray-400 text-sm">Alignment Score</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold ${getTrendColorText(analysis.dominant_trend)}">${analysis.dominant_trend?.toUpperCase()}</div>
+                        <div class="text-gray-400 text-sm">Dominant Trend</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-blue-400">${analysis.confluence_zones?.length || 0}</div>
+                        <div class="text-gray-400 text-sm">Confluence Zones</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Timeframe Analysis -->
+            <div class="bg-gray-800 rounded-lg p-6">
+                <h4 class="text-lg font-semibold text-white mb-4">Timeframe Breakdown</h4>
+                <div class="space-y-3">
+                    ${Object.entries(analysis.timeframe_data || {}).map(([tf, data]) => `
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-300">${tf}</span>
+                            <div class="text-right">
+                                <div class="text-sm ${getTrendColorText(data.trend_strength?.direction)}">
+                                    ${data.trend_strength?.direction?.toUpperCase() || 'N/A'}
+                                </div>
+                                <div class="text-xs text-gray-400">
+                                    ${data.momentum_score?.composite_score?.toFixed(0) || '--'}% momentum
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            
+            <!-- Trade Recommendation -->
+            <div class="bg-gray-800 rounded-lg p-6">
+                <h4 class="text-lg font-semibold text-white mb-4">Trade Recommendation</h4>
+                <div class="space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-gray-300">Action:</span>
+                        <span class="font-semibold ${getActionColor(analysis.trade_recommendation?.action)}">
+                            ${analysis.trade_recommendation?.action?.toUpperCase() || 'HOLD'}
+                        </span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-300">Confidence:</span>
+                        <span class="text-white">${analysis.trade_recommendation?.confidence?.toUpperCase() || 'LOW'}</span>
+                    </div>
+                    ${analysis.trade_recommendation?.entry_level ? `
+                        <div class="flex justify-between">
+                            <span class="text-gray-300">Entry Level:</span>
+                            <span class="text-white">$${analysis.trade_recommendation.entry_level.toFixed(2)}</span>
+                        </div>
+                    ` : ''}
+                    ${analysis.trade_recommendation?.stop_loss ? `
+                        <div class="flex justify-between">
+                            <span class="text-gray-300">Stop Loss:</span>
+                            <span class="text-red-400">$${analysis.trade_recommendation.stop_loss.toFixed(2)}</span>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+            
+            <!-- Risk Assessment -->
+            <div class="lg:col-span-2 bg-gray-800 rounded-lg p-6">
+                <h4 class="text-lg font-semibold text-white mb-4">Risk Assessment</h4>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <div class="text-sm text-gray-400">Risk Level</div>
+                        <div class="text-lg font-semibold ${getRiskColor(analysis.risk_assessment?.risk_level)}">
+                            ${analysis.risk_assessment?.risk_level?.toUpperCase() || 'UNKNOWN'}
+                        </div>
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-400">Position Sizing</div>
+                        <div class="text-lg font-semibold text-white">
+                            ${(analysis.risk_assessment?.position_sizing_multiplier * 100)?.toFixed(0) || '--'}% of normal
+                        </div>
+                    </div>
+                </div>
+                ${analysis.risk_assessment?.risk_factors?.length ? `
+                    <div class="mt-4">
+                        <div class="text-sm text-gray-400 mb-2">Risk Factors:</div>
+                        <ul class="text-sm text-yellow-400 space-y-1">
+                            ${analysis.risk_assessment.risk_factors.map(factor => `<li>• ${factor}</li>`).join('')}
+                        </ul>
+                    </div>
+                ` : ''}
+            </div>
+        </div>
+    `;
+    
+    content.innerHTML = html;
+}
+
+function getTrendColorText(trend) {
+    if (trend === 'bullish') return 'text-green-400';
+    if (trend === 'bearish') return 'text-red-400';
+    return 'text-gray-400';
+}
+
+function getActionColor(action) {
+    if (action?.includes('buy')) return 'text-green-400';
+    if (action?.includes('sell')) return 'text-red-400';
+    return 'text-yellow-400';
+}
+
+function getRiskColor(risk) {
+    if (risk === 'low') return 'text-green-400';
+    if (risk === 'medium') return 'text-yellow-400';
+    if (risk === 'high') return 'text-red-400';
+    return 'text-gray-400';
+}
+
+function closeMTFModal() {
+    document.getElementById('mtfModal').classList.add('hidden');
+}
+
+// Load market overview on page load
+document.addEventListener('DOMContentLoaded', loadMarketOverview);
+</script>
+{% endblock %}
