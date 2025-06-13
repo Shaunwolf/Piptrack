@@ -48,43 +48,39 @@ function setupEventListeners() {
     // Modal close listeners
     document.addEventListener('click', function(e) {
         if (e.target.classList.contains('modal') || e.target.classList.contains('modal-close')) {
-            let modal = e.target;
-            while (modal && modal !== document) {
-                if (modal.classList && modal.classList.contains('modal')) {
-                    closeModal(modal.id);
-                    return;
-                }
-                modal = modal.parentNode;
+            const modal = e.target.closest('.modal') || e.target;
+            if (modal.classList.contains('modal')) {
+                closeModal(modal.id);
             }
         }
     });
     
-    // Escape key to close modals
+    // ESC key to close modals
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
-            const openModal = document.querySelector('.modal:not(.hidden)');
+            const openModal = document.querySelector('.modal.show');
             if (openModal) {
                 closeModal(openModal.id);
             }
         }
     });
-    
-    // Form submissions
-    document.addEventListener('submit', function(e) {
-        if (e.target.tagName === 'FORM') {
-            const submitButton = e.target.querySelector('button[type="submit"]');
-            if (submitButton) {
-                submitButton.disabled = true;
-                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Processing...';
-                
-                // Re-enable after 3 seconds as fallback
-                setTimeout(() => {
-                    submitButton.disabled = false;
-                    submitButton.innerHTML = submitButton.dataset.originalText || 'Submit';
-                }, 3000);
-            }
-        }
-    });
+}
+
+// Modal control functions
+function showModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.remove('show');
+        document.body.style.overflow = '';
+    }
 }
 
 // Voice functionality

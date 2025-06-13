@@ -226,14 +226,21 @@ async function getAIReview(symbol) {
 
 // Display AI analysis in modal
 function displayAIAnalysis(analysis, symbol) {
-    // Create or update AI review modal
-    let modal = document.getElementById('aiReviewModal');
+    // Get the modal and show it
+    const modal = document.getElementById('aiReviewModal');
     if (!modal) {
-        modal = createAIReviewModal();
+        console.error('AI Review modal not found');
+        return;
     }
     
+    // Show the modal
+    modal.classList.add('show');
+    
     const content = document.getElementById('aiReviewContent');
-    if (!content) return;
+    if (!content) {
+        console.error('AI Review content container not found');
+        return;
+    }
     
     const moodEmoji = getMoodEmoji(analysis.mood_tag);
     const confidenceColor = getConfidenceColor(analysis.confidence_factors);
