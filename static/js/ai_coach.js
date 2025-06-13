@@ -204,6 +204,14 @@ async function getAIReview(symbol) {
             // Store current analysis
             window.aiCoachState.currentAnalysis = analysis;
             
+            // Smooth scroll to bottom of page where AI analysis appears
+            setTimeout(() => {
+                window.scrollTo({
+                    top: document.body.scrollHeight,
+                    behavior: 'smooth'
+                });
+            }, 300);
+            
         } else {
             showAlert('Error getting AI analysis: ' + data.error, 'error');
         }
