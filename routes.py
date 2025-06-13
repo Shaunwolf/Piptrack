@@ -21,6 +21,17 @@ sheets_integration = GoogleSheetsIntegration()
 pdf_generator = PDFGenerator()
 pattern_tracker = PatternEvolutionTracker()
 
+# Initialize enhanced components
+try:
+    from enhanced_journal import EnhancedTradingJournal
+    from multi_timeframe_analyzer import MultiTimeframeAnalyzer
+    enhanced_journal = EnhancedTradingJournal()
+    mtf_analyzer = MultiTimeframeAnalyzer()
+except ImportError as e:
+    logging.warning(f"Enhanced components not available: {e}")
+    enhanced_journal = None
+    mtf_analyzer = None
+
 @app.route('/')
 def index():
     """Main dashboard"""
