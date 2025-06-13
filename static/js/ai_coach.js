@@ -954,14 +954,96 @@ function renderHistoricalPlotlyChart(chartId, chartData) {
     };
     
     try {
-        // Add similarity highlighting for reversal patterns
-        if (chartData.symbol === 'META' && chartData.chart_type === 'candlestick') {
-            // Find the bottom formation area (around November 2022)
+        // Add enhanced pattern similarity overlay for META
+        if (chartData.symbol === 'META' && chartData.pattern_stages) {
+            const stages = chartData.pattern_stages;
+            layout.shapes = [];
+            layout.annotations = [];
+            
+            // Add highlighting for each pattern stage
+            if (stages.bottom) {
+                const bottomIdx = chartData.dates.findIndex(d => d.includes(stages.bottom));
+                if (bottomIdx >= 0) {
+                    layout.shapes.push({
+                        type: 'circle',
+                        xref: 'x',
+                        yref: 'y',
+                        x0: chartData.dates[Math.max(0, bottomIdx-2)],
+                        y0: chartData.closes[bottomIdx] * 0.95,
+                        x1: chartData.dates[Math.min(chartData.dates.length-1, bottomIdx+2)],
+                        y1: chartData.closes[bottomIdx] * 1.05,
+                        fillcolor: 'rgba(239, 68, 68, 0.3)',
+                        line: { color: '#ef4444', width: 2 }
+                    });
+                    
+                    layout.annotations.push({
+                        x: chartData.dates[bottomIdx],
+                        y: chartData.closes[bottomIdx],
+                        text: `Pattern Bottom - Current stage`,
+                        showarrow: true,
+                        arrowhead: 2,
+                        arrowcolor: '#ef4444',
+                        font: { color: '#ef4444', size: 9 },
+                        bgcolor: 'rgba(0,0,0,0.8)',
+                        bordercolor: '#ef4444',
+                        borderwidth: 1
+                    });
+                }
+            }
+            
+            if (stages.accumulation) {
+                const accumIdx = chartData.dates.findIndex(d => d.includes(stages.accumulation));
+                if (accumIdx >= 0) {
+                    layout.shapes.push({
+                        type: 'rect',
+                        xref: 'x',
+                        yref: 'paper',
+                        x0: chartData.dates[accumIdx],
+                        y0: 0,
+                        x1: chartData.dates[Math.min(chartData.dates.length-1, accumIdx+8)],
+                        y1: 1,
+                        fillcolor: 'rgba(251, 191, 36, 0.2)',
+                        line: { width: 0 }
+                    });
+                    
+                    layout.annotations.push({
+                        x: chartData.dates[accumIdx+4],
+                        y: chartData.closes[accumIdx],
+                        text: `Accumulation Phase`,
+                        showarrow: true,
+                        arrowhead: 2,
+                        arrowcolor: '#fbbf24',
+                        font: { color: '#fbbf24', size: 9 },
+                        bgcolor: 'rgba(0,0,0,0.8)',
+                        bordercolor: '#fbbf24',
+                        borderwidth: 1
+                    });
+                }
+            }
+            
+            if (stages.first_breakout) {
+                const breakoutIdx = chartData.dates.findIndex(d => d.includes(stages.first_breakout));
+                if (breakoutIdx >= 0) {
+                    layout.annotations.push({
+                        x: chartData.dates[breakoutIdx],
+                        y: chartData.closes[breakoutIdx],
+                        text: `First Breakout Target`,
+                        showarrow: true,
+                        arrowhead: 2,
+                        arrowcolor: '#10b981',
+                        font: { color: '#10b981', size: 9 },
+                        bgcolor: 'rgba(0,0,0,0.8)',
+                        bordercolor: '#10b981',
+                        borderwidth: 1
+                    });
+                }
+            }
+        } else if (chartData.symbol === 'META') {
+            // Fallback highlighting
             const bottomStart = chartData.dates.findIndex(d => d.includes('2022-11'));
             const bottomEnd = chartData.dates.findIndex(d => d.includes('2022-12'));
             
             if (bottomStart >= 0 && bottomEnd >= 0) {
-                // Add highlighting for the reversal pattern area
                 layout.shapes = [{
                     type: 'rect',
                     xref: 'x',
@@ -974,17 +1056,14 @@ function renderHistoricalPlotlyChart(chartId, chartData) {
                     line: { width: 0 }
                 }];
                 
-                // Add annotation for similarity
                 layout.annotations = [{
                     x: chartData.dates[Math.floor((bottomStart + bottomEnd) / 2)],
                     y: Math.min(...chartData.closes.slice(bottomStart, bottomEnd)),
-                    text: `Similar Pattern Area<br>Watch for reversal signals`,
+                    text: `Similar Pattern Area`,
                     showarrow: true,
                     arrowhead: 2,
-                    arrowsize: 1,
-                    arrowwidth: 2,
                     arrowcolor: '#fbbf24',
-                    font: { color: '#fbbf24', size: 10 },
+                    font: { color: '#fbbf24', size: 9 },
                     bgcolor: 'rgba(0,0,0,0.8)',
                     bordercolor: '#fbbf24',
                     borderwidth: 1
