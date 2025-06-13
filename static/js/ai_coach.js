@@ -314,13 +314,15 @@ function displayAIAnalysis(analysis, symbol) {
             
             // Handle the historical comparison data properly
             let historicalData = analysis.historical_comparison;
+            console.log('Historical data structure:', historicalData);
             
             // If it's an object with chart_data, render the chart
             if (historicalData && typeof historicalData === 'object' && historicalData.chart_data) {
-                console.log('Rendering chart with data:', historicalData.chart_data);
+                console.log('Chart data found, rendering...');
                 chartContainer.innerHTML = renderHistoricalChart(historicalData.chart_data);
             } else {
-                console.log('No chart data available or wrong format');
+                console.log('No chart data available - checking structure:', typeof historicalData);
+                console.log('Has chart_data property:', historicalData && historicalData.chart_data);
             }
         }
     }, 300);
