@@ -147,117 +147,164 @@ class AICoach:
             return 'unknown'
     
     def get_historical_comparison(self, pattern):
-        """Get historical comparison for the pattern with chart data"""
+        """Get historical comparison using enhanced multi-factor scoring engine"""
+        try:
+            from historical_comparison_engine import HistoricalComparisonEngine
+            
+            # Initialize the enhanced comparison engine
+            comparison_engine = HistoricalComparisonEngine()
+            
+            # Extract symbol from current analysis context
+            symbol = getattr(self, 'current_symbol', 'SPY')  # Default to SPY if no symbol set
+            
+            # Find historical matches with comprehensive scoring
+            matches = comparison_engine.find_historical_matches(symbol, lookback_days=504)  # 2 years
+            
+            if not matches:
+                return {
+                    'text': 'No significant historical matches found with current market data.',
+                    'chart_data': None
+                }
+            
+            # Get detailed analysis report
+            detailed_analysis = comparison_engine.get_detailed_analysis(matches)
+            
+            # Format top match for display
+            top_match = matches[0]
+            
+            # Create comprehensive comparison text
+            comparison_text = self._generate_comparison_text(top_match, detailed_analysis)
+            
+            # Generate chart data for visualization
+            chart_data = self._generate_comparison_chart_data(top_match)
+            
+            return {
+                'text': comparison_text,
+                'chart_data': chart_data,
+                'scoring_details': {
+                    'total_matches_found': len(matches),
+                    'top_match_score': round(top_match.composite_score * 100, 1),
+                    'confidence_level': top_match.confidence_level,
+                    'scoring_breakdown': {
+                        'price_correlation': round(top_match.price_correlation * 100, 1),
+                        'volume_correlation': round(top_match.volume_correlation * 100, 1),
+                        'technical_alignment': round(top_match.technical_score * 100, 1),
+                        'pattern_match': round(top_match.pattern_match_score * 100, 1),
+                        'market_conditions': round(top_match.market_condition_score * 100, 1)
+                    },
+                    'outcome_prediction': detailed_analysis.get('predictions', {}),
+                    'all_matches': [
+                        {
+                            'symbol': m.symbol,
+                            'period': m.date_range,
+                            'score': round(m.composite_score * 100, 1),
+                            'outcome': m.outcome.get('outcome', 'unknown'),
+                            'return': round(m.outcome.get('total_return', 0), 1)
+                        } for m in matches[:5]
+                    ]
+                }
+            }
+            
+        except Exception as e:
+            logging.error(f"Error in enhanced historical comparison: {e}")
+            return self._get_fallback_comparison()
+    
+    def _generate_comparison_text(self, match, analysis):
+        """Generate detailed comparison text from match data"""
+        symbol = match.symbol
+        date_range = match.date_range
+        score = round(match.composite_score * 100, 1)
+        outcome = match.outcome
+        
+        # Format outcome description
+        outcome_type = outcome.get('outcome', 'unknown')
+        total_return = outcome.get('total_return', 0)
+        max_gain = outcome.get('max_gain', 0)
+        max_loss = outcome.get('max_loss', 0)
+        
+        outcome_descriptions = {
+            'strong_bullish': f"rallied strongly ({total_return:+.1f}%, peak gain {max_gain:+.1f}%)",
+            'bullish': f"moved higher ({total_return:+.1f}%, peak {max_gain:+.1f}%)",
+            'sideways': f"traded sideways ({total_return:+.1f}%, range {max_loss:.1f}% to {max_gain:+.1f}%)",
+            'bearish': f"declined ({total_return:+.1f}%, maximum drawdown {max_loss:.1f}%)",
+            'strong_bearish': f"dropped sharply ({total_return:+.1f}%, low {max_loss:.1f}%)"
+        }
+        
+        outcome_desc = outcome_descriptions.get(outcome_type, f"moved {total_return:+.1f}%")
+        
+        # Generate key factors text
+        key_factors = []
+        if match.price_correlation > 0.8:
+            key_factors.append("nearly identical price action")
+        if match.volume_correlation > 0.7:
+            key_factors.append("similar volume patterns")
+        if match.technical_score > 0.8:
+            key_factors.append("strong technical indicator alignment")
+        if match.pattern_match_score > 0.8:
+            key_factors.append("matching chart patterns")
+        
+        factors_text = ", ".join(key_factors) if key_factors else "multiple technical factors"
+        
+        # Get prediction summary
+        predictions = analysis.get('predictions', {})
+        most_likely = predictions.get('most_likely_outcome', 'unknown')
+        probability = 0
+        if most_likely in predictions:
+            probability = predictions[most_likely].get('probability', 0) * 100
+        
+        return f"Strong historical match ({score}% similarity) found in {symbol} during {date_range}. " \
+               f"That pattern featured {factors_text} and subsequently {outcome_desc} over the following 10 trading days. " \
+               f"Based on {analysis.get('total_matches', 0)} similar historical patterns, " \
+               f"the most probable outcome is {most_likely.replace('_', ' ')} ({probability:.0f}% probability)."
+    
+    def _generate_comparison_chart_data(self, match):
+        """Generate chart data for historical comparison visualization"""
         try:
             import yfinance as yf
             from datetime import datetime, timedelta
             
-            # Enhanced historical patterns with specific examples and timeframes
-            historical_examples = {
-                'breakout': {
-                    'text': 'Similar breakout patterns were seen in TSLA during March 2020 when it broke above $150 resistance with massive volume, leading to a 300% gain over 6 months. The key was the volume confirmation above 3x average.',
-                    'example_symbol': 'TSLA',
-                    'example_period': '2020-02-01:2020-09-01',
-                    'chart_title': 'TSLA Breakout Pattern - March 2020'
-                },
-                'bull_flag': {
-                    'text': 'This bull flag formation mirrors AMD\'s pattern in October 2022, where after a 40% run-up, it consolidated for 3 weeks before breaking out for another 25% move. Volume dried up during the flag and surged on breakout.',
-                    'example_symbol': 'AMD',
-                    'example_period': '2022-09-01:2022-12-01',
-                    'chart_title': 'AMD Bull Flag Pattern - October 2022'
-                },
-                'cup_and_handle': {
-                    'text': 'Similar to AAPL\'s cup and handle in Q2 2020, where it formed a 6-week base around $320, then a 2-week handle before breaking to new highs. The pattern showed classic decreasing volume in the cup.',
-                    'example_symbol': 'AAPL',
-                    'example_period': '2020-04-01:2020-08-01',
-                    'chart_title': 'AAPL Cup & Handle - Q2 2020'
-                },
-                'consolidation': {
-                    'text': 'Reminiscent of NVDA\'s consolidation in early 2023, where it traded sideways for 6 weeks between $210-$240 before the AI rally began. Volume was below average during the consolidation phase.',
-                    'example_symbol': 'NVDA',
-                    'example_period': '2023-01-01:2023-04-01',
-                    'chart_title': 'NVDA Consolidation - Early 2023'
-                },
-                'reversal': {
-                    'text': 'This reversal pattern is similar to META\'s bottom in November 2022 at $88, where RSI was oversold for weeks before forming a double bottom and reversing higher for a 200% gain.',
-                    'example_symbol': 'META',
-                    'example_period': '2022-10-01:2023-02-01',
-                    'chart_title': 'META Reversal Pattern - November 2022'
-                }
-            }
+            # Parse date range
+            date_parts = match.date_range.split(' to ')
+            if len(date_parts) != 2:
+                return None
             
-            example = historical_examples.get(pattern)
-            if not example:
-                return {
-                    'text': 'This pattern is unique - no direct historical comparison available.',
-                    'chart_data': None
-                }
+            start_date = datetime.strptime(date_parts[0], '%Y-%m-%d')
+            end_date = datetime.strptime(date_parts[1], '%Y-%m-%d')
             
-            # Get historical chart data for the example with 4-hour intervals
-            try:
-                ticker = yf.Ticker(example['example_symbol'])
-                period_dates = example['example_period'].split(':')
-                start_date = period_dates[0]
-                end_date = period_dates[1]
-                
-                # Try 4-hour data first, fall back to daily for older periods
-                try:
-                    hist = ticker.history(start=start_date, end=end_date, interval='4h')
-                    if hist.empty:
-                        # Fall back to daily data for older periods
-                        hist = ticker.history(start=start_date, end=end_date, interval='1d')
-                        chart_type = 'daily_candlestick'
-                    else:
-                        chart_type = 'candlestick'
-                except Exception as e:
-                    print(f"4h data failed, falling back to daily: {e}")
-                    hist = ticker.history(start=start_date, end=end_date, interval='1d')
-                    chart_type = 'daily_candlestick'
-                
-                if not hist.empty:
-                    # Prepare candlestick chart data with appropriate date formatting
-                    date_format = '%Y-%m-%d %H:%M' if chart_type == 'candlestick' else '%Y-%m-%d'
-                    
-                    # Calculate pattern stages for similarity matching
-                    pattern_stages = self._calculate_pattern_stages(hist, example['example_symbol'])
-                    
-                    chart_data = {
-                        'dates': [date.strftime(date_format) for date in hist.index],
-                        'opens': hist['Open'].tolist(),
-                        'highs': hist['High'].tolist(),
-                        'lows': hist['Low'].tolist(),
-                        'closes': hist['Close'].tolist(),
-                        'volumes': hist['Volume'].tolist(),
-                        'symbol': example['example_symbol'],
-                        'title': example['chart_title'],
-                        'chart_type': chart_type,
-                        'pattern_stages': pattern_stages
-                    }
-                    
-                    return {
-                        'text': example['text'],
-                        'chart_data': chart_data
-                    }
-                else:
-                    return {
-                        'text': example['text'],
-                        'chart_data': None
-                    }
-                    
-            except Exception as e:
-                logging.error(f"Error fetching historical comparison chart data: {e}")
-                return {
-                    'text': example['text'],
-                    'chart_data': None
-                }
-                
-        except Exception as e:
-            logging.error(f"Error in get_historical_comparison: {e}")
+            # Extend end date to show outcome
+            extended_end = end_date + timedelta(days=15)
+            
+            # Fetch historical data
+            ticker = yf.Ticker(match.symbol)
+            hist = ticker.history(start=start_date, end=extended_end, interval="1d")
+            
+            if hist.empty:
+                return None
+            
             return {
-                'text': self.historical_patterns.get(pattern, 
-                    'This pattern is unique - no direct historical comparison available.'),
-                'chart_data': None
+                'dates': [date.strftime('%Y-%m-%d') for date in hist.index],
+                'prices': hist['Close'].tolist(),
+                'volumes': hist['Volume'].tolist(),
+                'pattern_start': date_parts[0],
+                'pattern_end': date_parts[1],
+                'symbol': match.symbol,
+                'title': f"{match.symbol} Historical Pattern ({match.date_range})"
             }
+            
+        except Exception as e:
+            logging.error(f"Error generating comparison chart data: {e}")
+            return None
+    
+    def _get_fallback_comparison(self):
+        """Provide fallback when enhanced engine is unavailable"""
+        return {
+            'text': 'Historical pattern analysis is currently processing market data to find the most accurate comparisons.',
+            'chart_data': None,
+            'scoring_details': {
+                'total_matches_found': 0,
+                'status': 'processing'
+            }
+        }
     
     def assign_mood_tag(self, analysis, pattern):
         """Assign mood tag based on analysis"""
