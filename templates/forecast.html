@@ -89,7 +89,18 @@
                 <p class="text-gray-300 mb-4">{{ ai_analysis.analysis_text }}</p>
                 
                 <h3 class="font-semibold text-accent-blue mb-2">Historical Comparison</h3>
-                <p class="text-gray-300">{{ ai_analysis.historical_comparison }}</p>
+                <p class="text-gray-300">
+                    {% if ai_analysis.historical_comparison is mapping and ai_analysis.historical_comparison.text %}
+                        {{ ai_analysis.historical_comparison.text }}
+                    {% else %}
+                        {{ ai_analysis.historical_comparison }}
+                    {% endif %}
+                </p>
+                
+                <!-- Historical Chart Container -->
+                {% if ai_analysis.historical_comparison is mapping and ai_analysis.historical_comparison.chart_data %}
+                <div id="historical-chart-forecast-{{ stock.symbol }}" class="h-64 bg-gray-800 rounded-lg border border-gray-600 mt-4"></div>
+                {% endif %}
             </div>
             
             <div>
@@ -271,6 +282,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Load chart story if available
     loadChartStory();
+    
+    // Render historical comparison chart if available
+    renderHistoricalComparisonChart();
 });
 
 // Refresh forecast
@@ -414,5 +428,78 @@ setInterval(async () => {
         console.error('Error checking confidence updates:', error);
     }
 }, 60000); // Check every minute
+
+// Render historical comparison chart
+function renderHistoricalComparisonChart() {
+    console.log('Checking for historical comparison chart data...');
+    console.log('AI Analysis data:', aiAnalysis);
+    
+    // Check if historical comparison has chart data
+    if (aiAnalysis && aiAnalysis.historical_comparison && 
+        typeof aiAnalysis.historical_comparison === 'object' && 
+        aiAnalysis.historical_comparison.chart_data) {
+        
+        const chartContainer = document.getElementById(`historical-chart-forecast-${stockData.symbol}`);
+        if (chartContainer) {
+            console.log('Rendering historical comparison chart...');
+            
+            const chartData = aiAnalysis.historical_comparison.chart_data;
+            
+            const trace = {
+                x: chartData.dates,
+                y: chartData.prices,
+                type: 'scatter',
+                mode: 'lines',
+                name: chartData.symbol || 'Historical Pattern',
+                line: {
+                    color: '#3b82f6',
+                    width: 2
+                }
+            };
+            
+            const layout = {
+                title: {
+                    text: chartData.title || 'Historical Pattern Comparison',
+                    font: { color: '#d1d5db', size: 14 }
+                },
+                paper_bgcolor: '#1f2937',
+                plot_bgcolor: '#1f2937',
+                xaxis: {
+                    gridcolor: '#374151',
+                    color: '#9ca3af',
+                    tickfont: { size: 10 },
+                    showline: true,
+                    linecolor: '#374151'
+                },
+                yaxis: {
+                    gridcolor: '#374151',
+                    color: '#9ca3af',
+                    tickfont: { size: 10 },
+                    title: { text: 'Price ($)', font: { color: '#9ca3af', size: 12 } }
+                },
+                margin: { l: 50, r: 20, t: 40, b: 40 },
+                showlegend: false,
+                hovermode: 'x unified'
+            };
+            
+            const config = {
+                displayModeBar: false,
+                responsive: true
+            };
+            
+            try {
+                Plotly.newPlot(chartContainer, [trace], layout, config);
+                console.log('Historical comparison chart rendered successfully');
+            } catch (error) {
+                console.error('Error rendering historical chart:', error);
+                chartContainer.innerHTML = '<div class="text-center text-gray-500 py-8">Chart unavailable</div>';
+            }
+        } else {
+            console.log('Chart container not found');
+        }
+    } else {
+        console.log('No historical comparison chart data available');
+    }
+}
 </script>
 {% endblock %}
