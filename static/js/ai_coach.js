@@ -894,9 +894,26 @@ function renderHistoricalPlotlyChart(chartId, chartData) {
     
     console.log('Chart element found, preparing data...');
     
-    const trace = {
+    // Create candlestick chart if we have OHLC data
+    const trace = chartData.chart_type === 'candlestick' ? {
         x: chartData.dates,
-        y: chartData.prices,
+        open: chartData.opens,
+        high: chartData.highs,
+        low: chartData.lows,
+        close: chartData.closes,
+        type: 'candlestick',
+        name: chartData.symbol || 'Historical Pattern',
+        increasing: {
+            line: { color: '#10b981', width: 1 },
+            fillcolor: '#10b981'
+        },
+        decreasing: {
+            line: { color: '#ef4444', width: 1 },
+            fillcolor: '#ef4444'
+        }
+    } : {
+        x: chartData.dates,
+        y: chartData.closes || chartData.prices,
         type: 'scatter',
         mode: 'lines',
         name: chartData.symbol || 'Historical Pattern',
@@ -937,7 +954,46 @@ function renderHistoricalPlotlyChart(chartId, chartData) {
     };
     
     try {
+        // Add similarity highlighting for reversal patterns
+        if (chartData.symbol === 'META' && chartData.chart_type === 'candlestick') {
+            // Find the bottom formation area (around November 2022)
+            const bottomStart = chartData.dates.findIndex(d => d.includes('2022-11'));
+            const bottomEnd = chartData.dates.findIndex(d => d.includes('2022-12'));
+            
+            if (bottomStart >= 0 && bottomEnd >= 0) {
+                // Add highlighting for the reversal pattern area
+                layout.shapes = [{
+                    type: 'rect',
+                    xref: 'x',
+                    yref: 'paper',
+                    x0: chartData.dates[bottomStart],
+                    y0: 0,
+                    x1: chartData.dates[bottomEnd],
+                    y1: 1,
+                    fillcolor: 'rgba(251, 191, 36, 0.2)',
+                    line: { width: 0 }
+                }];
+                
+                // Add annotation for similarity
+                layout.annotations = [{
+                    x: chartData.dates[Math.floor((bottomStart + bottomEnd) / 2)],
+                    y: Math.min(...chartData.closes.slice(bottomStart, bottomEnd)),
+                    text: `Similar Pattern Area<br>Watch for reversal signals`,
+                    showarrow: true,
+                    arrowhead: 2,
+                    arrowsize: 1,
+                    arrowwidth: 2,
+                    arrowcolor: '#fbbf24',
+                    font: { color: '#fbbf24', size: 10 },
+                    bgcolor: 'rgba(0,0,0,0.8)',
+                    bordercolor: '#fbbf24',
+                    borderwidth: 1
+                }];
+            }
+        }
+        
         Plotly.newPlot(chartId, [trace], layout, config);
+        console.log('Historical comparison chart with similarity highlighting rendered successfully');
     } catch (error) {
         console.error('Error rendering historical chart:', error);
         element.innerHTML = '<div class="text-center text-gray-500 py-8">Chart unavailable</div>';

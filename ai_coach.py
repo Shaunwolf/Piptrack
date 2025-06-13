@@ -193,26 +193,28 @@ class AICoach:
                     'chart_data': None
                 }
             
-            # Get historical chart data for the example
+            # Get historical chart data for the example with 4-hour intervals
             try:
                 ticker = yf.Ticker(example['example_symbol'])
                 period_dates = example['example_period'].split(':')
                 start_date = period_dates[0]
                 end_date = period_dates[1]
                 
-                hist = ticker.history(start=start_date, end=end_date)
+                # Get 4-hour candlestick data for more detailed analysis
+                hist = ticker.history(start=start_date, end=end_date, interval='4h')
                 
                 if not hist.empty:
-                    # Prepare chart data
+                    # Prepare candlestick chart data
                     chart_data = {
-                        'dates': [date.strftime('%Y-%m-%d') for date in hist.index],
-                        'prices': hist['Close'].tolist(),
-                        'volumes': hist['Volume'].tolist(),
+                        'dates': [date.strftime('%Y-%m-%d %H:%M') for date in hist.index],
+                        'opens': hist['Open'].tolist(),
                         'highs': hist['High'].tolist(),
                         'lows': hist['Low'].tolist(),
-                        'opens': hist['Open'].tolist(),
+                        'closes': hist['Close'].tolist(),
+                        'volumes': hist['Volume'].tolist(),
                         'symbol': example['example_symbol'],
-                        'title': example['chart_title']
+                        'title': example['chart_title'],
+                        'chart_type': 'candlestick'
                     }
                     
                     return {
