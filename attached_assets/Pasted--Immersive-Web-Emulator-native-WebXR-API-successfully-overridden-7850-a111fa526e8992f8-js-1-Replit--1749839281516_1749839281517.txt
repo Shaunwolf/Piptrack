@@ -1,0 +1,126 @@
+[Immersive Web Emulator] native WebXR API successfully overridden
+7850-a111fa526e8992f8.js:1 Replit version 09923d8e, pid2 version 0.0.1411
+_app-12ff4c5513dacd15.js:38 
+      /////////////////////
+   ///////////////////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////        Curious and driven?
+  ///////////////@@@@@@@///////        Work with us!
+  ///////////////@@@@@@@///////
+  ///////////////@@@@@@@///////        https://join.replit.com/hack.with.us
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@#//////////////
+   ///////////////////////////
+      /////////////////////
+      
+_app-12ff4c5513dacd15.js:38 [LaunchDarkly] LaunchDarkly client initialized
+ [Immersive Web Emulator] native WebXR API successfully overridden
+webxr-polyfill.js:34048 [Immersive Web Emulator] native WebXR API successfully overridden
+webxr-polyfill.js:34048 [Immersive Web Emulator] native WebXR API successfully overridden
+webxr-polyfill.js:34048 [Immersive Web Emulator] native WebXR API successfully overridden
+12Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.Understand this error
+framework-053504fa78f841b4.js:1 Unrecognized feature: 'ambient-light-sensor'.
+_ @ framework-053504fa78f841b4.js:1Understand this warning
+framework-053504fa78f841b4.js:1 Unrecognized feature: 'battery'.
+_ @ framework-053504fa78f841b4.js:1Understand this warning
+framework-053504fa78f841b4.js:1 Unrecognized feature: 'execution-while-not-rendered'.
+_ @ framework-053504fa78f841b4.js:1Understand this warning
+framework-053504fa78f841b4.js:1 Unrecognized feature: 'execution-while-out-of-viewport'.
+_ @ framework-053504fa78f841b4.js:1Understand this warning
+framework-053504fa78f841b4.js:1 Unrecognized feature: 'layout-animations'.
+_ @ framework-053504fa78f841b4.js:1Understand this warning
+framework-053504fa78f841b4.js:1 Unrecognized feature: 'legacy-image-formats'.
+_ @ framework-053504fa78f841b4.js:1Understand this warning
+framework-053504fa78f841b4.js:1 Unrecognized feature: 'navigation-override'.
+_ @ framework-053504fa78f841b4.js:1Understand this warning
+framework-053504fa78f841b4.js:1 Unrecognized feature: 'oversized-images'.
+_ @ framework-053504fa78f841b4.js:1Understand this warning
+framework-053504fa78f841b4.js:1 Unrecognized feature: 'publickey-credentials'.
+_ @ framework-053504fa78f841b4.js:1Understand this warning
+framework-053504fa78f841b4.js:1 Unrecognized feature: 'speaker-selection'.
+_ @ framework-053504fa78f841b4.js:1Understand this warning
+framework-053504fa78f841b4.js:1 Unrecognized feature: 'unoptimized-images'.
+_ @ framework-053504fa78f841b4.js:1Understand this warning
+framework-053504fa78f841b4.js:1 Unrecognized feature: 'unsized-media'.
+_ @ framework-053504fa78f841b4.js:1Understand this warning
+framework-053504fa78f841b4.js:1 Unrecognized feature: 'pointer-lock'.
+_ @ framework-053504fa78f841b4.js:1Understand this warning
+framework-053504fa78f841b4.js:1 Allow attribute will take precedence over 'allowfullscreen'.
+_ @ framework-053504fa78f841b4.js:1Understand this warning
+framework-053504fa78f841b4.js:1 Allow attribute will take precedence over 'allowpaymentrequest'.
+_ @ framework-053504fa78f841b4.js:1Understand this warning
+5Error handling response: Error: runtime/sendMessage: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+    at <URL>Understand this error
+stallwart.build.js:1 stallwart: failed ping 1
+webxr-polyfill.js:34048 [Immersive Web Emulator] native WebXR API successfully overridden
+6[Report Only] Refused to execute inline event handler because it violates the following Content Security Policy directive: "script-src 'self'". Either the 'unsafe-inline' keyword, a hash ('sha256-...'), or a nonce ('nonce-...') is required to enable inline execution. Note that hashes do not apply to event handlers, style attributes and javascript: navigations unless the 'unsafe-hashes' keyword is present.
+
+webxr-polyfill.js:34048 [Immersive Web Emulator] native WebXR API successfully overridden
+HealthTrackr:1 Banner not shown: beforeinstallpromptevent.preventDefault() called. The page must call beforeinstallpromptevent.prompt() to show the banner.
+HealthTrackr:1 Error handling response: Error: runtime/sendMessage: The message port closed before a response was received.
+    at chrome-extension://fdjamakpfbbddfjaooikfcpapjohcfmg/content/contentScripts/kwift.CHROME.js:1:184373Understand this error
+HealthTrackr:1 Error handling response: Error: runtime/sendMessage: The message port closed before a response was received.
+    at chrome-extension://fdjamakpfbbddfjaooikfcpapjohcfmg/content/contentScripts/kwift.CHROME.js:1:184373Understand this error
+ [Immersive Web Emulator] native WebXR API successfully overridden
+workspace_iframe.html:32 Unrecognized feature: 'ambient-light-sensor'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'battery'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'execution-while-not-rendered'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'execution-while-out-of-viewport'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'layout-animations'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'legacy-image-formats'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'navigation-override'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'oversized-images'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'publickey-credentials'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'speaker-selection'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'unoptimized-images'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'unsized-media'.Understand this warning
+workspace_iframe.html:32 Allow attribute will take precedence over 'allowfullscreen'.Understand this warning
+workspace_iframe.html:32 Allow attribute will take precedence over 'allowpaymentrequest'.Understand this warning
+ [Immersive Web Emulator] native WebXR API successfully overridden
+ cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation
+Mt.forEach.n.<computed> @ eruda.js:2Understand this warning
+ WARNING: plotly-latest.min.js and plotly-latest.js are NO LONGER the latest releases of plotly.js. They are v1.58.5 (released July 2021), the end of the v1.x line, and will not be updated again. To use more recent versions of plotly.js, please update your links to point to an explicit version on cdn.plot.ly. You can find the latest version information at https://github.com/plotly/plotly.js/releases
+Mt.forEach.n.<computed> @ eruda.js:2Understand this error
+ CandleCast Scanner initialized
+ Voice alerts system initialized
+ Pattern Evolution Tracker initialized
+ AI Coach initialized
+ AI Avatar initialized
+ Initializing sparklines
+ Selected voice: Google UK English Female
+2 Loaded pattern evolutions for 1 stocks
+ Emergency voice stop activated
+webxr-polyfill.js:34048 [Immersive Web Emulator] native WebXR API successfully overridden
+Console.js:61 cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation
+Mt.forEach.n.<computed> @ Console.js:61Understand this warning
+Console.js:61 WARNING: plotly-latest.min.js and plotly-latest.js are NO LONGER the latest releases of plotly.js. They are v1.58.5 (released July 2021), the end of the v1.x line, and will not be updated again. To use more recent versions of plotly.js, please update your links to point to an explicit version on cdn.plot.ly. You can find the latest version information at https://github.com/plotly/plotly.js/releases
+Mt.forEach.n.<computed> @ Console.js:61Understand this error
+Console.js:61 CandleCast Scanner initialized
+Console.js:61 Voice alerts system initialized
+Console.js:61 Pattern Evolution Tracker initialized
+Console.js:61 AI Coach initialized
+Console.js:61 AI Avatar initialized
+Console.js:61 Initializing sparklines
+Console.js:61 Selected voice: Google UK English Female
+Console.js:61 Loaded pattern evolutions for 1 stocks
+Console.js:61 Emergency voice stop activated
+webxr-polyfill.js:34048 [Immersive Web Emulator] native WebXR API successfully overridden
+Console.js:61 cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation
+Mt.forEach.n.<computed> @ Console.js:61Understand this warning
+Console.js:61 WARNING: plotly-latest.min.js and plotly-latest.js are NO LONGER the latest releases of plotly.js. They are v1.58.5 (released July 2021), the end of the v1.x line, and will not be updated again. To use more recent versions of plotly.js, please update your links to point to an explicit version on cdn.plot.ly. You can find the latest version information at https://github.com/plotly/plotly.js/releases
+Mt.forEach.n.<computed> @ Console.js:61Understand this error
+Console.js:61 CandleCast Scanner initialized
+Console.js:61 Voice alerts system initialized
+Console.js:61 Pattern Evolution Tracker initialized
+Console.js:61 AI Coach initialized
+Console.js:61 AI Avatar initialized
+Console.js:61 Initializing sparklines
+Console.js:61 Rendered spaghetti chart for RSLS with 4 paths
+Console.js:61 Selected voice: Google UK English Female
+Console.js:61 Loaded pattern evolutions for 1 stocks
+testButtonClick()
+VM659:1 Uncaught ReferenceError: testButtonClick is not defined
+    at <anonymous>:1:1
+(anonymous) @ VM659:1Understand this error

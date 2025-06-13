@@ -12,6 +12,18 @@ window.aiCoachState = {
 document.addEventListener('DOMContentLoaded', function() {
     initializeAICoach();
     setupAICoachEventListeners();
+    
+    // Export functions to global scope after DOM load
+    window.getAIReview = getAIReview;
+    window.performGutCheck = performGutCheck;
+    window.exportAnalysis = exportAnalysis;
+    window.speakAnalysis = speakAnalysis;
+    window.testButtonClick = function() {
+        console.log('=== TESTING AI REVIEW BUTTON ===');
+        getAIReview('RSLS');
+    };
+    
+    console.log('Global AI functions exported successfully');
 });
 
 // Initialize AI Coach
@@ -807,27 +819,35 @@ function speakAnalysis(text) {
     }
 }
 
-// Export functions for global access immediately
-window.getAIReview = getAIReview;
-window.performGutCheck = performGutCheck;
-window.exportAnalysis = exportAnalysis;
-window.speakAnalysis = speakAnalysis;
-window.aiCoachState = window.aiCoachState;
+// Export functions for global access immediately - fix scope issue
+if (typeof window !== 'undefined') {
+    window.getAIReview = getAIReview;
+    window.performGutCheck = performGutCheck;
+    window.exportAnalysis = exportAnalysis;
+    window.speakAnalysis = speakAnalysis;
+    window.aiCoachState = window.aiCoachState;
+}
 
 // Test function to verify AI review functionality
-window.testAIFunction = function() {
-    console.log('AI function test - getAIReview available:', typeof window.getAIReview);
-    console.log('Calling getAIReview with test symbol...');
-    if (typeof window.getAIReview === 'function') {
-        window.getAIReview('RSLS');
-    }
-};
+if (typeof window !== 'undefined') {
+    window.testAIFunction = function() {
+        console.log('AI function test - getAIReview available:', typeof window.getAIReview);
+        console.log('Calling getAIReview with test symbol...');
+        if (typeof window.getAIReview === 'function') {
+            window.getAIReview('RSLS');
+        }
+    };
 
-// Add direct button click test
-window.testButtonClick = function() {
-    console.log('Testing button click directly...');
-    getAIReview('RSLS');
-};
+    // Add direct button click test
+    window.testButtonClick = function() {
+        console.log('Testing button click directly...');
+        if (typeof getAIReview === 'function') {
+            getAIReview('RSLS');
+        } else {
+            console.error('getAIReview function not available');
+        }
+    };
+}
 
 // Render historical comparison chart
 function renderHistoricalChart(chartData) {
