@@ -70,8 +70,18 @@ class AICoach:
         try:
             current_price = hist['Close'].iloc[-1]
             
-            # RSI analysis
-            rsi = ta.rsi(hist['Close']).iloc[-1]
+            # RSI analysis - calculate manually if ta library fails
+            try:
+                from ta.momentum import RSIIndicator
+                rsi_indicator = RSIIndicator(close=hist['Close'])
+                rsi = rsi_indicator.rsi().iloc[-1]
+            except:
+                # Fallback RSI calculation
+                delta = hist['Close'].diff()
+                gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+                loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+                rs = gain / loss
+                rsi = 100 - (100 / (1 + rs)).iloc[-1]
             
             # Volume analysis
             avg_volume = hist['Volume'].rolling(20).mean().iloc[-2]
