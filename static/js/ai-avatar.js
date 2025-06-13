@@ -349,8 +349,8 @@ class CandleCastMascot {
     }
 }
 
-// Initialize AI Avatar when DOM is ready
+// Initialize CandleCast Mascot when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    window.aiAvatar = new AIAvatar();
-    window.aiAvatar.show();
+    window.candleMascot = new CandleCastMascot();
+    window.candleMascot.show();
 });

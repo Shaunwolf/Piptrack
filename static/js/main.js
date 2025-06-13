@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Initialize application
 function initializeApp() {
-    console.log('AIvest Stock Scanner initialized');
+    console.log('CandleCast Scanner initialized');
     
     // Check for saved preferences
     const voiceEnabled = localStorage.getItem('voiceEnabled');
