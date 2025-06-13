@@ -641,8 +641,8 @@ let currentTheme = 'bubblegum';
 
 // Initialize journal
 document.addEventListener('DOMContentLoaded', function() {
-    // Apply notebook paper styling to body
-    document.body.classList.add('journal-page');
+    // Apply notebook paper styling immediately
+    applyNotebookStyling();
     
     initializeJournal();
     setupStickerDragDrop();
@@ -651,6 +651,35 @@ document.addEventListener('DOMContentLoaded', function() {
     setupConfidenceSlider();
     setCurrentDate();
 });
+
+function applyNotebookStyling() {
+    const body = document.body;
+    
+    // Remove base template classes
+    body.classList.remove('dark', 'bg-dark-bg', 'text-white');
+    
+    // Apply notebook styling with highest priority
+    body.style.setProperty('background-color', '#FAFAF3', 'important');
+    body.style.setProperty('background-image', `
+        repeating-linear-gradient(
+            transparent,
+            transparent 23px,
+            #A0C5E8 23px,
+            #A0C5E8 25px
+        ),
+        linear-gradient(
+            to right,
+            transparent 78px,
+            #F28B82 78px,
+            #F28B82 80px,
+            transparent 80px
+        )`, 'important');
+    body.style.setProperty('color', '#1e3a8a', 'important');
+    body.style.setProperty('font-family', '"Patrick Hand", cursive', 'important');
+    body.style.setProperty('min-height', '100vh', 'important');
+    
+    console.log('Applied notebook paper styling');
+}
 
 function setCurrentDate() {
     const now = new Date();
