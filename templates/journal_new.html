@@ -707,9 +707,7 @@ let currentTheme = 'bubblegum';
 
 // Initialize journal
 document.addEventListener('DOMContentLoaded', function() {
-    // Apply notebook paper styling immediately
-    applyNotebookStyling();
-    
+    initializeJournalTheme();
     initializeJournal();
     setupStickerDragDrop();
     setupMoodSelector();
