@@ -449,6 +449,49 @@ def all_pattern_evolutions():
         logging.error(f"Error getting all pattern evolutions: {e}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/sparkline/<symbol>')
+def get_sparkline_data(symbol):
+    """Get sparkline data for a stock symbol"""
+    try:
+        import yfinance as yf
+        from datetime import datetime, timedelta
+        
+        # Get 7 days of price data
+        ticker = yf.Ticker(symbol)
+        hist = ticker.history(period="7d", interval="1d")
+        
+        if hist.empty:
+            return jsonify({
+                'error': 'No data available',
+                'symbol': symbol
+            }), 404
+        
+        # Extract price data
+        prices = hist['Close'].tolist()
+        dates = [date.strftime('%Y-%m-%d') for date in hist.index]
+        
+        # Calculate change percentage
+        if len(prices) >= 2:
+            change = ((prices[-1] - prices[0]) / prices[0]) * 100
+        else:
+            change = 0
+        
+        return jsonify({
+            'symbol': symbol,
+            'prices': prices,
+            'dates': dates,
+            'change': round(change, 2),
+            'high': round(max(prices), 2),
+            'low': round(min(prices), 2)
+        })
+        
+    except Exception as e:
+        logging.error(f"Error fetching sparkline data for {symbol}: {e}")
+        return jsonify({
+            'error': str(e),
+            'symbol': symbol
+        }), 500
+
 @app.route('/update_pattern_evolutions', methods=['POST'])
 def update_pattern_evolutions():
     """Update pattern evolution data for all tracked stocks"""

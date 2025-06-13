@@ -204,13 +204,13 @@ async function getAIReview(symbol) {
             // Store current analysis
             window.aiCoachState.currentAnalysis = analysis;
             
-            // Smooth scroll to bottom of page where AI analysis appears
+            // Focus on the modal instead of scrolling
             setTimeout(() => {
-                window.scrollTo({
-                    top: document.body.scrollHeight,
-                    behavior: 'smooth'
-                });
-            }, 300);
+                const modal = document.getElementById('aiReviewModal');
+                if (modal) {
+                    modal.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }, 100);
             
         } else {
             showAlert('Error getting AI analysis: ' + data.error, 'error');
@@ -289,7 +289,12 @@ function displayAIAnalysis(analysis, symbol) {
         </div>
     `;
     
-    showModal('aiReviewModal');
+    // Show the modal
+    modal.classList.remove('hidden');
+    modal.classList.add('show');
+    
+    // Prevent body scrolling
+    document.body.style.overflow = 'hidden';
 }
 
 // Create AI review modal if it doesn't exist
