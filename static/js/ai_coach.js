@@ -275,7 +275,10 @@ function displayAIAnalysis(analysis, symbol) {
             <!-- Historical Comparison -->
             <div class="bg-dark-accent rounded-lg p-4">
                 <h5 class="font-semibold text-accent-blue mb-2">Historical Context</h5>
-                <p class="text-gray-300 leading-relaxed">${analysis.historical_comparison}</p>
+                <p class="text-gray-300 leading-relaxed">${analysis.historical_comparison?.text || analysis.historical_comparison}</p>
+                
+                <!-- Historical Chart -->
+                ${analysis.historical_comparison?.chart_data ? renderHistoricalChart(analysis.historical_comparison.chart_data) : ''}
             </div>
             
             <!-- Key Insights -->
@@ -784,6 +787,85 @@ window.performGutCheck = performGutCheck;
 window.exportAnalysis = exportAnalysis;
 window.speakAnalysis = speakAnalysis;
 window.aiCoachState = window.aiCoachState;
+
+// Render historical comparison chart
+function renderHistoricalChart(chartData) {
+    if (!chartData || !chartData.dates || !chartData.prices) {
+        return '';
+    }
+    
+    const chartId = `historicalChart_${Date.now()}`;
+    
+    // Create chart container
+    const chartHtml = `
+        <div class="mt-4">
+            <h6 class="text-sm font-medium text-gray-400 mb-2">${chartData.title}</h6>
+            <div id="${chartId}" class="h-64 bg-gray-800 rounded-lg"></div>
+        </div>
+    `;
+    
+    // Render chart after DOM update
+    setTimeout(() => {
+        renderHistoricalPlotlyChart(chartId, chartData);
+    }, 100);
+    
+    return chartHtml;
+}
+
+// Render the actual Plotly chart
+function renderHistoricalPlotlyChart(chartId, chartData) {
+    const element = document.getElementById(chartId);
+    if (!element) return;
+    
+    const trace = {
+        x: chartData.dates,
+        y: chartData.prices,
+        type: 'scatter',
+        mode: 'lines',
+        name: chartData.symbol,
+        line: {
+            color: '#3b82f6',
+            width: 2
+        },
+        fill: 'tonexty',
+        fillcolor: 'rgba(59, 130, 246, 0.1)'
+    };
+    
+    const layout = {
+        title: {
+            text: chartData.title,
+            font: { color: '#d1d5db', size: 14 }
+        },
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        xaxis: {
+            gridcolor: '#374151',
+            color: '#9ca3af',
+            tickfont: { size: 10 }
+        },
+        yaxis: {
+            gridcolor: '#374151',
+            color: '#9ca3af',
+            tickfont: { size: 10 },
+            title: { text: 'Price ($)', font: { color: '#9ca3af', size: 12 } }
+        },
+        margin: { l: 50, r: 20, t: 40, b: 40 },
+        showlegend: false,
+        hovermode: 'x unified'
+    };
+    
+    const config = {
+        displayModeBar: false,
+        responsive: true
+    };
+    
+    try {
+        Plotly.newPlot(chartId, [trace], layout, config);
+    } catch (error) {
+        console.error('Error rendering historical chart:', error);
+        element.innerHTML = '<div class="text-center text-gray-500 py-8">Chart unavailable</div>';
+    }
+}
 
 // Debug function to test AI review
 window.testAIReview = function(symbol) {
