@@ -230,6 +230,42 @@ function hideLoading() {
     }
 }
 
+// Loading modal functions
+function showLoadingModal(message = 'Loading...') {
+    let modal = document.getElementById('loadingModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'loadingModal';
+        modal.className = 'modal show';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-body text-center py-8">
+                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                    <p id="loadingMessage" class="text-lg">${message}</p>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    } else {
+        modal.classList.remove('hidden');
+        modal.classList.add('show');
+        document.getElementById('loadingMessage').textContent = message;
+    }
+}
+
+function hideLoadingModal() {
+    const modal = document.getElementById('loadingModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('show');
+    }
+}
+
+// Notification system
+function showNotification(message, type = 'info') {
+    showAlert(message, type);
+}
+
 // Confidence monitoring
 function startConfidenceMonitoring() {
     // Update confidence scores every 5 minutes for tracked stocks

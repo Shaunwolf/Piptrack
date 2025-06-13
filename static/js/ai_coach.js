@@ -766,9 +766,20 @@ function speakAnalysis(text) {
     }
 }
 
-// Export functions for global access
+// Export functions for global access immediately
 window.getAIReview = getAIReview;
 window.performGutCheck = performGutCheck;
 window.exportAnalysis = exportAnalysis;
 window.speakAnalysis = speakAnalysis;
 window.aiCoachState = window.aiCoachState;
+
+// Debug function to test AI review
+window.testAIReview = function(symbol) {
+    console.log('Testing AI review for:', symbol);
+    if (typeof getAIReview === 'function') {
+        console.log('getAIReview function found, calling...');
+        getAIReview(symbol);
+    } else {
+        console.error('getAIReview function not found');
+    }
+};
