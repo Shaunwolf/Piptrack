@@ -85,15 +85,21 @@ async function initializeSparklineChart(symbol) {
 // Fetch sparkline data from backend
 async function fetchSparklineData(symbol) {
     try {
-        const response = await fetch(`/api/sparkline/${symbol}`);
+        const response = await fetch(`/api/sparkline/${symbol}?period=1d&interval=5m`);
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}`);
         }
-        return await response.json();
+        const data = await response.json();
+        
+        // Check if we have enhanced animated features
+        if (data.animation_frames && data.candle_guy_mood) {
+            return enhanceSparklineWithAnimation(data);
+        }
+        
+        return data;
     } catch (error) {
         console.error(`Error fetching sparkline data for ${symbol}:`, error);
-        // Return mock data for development - replace with real data
-        return generateMockSparklineData(symbol);
+        throw error;
     }
 }
 
@@ -295,7 +301,182 @@ function addSparklineToNewCard(card, symbol) {
     addSparklineToCard(card, symbol);
 }
 
+// Enhanced Animation Functions for CandleCast Integration
+
+// Enhance sparkline data with animation features
+function enhanceSparklineWithAnimation(data) {
+    // Add candle guy character integration
+    data.candleGuyAnimation = createCandleGuyAnimation(data.candle_guy_mood, data.animation_speed);
+    
+    // Add momentum-based sparkle effects
+    if (data.momentum_indicators && data.momentum_indicators.rsi > 70) {
+        data.sparkleEffect = 'bullish';
+    } else if (data.momentum_indicators && data.momentum_indicators.rsi < 30) {
+        data.sparkleEffect = 'bearish';
+    } else {
+        data.sparkleEffect = 'neutral';
+    }
+    
+    return data;
+}
+
+// Create candle guy animation based on mood
+function createCandleGuyAnimation(mood, speed = 1.0) {
+    const animations = {
+        'bullish': {
+            emoji: '📈',
+            color: '#10b981',
+            bounce: true,
+            sparkles: true
+        },
+        'bearish': {
+            emoji: '📉',
+            color: '#ef4444',
+            shake: true,
+            storm: true
+        },
+        'neutral': {
+            emoji: '📊',
+            color: '#6b7280',
+            pulse: true
+        },
+        'excited': {
+            emoji: '🚀',
+            color: '#3b82f6',
+            rocket: true,
+            trail: true
+        },
+        'confused': {
+            emoji: '🤔',
+            color: '#f59e0b',
+            wobble: true
+        }
+    };
+    
+    return animations[mood] || animations['neutral'];
+}
+
+// Add candle guy to sparkline container
+function addCandleGuyToSparkline(symbol, animation) {
+    const container = document.querySelector(`#sparkline-${symbol}`).parentElement;
+    
+    // Remove existing candle guy
+    const existing = container.querySelector('.candle-guy');
+    if (existing) existing.remove();
+    
+    // Create new candle guy element
+    const candleGuy = document.createElement('div');
+    candleGuy.className = 'candle-guy absolute top-0 right-0 text-lg z-10';
+    candleGuy.innerHTML = animation.emoji;
+    candleGuy.style.color = animation.color;
+    
+    // Apply animation based on mood
+    if (animation.bounce) {
+        candleGuy.style.animation = 'bounce 1s infinite';
+    } else if (animation.shake) {
+        candleGuy.style.animation = 'shake 0.5s infinite';
+    } else if (animation.pulse) {
+        candleGuy.style.animation = 'pulse 2s infinite';
+    } else if (animation.rocket) {
+        candleGuy.style.animation = 'rocket 2s ease-in-out infinite';
+    } else if (animation.wobble) {
+        candleGuy.style.animation = 'wobble 1s ease-in-out infinite';
+    }
+    
+    container.appendChild(candleGuy);
+    
+    // Add sparkle effects if enabled
+    if (animation.sparkles) {
+        addSparkleEffect(container, animation.color);
+    }
+}
+
+// Add sparkle effect around sparkline
+function addSparkleEffect(container, color) {
+    for (let i = 0; i < 3; i++) {
+        setTimeout(() => {
+            const sparkle = document.createElement('div');
+            sparkle.className = 'absolute text-xs opacity-80';
+            sparkle.innerHTML = '✨';
+            sparkle.style.left = Math.random() * 100 + '%';
+            sparkle.style.top = Math.random() * 100 + '%';
+            sparkle.style.animation = 'sparkle 1.5s ease-out forwards';
+            
+            container.appendChild(sparkle);
+            
+            setTimeout(() => sparkle.remove(), 1500);
+        }, i * 200);
+    }
+}
+
+// Enhanced chart creation with animation features
+function createEnhancedSparklineChart(symbol, data) {
+    // Create base chart
+    createSparklineChart(symbol, data);
+    
+    // Add enhanced animation features if available
+    if (data.candleGuyAnimation) {
+        addCandleGuyToSparkline(symbol, data.candleGuyAnimation);
+    }
+    
+    // Add volatility bands visualization
+    if (data.volatility_bands) {
+        addVolatilityBands(symbol, data.volatility_bands);
+    }
+    
+    // Add price event markers
+    if (data.price_events && data.price_events.length > 0) {
+        addPriceEventMarkers(symbol, data.price_events);
+    }
+}
+
+// Add volatility bands to chart
+function addVolatilityBands(symbol, bands) {
+    const canvas = document.getElementById(`sparkline-${symbol}`);
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    const rect = canvas.getBoundingClientRect();
+    
+    // Draw volatility bands as subtle background
+    ctx.globalAlpha = 0.1;
+    ctx.fillStyle = bands.trend === 'expanding' ? '#ef4444' : '#10b981';
+    ctx.fillRect(0, rect.height * 0.2, rect.width, rect.height * 0.6);
+    ctx.globalAlpha = 1.0;
+}
+
+// Add price event markers
+function addPriceEventMarkers(symbol, events) {
+    const container = document.querySelector(`#sparkline-${symbol}`).parentElement;
+    
+    events.forEach((event, index) => {
+        const marker = document.createElement('div');
+        marker.className = 'absolute w-2 h-2 rounded-full animate-ping';
+        marker.style.background = event.type === 'spike' ? '#10b981' : '#ef4444';
+        marker.style.left = (event.position * 100) + '%';
+        marker.style.top = '50%';
+        marker.title = `${event.type}: ${event.magnitude.toFixed(2)}%`;
+        
+        container.appendChild(marker);
+        
+        // Remove marker after animation
+        setTimeout(() => marker.remove(), 3000);
+    });
+}
+
+// Update sparkline creation function
+const originalCreateSparklineChart = createSparklineChart;
+createSparklineChart = function(symbol, data) {
+    // Use enhanced version if animation data is available
+    if (data.candleGuyAnimation || data.volatility_bands || data.price_events) {
+        createEnhancedSparklineChart(symbol, data);
+    } else {
+        originalCreateSparklineChart(symbol, data);
+    }
+};
+
 // Export functions for global access
 window.addSparklineToNewCard = addSparklineToNewCard;
 window.updateAllSparklines = updateAllSparklines;
 window.sparklineState = window.sparklineState;
+window.enhanceSparklineWithAnimation = enhanceSparklineWithAnimation;

@@ -562,6 +562,7 @@ def get_sparkline_data(symbol):
             
             # Convert to format expected by existing frontend
             prices = sparkline_data['prices']
+            import pandas as pd
             dates = [pd.Timestamp(ts, unit='ms').strftime('%Y-%m-%d') for ts in sparkline_data['timestamps']]
             change = sparkline_data['price_change_pct']
             
