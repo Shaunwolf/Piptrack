@@ -886,3 +886,78 @@ def clear_sparklines_cache():
     except Exception as e:
         logging.error(f"Error clearing cache: {e}")
         return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/historical-comparison/<symbol>')
+def get_historical_comparison_api(symbol):
+    """Get enhanced historical comparison with comprehensive scoring"""
+    try:
+        from historical_comparison_engine import HistoricalComparisonEngine
+        
+        engine = HistoricalComparisonEngine()
+        matches = engine.find_historical_matches(symbol.upper(), lookback_days=504)
+        
+        if not matches:
+            return jsonify({
+                'success': False,
+                'message': 'No significant historical matches found',
+                'total_matches': 0,
+                'symbol': symbol.upper()
+            })
+        
+        # Get detailed analysis
+        detailed_analysis = engine.get_detailed_analysis(matches)
+        
+        # Format response with comprehensive scoring data
+        response_data = {
+            'success': True,
+            'symbol': symbol.upper(),
+            'total_matches_found': len(matches),
+            'analysis_summary': detailed_analysis,
+            'top_matches': []
+        }
+        
+        # Add top 10 matches with full scoring breakdown
+        for match in matches[:10]:
+            match_data = {
+                'symbol': match.symbol,
+                'date_range': match.date_range,
+                'confidence_level': match.confidence_level,
+                'scoring_breakdown': {
+                    'composite_score': round(match.composite_score * 100, 1),
+                    'price_correlation': round(match.price_correlation * 100, 1),
+                    'volume_correlation': round(match.volume_correlation * 100, 1),
+                    'technical_score': round(match.technical_score * 100, 1),
+                    'pattern_match_score': round(match.pattern_match_score * 100, 1),
+                    'news_sentiment_score': round(match.news_sentiment_score * 100, 1),
+                    'market_condition_score': round(match.market_condition_score * 100, 1)
+                },
+                'key_metrics': match.key_metrics,
+                'outcome': match.outcome,
+                'factors_matched': []
+            }
+            
+            # Identify key factors that contributed to high scores
+            if match.price_correlation > 0.8:
+                match_data['factors_matched'].append('Strong price correlation')
+            if match.volume_correlation > 0.7:
+                match_data['factors_matched'].append('Similar volume patterns')
+            if match.technical_score > 0.8:
+                match_data['factors_matched'].append('Technical indicators aligned')
+            if match.pattern_match_score > 0.8:
+                match_data['factors_matched'].append('Chart patterns match')
+            if match.news_sentiment_score > 0.7:
+                match_data['factors_matched'].append('Similar market sentiment')
+            if match.market_condition_score > 0.7:
+                match_data['factors_matched'].append('Comparable market conditions')
+            
+            response_data['top_matches'].append(match_data)
+        
+        return jsonify(response_data)
+        
+    except Exception as e:
+        logging.error(f"Error in historical comparison API: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'message': 'Historical comparison analysis failed'
+        }), 500
