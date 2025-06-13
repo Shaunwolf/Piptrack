@@ -35,38 +35,77 @@ function initializeAICoach() {
 
 // Setup AI Coach event listeners
 function setupAICoachEventListeners() {
-    // AI Review buttons
+    // Global function to handle AI review clicks
+    window.getAIReview = getAIReview;
+    
+    // Also handle direct button clicks
     document.addEventListener('click', function(e) {
-        if (e.target.closest('[onclick*="getAIReview"]')) {
-            e.preventDefault();
-            const symbol = extractSymbolFromOnClick(e.target.closest('[onclick*="getAIReview"]'));
-            if (symbol) {
-                getAIReview(symbol);
+        let target = e.target;
+        
+        // Check if clicked element or parent has AI review functionality
+        while (target && target !== document) {
+            if (target.classList && target.classList.contains('ai-review-btn')) {
+                e.preventDefault();
+                const symbol = target.getAttribute('data-symbol');
+                if (symbol) {
+                    getAIReview(symbol);
+                }
+                return;
             }
+            
+            // Check onclick attribute for getAIReview calls
+            if (target.getAttribute && target.getAttribute('onclick')) {
+                const onclick = target.getAttribute('onclick');
+                if (onclick.includes('getAIReview')) {
+                    e.preventDefault();
+                    const match = onclick.match(/getAIReview\(['"]([^'"]+)['"]\)/);
+                    if (match) {
+                        getAIReview(match[1]);
+                    }
+                    return;
+                }
+            }
+            
+            target = target.parentNode;
         }
     });
     
     // Gut check buttons
     document.addEventListener('click', function(e) {
-        if (e.target.closest('.gut-check-btn')) {
-            e.preventDefault();
-            const symbol = e.target.closest('.gut-check-btn').dataset.symbol;
-            if (symbol) {
-                performGutCheck(symbol);
+        let target = e.target;
+        while (target && target !== document) {
+            if (target.classList && target.classList.contains('gut-check-btn')) {
+                e.preventDefault();
+                const symbol = target.getAttribute('data-symbol');
+                if (symbol) {
+                    performGutCheck(symbol);
+                }
+                return;
             }
+            target = target.parentNode;
         }
     });
     
     // Chart story hover events
     document.addEventListener('mouseenter', function(e) {
-        if (e.target.closest('.chart-hover-zone') && window.aiCoachState.chartStoryActive) {
-            showChartStoryTooltip(e);
+        let target = e.target;
+        while (target && target !== document) {
+            if (target.classList && target.classList.contains('chart-hover-zone') && window.aiCoachState.chartStoryActive) {
+                showChartStoryTooltip(e);
+                return;
+            }
+            target = target.parentNode;
         }
     }, true);
     
     document.addEventListener('mouseleave', function(e) {
-        if (e.target.closest('.chart-hover-zone')) {
-            hideChartStoryTooltip();
+        let target = e.target;
+        while (target && target !== document) {
+            if (target.classList && target.classList.contains('chart-hover-zone')) {
+                hideChartStoryTooltip();
+                return;
+            }
+            target = target.parentNode;
         }
     }, true);
 }

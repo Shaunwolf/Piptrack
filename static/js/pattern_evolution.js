@@ -33,21 +33,28 @@ function initializePatternEvolution() {
 function setupPatternEvolutionListeners() {
     // Pattern evolution button clicks
     document.addEventListener('click', function(e) {
-        if (e.target.closest('.pattern-evolution-btn')) {
-            e.preventDefault();
-            const symbol = e.target.closest('.pattern-evolution-btn').dataset.symbol;
-            if (symbol) {
-                showPatternEvolutionModal(symbol);
+        let target = e.target;
+        while (target && target !== document) {
+            if (target.classList && target.classList.contains('pattern-evolution-btn')) {
+                e.preventDefault();
+                const symbol = target.getAttribute('data-symbol');
+                if (symbol) {
+                    showPatternEvolutionModal(symbol);
+                }
+                return;
             }
+            target = target.parentNode;
         }
     });
     
     // Breakout timing alerts
     document.addEventListener('click', function(e) {
-        if (e.target.closest('.breakout-timing-btn')) {
-            e.preventDefault();
-            const symbol = e.target.closest('.breakout-timing-btn').dataset.symbol;
-            if (symbol) {
+        let target = e.target;
+        while (target && target !== document) {
+            if (target.classList && target.classList.contains('breakout-timing-btn')) {
+                e.preventDefault();
+                const symbol = target.getAttribute('data-symbol');
+                if (symbol) {
                 showBreakoutTimingAlert(symbol);
             }
         }

@@ -48,9 +48,13 @@ function setupEventListeners() {
     // Modal close listeners
     document.addEventListener('click', function(e) {
         if (e.target.classList.contains('modal') || e.target.classList.contains('modal-close')) {
-            const modal = e.target.closest('.modal') || e.target;
-            if (modal.classList.contains('modal')) {
-                closeModal(modal.id);
+            let modal = e.target;
+            while (modal && modal !== document) {
+                if (modal.classList && modal.classList.contains('modal')) {
+                    closeModal(modal.id);
+                    return;
+                }
+                modal = modal.parentNode;
             }
         }
     });
