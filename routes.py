@@ -27,12 +27,12 @@ try:
     from multi_timeframe_analyzer import MultiTimeframeAnalyzer
     from scanner_widgets import ScannerWidgets
     from physics_market_engine import PhysicsMarketEngine
-    from animated_sparklines import AnimatedSparklines
+    from simple_sparklines import SimpleSparklines
     enhanced_journal = EnhancedTradingJournal()
     mtf_analyzer = MultiTimeframeAnalyzer()
     scanner_widgets = ScannerWidgets()
     physics_engine = PhysicsMarketEngine()
-    sparklines_engine = AnimatedSparklines()
+    sparklines_engine = SimpleSparklines()
 except ImportError as e:
     logging.warning(f"Enhanced components not available: {e}")
     enhanced_journal = None
@@ -552,7 +552,7 @@ def get_sparkline_data(symbol):
             period = request.args.get('period', '1d')
             interval = request.args.get('interval', '5m')
             
-            sparkline_data = sparklines_engine.generate_sparkline_data(symbol, period, interval)
+            sparkline_data = sparklines_engine.generate_sparkline(symbol)
             
             if 'error' in sparkline_data:
                 return jsonify({
@@ -576,16 +576,15 @@ def get_sparkline_data(symbol):
                 'low': round(min(prices), 2)
             }
             
-            # Include enhanced animated features if available
-            if 'animation_frames' in sparkline_data:
-                response.update({
-                    'animation_frames': sparkline_data['animation_frames'],
-                    'volatility_bands': sparkline_data.get('volatility_bands', {}),
-                    'price_events': sparkline_data.get('price_events', []),
-                    'momentum_indicators': sparkline_data.get('momentum_indicators', {}),
-                    'candle_guy_mood': sparkline_data.get('candle_guy_mood', 'neutral'),
-                    'animation_speed': sparkline_data.get('animation_speed', 1.0)
-                })
+            # Include CandleCast candle guy features
+            response.update({
+                'candle_guy_mood': sparkline_data.get('candle_guy_mood', 'neutral'),
+                'animation_speed': sparkline_data.get('animation_speed', 1.0),
+                'price_change_pct': sparkline_data.get('price_change_pct', 0),
+                'volatility_score': sparkline_data.get('volatility_score', 0),
+                'trend_direction': sparkline_data.get('trend_direction', 'flat'),
+                'volume_trend': sparkline_data.get('volume_trend', 'stable')
+            })
             
             return jsonify(response)
         
