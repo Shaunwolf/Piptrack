@@ -303,14 +303,24 @@ function displayAIAnalysis(analysis, symbol) {
     modal.classList.remove('hidden');
     
     // Render historical chart if chart data is available
-    if (analysis.historical_comparison && typeof analysis.historical_comparison === 'object' && analysis.historical_comparison.chart_data) {
-        setTimeout(() => {
-            const chartContainer = document.getElementById(`historical-chart-container-${symbol}`);
-            if (chartContainer) {
-                chartContainer.innerHTML = renderHistoricalChart(analysis.historical_comparison.chart_data);
+    setTimeout(() => {
+        const chartContainer = document.getElementById(`historical-chart-container-${symbol}`);
+        if (chartContainer && analysis.historical_comparison) {
+            console.log('Historical comparison data:', analysis.historical_comparison);
+            console.log('Type:', typeof analysis.historical_comparison);
+            
+            // Handle the historical comparison data properly
+            let historicalData = analysis.historical_comparison;
+            
+            // If it's an object with chart_data, render the chart
+            if (historicalData && typeof historicalData === 'object' && historicalData.chart_data) {
+                console.log('Rendering chart with data:', historicalData.chart_data);
+                chartContainer.innerHTML = renderHistoricalChart(historicalData.chart_data);
+            } else {
+                console.log('No chart data available or wrong format');
             }
-        }, 200);
-    }
+        }
+    }, 300);
     modal.classList.add('show');
     
     // Prevent body scrolling
