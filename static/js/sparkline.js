@@ -73,19 +73,19 @@ async function initializeSparklineChart(symbol) {
         
         if (data && !data.error && data.prices && data.prices.length > 0) {
             createSparklineChart(symbol, data);
-            updateSparklineInfo(symbol, data);
+            updateSparklineChange(symbol, data);
             
             // Add enhanced CandleCast features if available
             if (data.candle_guy_mood) {
-                addCandleGuyToSparkline(symbol, createCandleGuyAnimation(data.candle_guy_mood, data.animation_speed));
+                addCandleGuyToSparkline(symbol, createCandleGuyAnimation(data.candle_guy_mood, data.animation_speed || 1.0));
             }
         } else {
-            console.log(`No valid data for ${symbol}, using fallback display`);
-            showSparklineError(symbol, 'Loading...');
+            console.error(`No valid data for ${symbol}:`, data);
+            showSparklineError(symbol, data?.error || 'No data available');
         }
     } catch (error) {
         console.error(`Error initializing sparkline for ${symbol}:`, error);
-        showSparklineError(symbol, 'Error loading data');
+        showSparklineError(symbol, 'Failed to load');
     }
 }
 
@@ -181,7 +181,7 @@ function createSparklineChart(symbol, data) {
     }));
     
     // Determine color based on overall change
-    const change = data.change || 0;
+    const change = data.price_change_pct || data.change || 0;
     const color = change >= 0 ? window.sparklineState.colors.positive : window.sparklineState.colors.negative;
     
     // Clear canvas
@@ -258,13 +258,24 @@ function updateSparklineChange(symbol, data) {
     const changeElement = document.getElementById(`sparkline-change-${symbol}`);
     if (!changeElement) return;
     
-    const change = data.change || 0;
+    const change = data.price_change_pct || data.change || 0;
     const changeText = `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`;
     const icon = change >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
     const colorClass = change >= 0 ? 'text-green-400' : 'text-red-400';
     
     changeElement.className = `text-xs font-semibold ${colorClass}`;
     changeElement.innerHTML = `<i class="fas ${icon} mr-1"></i>${changeText}`;
+    
+    // Add candle guy mood indicator
+    if (data.candle_guy_mood) {
+        const container = changeElement.parentElement;
+        if (container && !container.querySelector('.mood-indicator')) {
+            const moodDiv = document.createElement('div');
+            moodDiv.className = 'mood-indicator text-xs text-gray-400 mt-1';
+            moodDiv.innerHTML = `<i class="fas fa-smile mr-1"></i>Mood: ${data.candle_guy_mood}`;
+            container.appendChild(moodDiv);
+        }
+    }
 }
 
 // Show sparkline error
