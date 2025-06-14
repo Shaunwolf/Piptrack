@@ -2,7 +2,7 @@ from flask import render_template, request, jsonify, redirect, url_for, flash, s
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import app, db
-from models import Stock, TradeJournal, ForecastPath, AIAnalysis, PatternEvolution, User, OAuth
+from models import Stock, TradeJournal, ForecastPath, AIAnalysis, PatternEvolution, User, OAuth, UserTradingProfile, StockRecommendation, RecommendationFeedback
 from replit_auth import require_login, make_replit_blueprint
 from auth_forms import RegistrationForm, LoginForm
 from google_auth import google_auth, is_google_configured
@@ -14,6 +14,7 @@ from confidence_scorer import ConfidenceScorer
 from google_sheets_integration import GoogleSheetsIntegration
 from pdf_generator import PDFGenerator
 from pattern_evolution_tracker import PatternEvolutionTracker
+from personalized_recommender import PersonalizedRecommender
 import json
 import logging
 import pandas as pd

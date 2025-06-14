@@ -125,3 +125,111 @@ class PatternEvolution(db.Model):
     
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+# Personalized Recommendation System Models
+class UserTradingProfile(db.Model):
+    __tablename__ = 'user_trading_profiles'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=False)
+    
+    # Risk and style preferences
+    risk_tolerance = db.Column(db.String(20), default='moderate')  # conservative, moderate, aggressive
+    trading_style = db.Column(db.String(20), default='swing')     # day_trading, short_term, swing, position
+    avg_holding_period = db.Column(db.Integer, default=21)        # days
+    
+    # Sector and market preferences
+    preferred_sectors = db.Column(db.JSON)                        # Array of sector names
+    market_cap_preference = db.Column(db.String(10), default='large')  # small, mid, large
+    price_range_min = db.Column(db.Float, default=10.0)
+    price_range_max = db.Column(db.Float, default=500.0)
+    preferred_price = db.Column(db.Float, default=100.0)
+    
+    # Performance metrics
+    success_rate = db.Column(db.Float, default=0.6)
+    avg_winner_pct = db.Column(db.Float, default=8.0)
+    avg_loser_pct = db.Column(db.Float, default=-4.0)
+    total_return_pct = db.Column(db.Float, default=0.0)
+    sharpe_ratio = db.Column(db.Float, default=1.0)
+    max_drawdown_pct = db.Column(db.Float, default=0.0)
+    
+    # Technical preferences
+    volatility_preference = db.Column(db.Float, default=0.15)
+    technical_indicators = db.Column(db.JSON)  # Array of preferred indicators
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    user = db.relationship('User', backref='trading_profile')
+
+class StockRecommendation(db.Model):
+    __tablename__ = 'stock_recommendations'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=False)
+    symbol = db.Column(db.String(10), nullable=False)
+    
+    # Scoring components
+    total_score = db.Column(db.Float, nullable=False)
+    technical_score = db.Column(db.Float)
+    fundamental_score = db.Column(db.Float)
+    sentiment_score = db.Column(db.Float)
+    fit_score = db.Column(db.Float)
+    
+    # Stock data at recommendation time
+    current_price = db.Column(db.Float)
+    target_price = db.Column(db.Float)
+    sector = db.Column(db.String(50))
+    market_cap = db.Column(db.BigInteger)
+    beta = db.Column(db.Float)
+    pe_ratio = db.Column(db.Float)
+    volume = db.Column(db.BigInteger)
+    
+    # Recommendation details
+    confidence_level = db.Column(db.String(10))  # High, Medium, Low
+    risk_assessment = db.Column(db.String(10))   # High, Medium, Low
+    time_horizon = db.Column(db.String(20))      # e.g., "2-8 weeks"
+    recommendation_reason = db.Column(db.Text)
+    ai_insight = db.Column(db.Text)
+    
+    # User interaction tracking
+    viewed = db.Column(db.Boolean, default=False)
+    action_taken = db.Column(db.String(20))      # bought, watchlisted, ignored, rejected
+    user_feedback = db.Column(db.String(20))     # excellent, good, neutral, poor
+    feedback_notes = db.Column(db.Text)
+    
+    # Performance tracking
+    performance_tracked = db.Column(db.Boolean, default=True)
+    price_at_follow_up = db.Column(db.Float)     # Price after time horizon
+    recommendation_return_pct = db.Column(db.Float)  # Theoretical return
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    expires_at = db.Column(db.DateTime)  # When recommendation expires
+    
+    # Relationships
+    user = db.relationship('User', backref='recommendations')
+
+class RecommendationFeedback(db.Model):
+    __tablename__ = 'recommendation_feedback'
+    id = db.Column(db.Integer, primary_key=True)
+    recommendation_id = db.Column(db.Integer, db.ForeignKey('stock_recommendations.id'), nullable=False)
+    user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=False)
+    
+    # Feedback details
+    feedback_type = db.Column(db.String(20))     # positive, negative, neutral
+    rating = db.Column(db.Integer)               # 1-5 stars
+    comment = db.Column(db.Text)
+    action_taken = db.Column(db.String(20))      # bought, sold, watchlisted, ignored
+    entry_price = db.Column(db.Float)            # If they acted on it
+    quantity = db.Column(db.Integer)
+    
+    # Performance if they acted
+    exit_price = db.Column(db.Float)
+    actual_return_pct = db.Column(db.Float)
+    holding_days = db.Column(db.Integer)
+    outcome = db.Column(db.String(20))           # win, loss, breakeven, active
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    recommendation = db.relationship('StockRecommendation', backref='feedback')
+    user = db.relationship('User', backref='recommendation_feedback')
