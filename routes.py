@@ -298,21 +298,20 @@ def forecast_enhanced(symbol):
         take_profit_2 = calculate_take_profit(stock.price, 2)
         risk_reward_ratio = calculate_risk_reward_ratio(stock.price, stop_loss, take_profit_1)
         
-        # Try to get AI analysis with error handling
-        ai_analysis = None
-        try:
-            ai_analysis = ai_coach.analyze_setup(symbol)
-        except Exception as e:
-            logging.warning(f"AI analysis failed for {symbol}: {e}")
-            ai_analysis = {
-                'analysis_text': f"Technical analysis for {symbol} shows current price action with moderate momentum. Consider volume and support levels for entry timing.",
-                'mood_tag': 'neutral',
-                'confidence_factors': {
-                    'rsi': min(100, max(0, stock.rsi)),
-                    'volume_surge': min(100, stock.volume_spike),
-                    'momentum': momentum_score
-                }
+        # Generate AI analysis with lightweight approach
+        rsi_signal = "oversold" if stock.rsi < 30 else "overbought" if stock.rsi > 70 else "neutral"
+        volume_signal = "high" if stock.volume_spike > 2 else "moderate" if stock.volume_spike > 1.5 else "low"
+        momentum_signal = "strong" if momentum_score > 70 else "weak" if momentum_score < 30 else "moderate"
+        
+        ai_analysis = {
+            'analysis_text': f"Technical analysis shows {symbol} trading with {momentum_signal} momentum ({momentum_score:.1f}%). RSI at {stock.rsi:.1f} indicates {rsi_signal} conditions. Volume surge of {stock.volume_spike:.1f}x suggests {volume_signal} institutional interest. Current price action favors {'bullish' if momentum_score > 50 else 'bearish'} outlook with key support/resistance levels requiring attention.",
+            'mood_tag': 'bullish' if momentum_score > 65 and stock.rsi < 70 else 'bearish' if momentum_score < 35 and stock.rsi > 30 else 'neutral',
+            'confidence_factors': {
+                'rsi': min(100, max(0, stock.rsi)),
+                'volume_surge': min(100, stock.volume_spike),
+                'momentum': momentum_score
             }
+        }
         
         from datetime import datetime
         current_time = datetime.now()
