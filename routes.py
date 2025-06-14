@@ -1580,3 +1580,64 @@ def get_pump_enhancement_summary():
     except Exception as e:
         logging.error(f"Error getting enhancement summary: {e}")
         return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/phase1_pump_analysis/<symbol>')
+def phase1_pump_analysis(symbol):
+    """Phase 1 enhanced pump analysis with all improvements"""
+    try:
+        from phase1_pump_detector import Phase1PumpDetector
+        
+        detector = Phase1PumpDetector()
+        analysis = detector.comprehensive_pump_analysis(symbol.upper())
+        
+        return jsonify({
+            'success': True,
+            'analysis': analysis
+        })
+        
+    except Exception as e:
+        logging.error(f"Error in Phase 1 analysis for {symbol}: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/phase1_market_scan')
+def phase1_market_scan():
+    """Enhanced market scan with Phase 1 improvements"""
+    try:
+        from phase1_pump_detector import Phase1PumpDetector
+        
+        # Scan popular symbols
+        symbols = ['GME', 'AMC', 'BB', 'NOK', 'TSLA', 'NVDA', 'META', 'AAPL', 'MSFT', 'GOOGL']
+        
+        detector = Phase1PumpDetector()
+        candidates = detector.scan_market_for_pumps(symbols)
+        
+        return jsonify({
+            'success': True,
+            'pump_candidates': candidates,
+            'scan_timestamp': datetime.now().isoformat(),
+            'symbols_scanned': len(symbols),
+            'candidates_found': len(candidates),
+            'phase1_features': detector._get_phase1_features()
+        })
+        
+    except Exception as e:
+        logging.error(f"Error in Phase 1 market scan: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/phase1_cost_summary')
+def get_phase1_cost_summary():
+    """Get Phase 1 cost breakdown and feature summary"""
+    try:
+        from phase1_pump_detector import Phase1PumpDetector
+        
+        detector = Phase1PumpDetector()
+        cost_summary = detector.get_phase1_cost_summary()
+        
+        return jsonify({
+            'success': True,
+            'cost_summary': cost_summary
+        })
+        
+    except Exception as e:
+        logging.error(f"Error getting Phase 1 cost summary: {e}")
+        return jsonify({'success': False, 'error': str(e)})
