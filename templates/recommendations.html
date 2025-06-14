@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personalized Stock Recommendations - Trading Intelligence</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .recommendation-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        }
+        .recommendation-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        .confidence-badge {
+            animation: pulse 2s infinite;
+        }
+        .score-ring {
+            background: conic-gradient(from 0deg, #ef4444 0%, #f59e0b 30%, #10b981 60%, #10b981 100%);
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-white min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-black/20 backdrop-blur-sm border-b border-white/10 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center space-x-8">
+                    <a href="{{ url_for('dashboard') }}" class="flex items-center space-x-3">
+                        <i class="fas fa-chart-line text-2xl text-blue-400"></i>
+                        <span class="text-xl font-bold">Trading Intelligence</span>
+                    </a>
+                    <div class="hidden md:flex items-center space-x-1">
+                        <i class="fas fa-magic text-purple-400"></i>
+                        <span class="text-purple-300 font-medium">AI Recommendations</span>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="generateBtn" class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200">
+                        <i class="fas fa-sync-alt mr-2"></i>
+                        Generate New
+                    </button>
+                    <a href="{{ url_for('recommendation_setup') }}" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fas fa-cog"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header Section -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-white mb-2">Your Personalized Stock Recommendations</h1>
+            <p class="text-gray-400">AI-powered recommendations tailored to your trading style and preferences</p>
+        </div>
+
+        <!-- Profile Summary Card -->
+        {% if user_profile %}
+        <div class="bg-slate-800 rounded-xl p-6 mb-8 border border-slate-700">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-white">Your Trading Profile</h2>
+                <a href="{{ url_for('recommendation_setup') }}" class="text-blue-400 hover:text-blue-300 text-sm">
+                    <i class="fas fa-edit mr-1"></i>
+                    Edit Profile
+                </a>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="text-center">
+                    <div class="text-sm text-gray-400">Risk Tolerance</div>
+                    <div class="text-white font-medium capitalize">{{ user_profile.risk_tolerance }}</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-sm text-gray-400">Trading Style</div>
+                    <div class="text-white font-medium capitalize">{{ user_profile.trading_style.replace('_', ' ') }}</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-sm text-gray-400">Preferred Sectors</div>
+                    <div class="text-white font-medium">{{ (user_profile.preferred_sectors | length) if user_profile.preferred_sectors else 0 }} Selected</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-sm text-gray-400">Market Cap</div>
+                    <div class="text-white font-medium capitalize">{{ user_profile.market_cap_preference }}</div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Market Context Banner -->
+        <div id="marketContext" class="bg-gradient-to-r from-slate-800 to-slate-700 rounded-xl p-4 mb-8 border border-slate-600 hidden">
+            <div class="flex items-center space-x-3">
+                <i class="fas fa-globe text-blue-400"></i>
+                <div class="flex-1">
+                    <div class="text-sm text-gray-400">Current Market Conditions</div>
+                    <div id="marketSentiment" class="text-white font-medium"></div>
+                </div>
+                <div class="text-right">
+                    <div class="text-sm text-gray-400">Recommended Strategy</div>
+                    <div id="recommendedStrategy" class="text-white font-medium"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="text-center py-12 hidden">
+            <div class="inline-flex items-center space-x-3">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400"></div>
+                <span class="text-gray-400">Generating personalized recommendations...</span>
+            </div>
+        </div>
+
+        <!-- Recommendations Grid -->
+        <div id="recommendationsGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {% for rec in recommendations %}
+            <div class="recommendation-card rounded-xl p-6 border border-slate-600">
+                <!-- Stock Header -->
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                            <span class="text-white font-bold text-sm">{{ rec.symbol }}</span>
+                        </div>
+                        <div>
+                            <h3 class="text-white font-semibold">{{ rec.symbol }}</h3>
+                            <p class="text-gray-400 text-sm">{{ rec.sector or 'Technology' }}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-white font-semibold">${{ "%.2f"|format(rec.current_price or 0) }}</div>
+                        <div class="text-green-400 text-sm">
+                            Target: ${{ "%.2f"|format(rec.target_price or 0) }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Confidence Score -->
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-gray-400 text-sm">Confidence:</span>
+                        <span class="confidence-badge px-2 py-1 rounded-full text-xs font-medium
+                            {% if rec.confidence_level == 'High' %}bg-green-500/20 text-green-400
+                            {% elif rec.confidence_level == 'Medium' %}bg-yellow-500/20 text-yellow-400
+                            {% else %}bg-gray-500/20 text-gray-400{% endif %}">
+                            {{ rec.confidence_level or 'Medium' }}
+                        </span>
+                    </div>
+                    <div class="score-ring w-8 h-8 rounded-full p-0.5">
+                        <div class="w-full h-full bg-slate-800 rounded-full flex items-center justify-center">
+                            <span class="text-white text-xs font-bold">{{ (rec.total_score or 75)|round|int }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Insight -->
+                <div class="mb-4">
+                    <div class="text-gray-400 text-sm mb-2">AI Insight:</div>
+                    <p class="text-gray-300 text-sm leading-relaxed">
+                        {{ rec.ai_insight or "Strong recommendation based on technical and fundamental analysis." }}
+                    </p>
+                </div>
+
+                <!-- Metrics -->
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                    <div class="bg-slate-700/50 rounded-lg p-3">
+                        <div class="text-gray-400 text-xs">Risk Level</div>
+                        <div class="text-white font-medium">{{ rec.risk_assessment or 'Medium' }}</div>
+                    </div>
+                    <div class="bg-slate-700/50 rounded-lg p-3">
+                        <div class="text-gray-400 text-xs">Time Horizon</div>
+                        <div class="text-white font-medium">{{ rec.time_horizon or '2-8 weeks' }}</div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex space-x-2">
+                    <button class="feedback-btn flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-3 rounded-lg text-sm font-medium transition-colors"
+                            data-rec-id="{{ rec.id }}" data-action="positive">
+                        <i class="fas fa-thumbs-up mr-1"></i>
+                        Interested
+                    </button>
+                    <button class="feedback-btn flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 px-3 rounded-lg text-sm font-medium transition-colors"
+                            data-rec-id="{{ rec.id }}" data-action="neutral">
+                        <i class="fas fa-bookmark mr-1"></i>
+                        Watch
+                    </button>
+                    <button class="feedback-btn bg-red-600 hover:bg-red-700 text-white py-2 px-3 rounded-lg text-sm transition-colors"
+                            data-rec-id="{{ rec.id }}" data-action="negative">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Empty State -->
+        {% if not recommendations %}
+        <div class="text-center py-12">
+            <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-magic text-white text-xl"></i>
+            </div>
+            <h3 class="text-white text-lg font-semibold mb-2">No Recommendations Yet</h3>
+            <p class="text-gray-400 mb-6">Generate your first set of personalized stock recommendations</p>
+            <button id="generateFirstBtn" class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200">
+                <i class="fas fa-sparkles mr-2"></i>
+                Generate Recommendations
+            </button>
+        </div>
+        {% endif %}
+
+        <!-- Performance Section -->
+        <div class="mt-12">
+            <h2 class="text-xl font-semibold text-white mb-6">Recommendation Performance</h2>
+            <div id="performanceStats" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Performance cards will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize recommendation system
+        document.addEventListener('DOMContentLoaded', function() {
+            loadMarketContext();
+            loadPerformanceStats();
+            
+            // Generate recommendations button
+            document.getElementById('generateBtn')?.addEventListener('click', generateRecommendations);
+            document.getElementById('generateFirstBtn')?.addEventListener('click', generateRecommendations);
+            
+            // Feedback buttons
+            document.querySelectorAll('.feedback-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const recId = this.dataset.recId;
+                    const action = this.dataset.action;
+                    submitFeedback(recId, action, this);
+                });
+            });
+        });
+
+        function loadMarketContext() {
+            fetch('/api/market_analysis')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const market = data.market_analysis;
+                        document.getElementById('marketSentiment').textContent = 
+                            market.sentiment.charAt(0).toUpperCase() + market.sentiment.slice(1);
+                        document.getElementById('recommendedStrategy').textContent = 
+                            market.recommended_strategy.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+                        document.getElementById('marketContext').classList.remove('hidden');
+                    }
+                })
+                .catch(error => console.error('Error loading market context:', error));
+        }
+
+        function loadPerformanceStats() {
+            fetch('/api/recommendation_performance')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        displayPerformanceStats(data.performance);
+                    }
+                })
+                .catch(error => console.error('Error loading performance stats:', error));
+        }
+
+        function displayPerformanceStats(performance) {
+            const statsContainer = document.getElementById('performanceStats');
+            statsContainer.innerHTML = `
+                <div class="bg-slate-800 rounded-xl p-6 border border-slate-700">
+                    <div class="flex items-center space-x-3 mb-2">
+                        <i class="fas fa-chart-line text-green-400"></i>
+                        <h3 class="text-white font-semibold">Hit Rate</h3>
+                    </div>
+                    <div class="text-2xl font-bold text-green-400">${performance.hit_rate || 0}%</div>
+                    <div class="text-gray-400 text-sm">Successful recommendations</div>
+                </div>
+                <div class="bg-slate-800 rounded-xl p-6 border border-slate-700">
+                    <div class="flex items-center space-x-3 mb-2">
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <h3 class="text-white font-semibold">Satisfaction</h3>
+                    </div>
+                    <div class="text-2xl font-bold text-yellow-400">${performance.user_satisfaction_avg || 4.2}/5</div>
+                    <div class="text-gray-400 text-sm">Average rating</div>
+                </div>
+                <div class="bg-slate-800 rounded-xl p-6 border border-slate-700">
+                    <div class="flex items-center space-x-3 mb-2">
+                        <i class="fas fa-trending-up text-blue-400"></i>
+                        <h3 class="text-white font-semibold">Total Generated</h3>
+                    </div>
+                    <div class="text-2xl font-bold text-blue-400">${performance.total_recommendations || 0}</div>
+                    <div class="text-gray-400 text-sm">Past 30 days</div>
+                </div>
+            `;
+        }
+
+        function generateRecommendations() {
+            const loadingState = document.getElementById('loadingState');
+            const grid = document.getElementById('recommendationsGrid');
+            
+            loadingState.classList.remove('hidden');
+            
+            fetch('/api/get_recommendations')
+                .then(response => response.json())
+                .then(data => {
+                    loadingState.classList.add('hidden');
+                    
+                    if (data.success) {
+                        location.reload(); // Reload to show new recommendations
+                    } else {
+                        alert('Error generating recommendations: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    loadingState.classList.add('hidden');
+                    console.error('Error generating recommendations:', error);
+                    alert('Error generating recommendations. Please try again.');
+                });
+        }
+
+        function submitFeedback(recId, action, button) {
+            const feedback = {
+                recommendation_id: recId,
+                feedback_type: action,
+                action_taken: action,
+                rating: action === 'positive' ? 5 : action === 'neutral' ? 3 : 1
+            };
+
+            fetch('/api/recommendation_feedback', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(feedback)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    button.disabled = true;
+                    button.classList.add('opacity-50');
+                    button.innerHTML = '<i class="fas fa-check mr-1"></i>Recorded';
+                }
+            })
+            .catch(error => console.error('Error submitting feedback:', error));
+        }
+    </script>
+</body>
+</html>

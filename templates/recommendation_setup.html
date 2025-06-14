@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup Trading Profile - Trading Intelligence</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .setup-card {
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        }
+        .sector-chip {
+            transition: all 0.2s ease;
+        }
+        .sector-chip.selected {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            transform: scale(1.05);
+        }
+        .slider-track {
+            background: linear-gradient(to right, #ef4444 0%, #f59e0b 50%, #10b981 100%);
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-white min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-black/20 backdrop-blur-sm border-b border-white/10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center space-x-8">
+                    <a href="{{ url_for('dashboard') }}" class="flex items-center space-x-3">
+                        <i class="fas fa-chart-line text-2xl text-blue-400"></i>
+                        <span class="text-xl font-bold">Trading Intelligence</span>
+                    </a>
+                    <div class="hidden md:flex items-center space-x-1">
+                        <i class="fas fa-user-cog text-purple-400"></i>
+                        <span class="text-purple-300 font-medium">Profile Setup</span>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="{{ url_for('recommendations_dashboard') }}" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fas fa-arrow-left mr-2"></i>
+                        Back to Recommendations
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <h1 class="text-3xl font-bold text-white mb-4">Setup Your Trading Profile</h1>
+            <p class="text-gray-400 text-lg">Help us personalize your stock recommendations by sharing your trading preferences</p>
+        </div>
+
+        <!-- Setup Form -->
+        <form id="profileForm" class="space-y-8">
+            <!-- Risk Tolerance -->
+            <div class="setup-card rounded-xl p-6 border border-slate-600">
+                <h2 class="text-xl font-semibold text-white mb-4 flex items-center">
+                    <i class="fas fa-shield-alt text-blue-400 mr-3"></i>
+                    Risk Tolerance
+                </h2>
+                <p class="text-gray-400 mb-6">How comfortable are you with market volatility?</p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <label class="risk-option cursor-pointer">
+                        <input type="radio" name="risk_tolerance" value="conservative" class="hidden">
+                        <div class="risk-card border-2 border-gray-600 rounded-lg p-4 text-center hover:border-blue-400 transition-colors">
+                            <i class="fas fa-turtle text-green-400 text-2xl mb-2"></i>
+                            <h3 class="font-semibold text-white">Conservative</h3>
+                            <p class="text-gray-400 text-sm">Lower risk, stable returns</p>
+                        </div>
+                    </label>
+                    <label class="risk-option cursor-pointer">
+                        <input type="radio" name="risk_tolerance" value="moderate" class="hidden" checked>
+                        <div class="risk-card border-2 border-blue-400 rounded-lg p-4 text-center hover:border-blue-400 transition-colors">
+                            <i class="fas fa-balance-scale text-yellow-400 text-2xl mb-2"></i>
+                            <h3 class="font-semibold text-white">Moderate</h3>
+                            <p class="text-gray-400 text-sm">Balanced risk and reward</p>
+                        </div>
+                    </label>
+                    <label class="risk-option cursor-pointer">
+                        <input type="radio" name="risk_tolerance" value="aggressive" class="hidden">
+                        <div class="risk-card border-2 border-gray-600 rounded-lg p-4 text-center hover:border-blue-400 transition-colors">
+                            <i class="fas fa-rocket text-red-400 text-2xl mb-2"></i>
+                            <h3 class="font-semibold text-white">Aggressive</h3>
+                            <p class="text-gray-400 text-sm">Higher risk, higher returns</p>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Trading Style -->
+            <div class="setup-card rounded-xl p-6 border border-slate-600">
+                <h2 class="text-xl font-semibold text-white mb-4 flex items-center">
+                    <i class="fas fa-clock text-purple-400 mr-3"></i>
+                    Trading Style
+                </h2>
+                <p class="text-gray-400 mb-6">How long do you typically hold positions?</p>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <label class="style-option cursor-pointer">
+                        <input type="radio" name="trading_style" value="day_trading" class="hidden">
+                        <div class="style-card border-2 border-gray-600 rounded-lg p-4 text-center hover:border-purple-400 transition-colors">
+                            <i class="fas fa-bolt text-yellow-400 text-xl mb-2"></i>
+                            <h4 class="font-semibold text-white text-sm">Day Trading</h4>
+                            <p class="text-gray-400 text-xs">Minutes to hours</p>
+                        </div>
+                    </label>
+                    <label class="style-option cursor-pointer">
+                        <input type="radio" name="trading_style" value="short_term" class="hidden">
+                        <div class="style-card border-2 border-gray-600 rounded-lg p-4 text-center hover:border-purple-400 transition-colors">
+                            <i class="fas fa-chart-line text-blue-400 text-xl mb-2"></i>
+                            <h4 class="font-semibold text-white text-sm">Short Term</h4>
+                            <p class="text-gray-400 text-xs">1-7 days</p>
+                        </div>
+                    </label>
+                    <label class="style-option cursor-pointer">
+                        <input type="radio" name="trading_style" value="swing" class="hidden" checked>
+                        <div class="style-card border-2 border-purple-400 rounded-lg p-4 text-center hover:border-purple-400 transition-colors">
+                            <i class="fas fa-wave-square text-green-400 text-xl mb-2"></i>
+                            <h4 class="font-semibold text-white text-sm">Swing</h4>
+                            <p class="text-gray-400 text-xs">1-8 weeks</p>
+                        </div>
+                    </label>
+                    <label class="style-option cursor-pointer">
+                        <input type="radio" name="trading_style" value="position" class="hidden">
+                        <div class="style-card border-2 border-gray-600 rounded-lg p-4 text-center hover:border-purple-400 transition-colors">
+                            <i class="fas fa-mountain text-purple-400 text-xl mb-2"></i>
+                            <h4 class="font-semibold text-white text-sm">Position</h4>
+                            <p class="text-gray-400 text-xs">3+ months</p>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Preferred Sectors -->
+            <div class="setup-card rounded-xl p-6 border border-slate-600">
+                <h2 class="text-xl font-semibold text-white mb-4 flex items-center">
+                    <i class="fas fa-industry text-green-400 mr-3"></i>
+                    Preferred Sectors
+                </h2>
+                <p class="text-gray-400 mb-6">Select the sectors you're most interested in (choose 3-5)</p>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div class="sector-chip border border-gray-600 rounded-lg p-3 text-center cursor-pointer hover:border-green-400 transition-all" data-sector="Technology">
+                        <i class="fas fa-microchip text-blue-400 mb-2"></i>
+                        <div class="text-white text-sm font-medium">Technology</div>
+                    </div>
+                    <div class="sector-chip border border-gray-600 rounded-lg p-3 text-center cursor-pointer hover:border-green-400 transition-all" data-sector="Healthcare">
+                        <i class="fas fa-heartbeat text-red-400 mb-2"></i>
+                        <div class="text-white text-sm font-medium">Healthcare</div>
+                    </div>
+                    <div class="sector-chip border border-gray-600 rounded-lg p-3 text-center cursor-pointer hover:border-green-400 transition-all" data-sector="Financial">
+                        <i class="fas fa-university text-yellow-400 mb-2"></i>
+                        <div class="text-white text-sm font-medium">Financial</div>
+                    </div>
+                    <div class="sector-chip border border-gray-600 rounded-lg p-3 text-center cursor-pointer hover:border-green-400 transition-all" data-sector="Consumer Discretionary">
+                        <i class="fas fa-shopping-cart text-purple-400 mb-2"></i>
+                        <div class="text-white text-sm font-medium">Consumer</div>
+                    </div>
+                    <div class="sector-chip border border-gray-600 rounded-lg p-3 text-center cursor-pointer hover:border-green-400 transition-all" data-sector="Energy">
+                        <i class="fas fa-bolt text-orange-400 mb-2"></i>
+                        <div class="text-white text-sm font-medium">Energy</div>
+                    </div>
+                    <div class="sector-chip border border-gray-600 rounded-lg p-3 text-center cursor-pointer hover:border-green-400 transition-all" data-sector="Industrials">
+                        <i class="fas fa-cogs text-gray-400 mb-2"></i>
+                        <div class="text-white text-sm font-medium">Industrials</div>
+                    </div>
+                    <div class="sector-chip border border-gray-600 rounded-lg p-3 text-center cursor-pointer hover:border-green-400 transition-all" data-sector="Biotech">
+                        <i class="fas fa-dna text-green-400 mb-2"></i>
+                        <div class="text-white text-sm font-medium">Biotech</div>
+                    </div>
+                    <div class="sector-chip border border-gray-600 rounded-lg p-3 text-center cursor-pointer hover:border-green-400 transition-all" data-sector="Real Estate">
+                        <i class="fas fa-home text-indigo-400 mb-2"></i>
+                        <div class="text-white text-sm font-medium">Real Estate</div>
+                    </div>
+                </div>
+                <input type="hidden" name="preferred_sectors" id="selectedSectors" value="[]">
+            </div>
+
+            <!-- Market Cap Preference -->
+            <div class="setup-card rounded-xl p-6 border border-slate-600">
+                <h2 class="text-xl font-semibold text-white mb-4 flex items-center">
+                    <i class="fas fa-building text-yellow-400 mr-3"></i>
+                    Market Cap Preference
+                </h2>
+                <p class="text-gray-400 mb-6">What size companies do you prefer to invest in?</p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <label class="cap-option cursor-pointer">
+                        <input type="radio" name="market_cap_preference" value="small" class="hidden">
+                        <div class="cap-card border-2 border-gray-600 rounded-lg p-4 text-center hover:border-yellow-400 transition-colors">
+                            <i class="fas fa-seedling text-green-400 text-xl mb-2"></i>
+                            <h4 class="font-semibold text-white">Small Cap</h4>
+                            <p class="text-gray-400 text-sm">Under $2B</p>
+                            <p class="text-gray-500 text-xs">Higher growth potential</p>
+                        </div>
+                    </label>
+                    <label class="cap-option cursor-pointer">
+                        <input type="radio" name="market_cap_preference" value="mid" class="hidden">
+                        <div class="cap-card border-2 border-gray-600 rounded-lg p-4 text-center hover:border-yellow-400 transition-colors">
+                            <i class="fas fa-tree text-blue-400 text-xl mb-2"></i>
+                            <h4 class="font-semibold text-white">Mid Cap</h4>
+                            <p class="text-gray-400 text-sm">$2B - $10B</p>
+                            <p class="text-gray-500 text-xs">Balanced growth & stability</p>
+                        </div>
+                    </label>
+                    <label class="cap-option cursor-pointer">
+                        <input type="radio" name="market_cap_preference" value="large" class="hidden" checked>
+                        <div class="cap-card border-2 border-yellow-400 rounded-lg p-4 text-center hover:border-yellow-400 transition-colors">
+                            <i class="fas fa-mountain text-purple-400 text-xl mb-2"></i>
+                            <h4 class="font-semibold text-white">Large Cap</h4>
+                            <p class="text-gray-400 text-sm">Over $10B</p>
+                            <p class="text-gray-500 text-xs">Stable, established companies</p>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Price Range -->
+            <div class="setup-card rounded-xl p-6 border border-slate-600">
+                <h2 class="text-xl font-semibold text-white mb-4 flex items-center">
+                    <i class="fas fa-dollar-sign text-green-400 mr-3"></i>
+                    Price Range Preference
+                </h2>
+                <p class="text-gray-400 mb-6">What's your preferred stock price range?</p>
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-gray-400 text-sm mb-2">Minimum Price: $<span id="minPriceDisplay">10</span></label>
+                        <input type="range" name="price_range_min" id="minPriceSlider" min="1" max="100" value="10" 
+                               class="w-full h-2 slider-track rounded-lg appearance-none cursor-pointer">
+                    </div>
+                    <div>
+                        <label class="block text-gray-400 text-sm mb-2">Maximum Price: $<span id="maxPriceDisplay">500</span></label>
+                        <input type="range" name="price_range_max" id="maxPriceSlider" min="50" max="1000" value="500" 
+                               class="w-full h-2 slider-track rounded-lg appearance-none cursor-pointer">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Holding Period -->
+            <div class="setup-card rounded-xl p-6 border border-slate-600">
+                <h2 class="text-xl font-semibold text-white mb-4 flex items-center">
+                    <i class="fas fa-calendar-alt text-blue-400 mr-3"></i>
+                    Average Holding Period
+                </h2>
+                <p class="text-gray-400 mb-6">How long do you typically hold a position?</p>
+                <div>
+                    <label class="block text-gray-400 text-sm mb-2">Average holding period: <span id="holdingPeriodDisplay">21</span> days</label>
+                    <input type="range" name="avg_holding_period" id="holdingPeriodSlider" min="1" max="365" value="21" 
+                           class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer">
+                </div>
+            </div>
+
+            <!-- Technical Indicators -->
+            <div class="setup-card rounded-xl p-6 border border-slate-600">
+                <h2 class="text-xl font-semibold text-white mb-4 flex items-center">
+                    <i class="fas fa-chart-bar text-purple-400 mr-3"></i>
+                    Technical Indicators
+                </h2>
+                <p class="text-gray-400 mb-6">Which technical indicators do you use or find most important?</p>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <label class="indicator-option flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" name="technical_indicators" value="RSI" class="hidden indicator-checkbox">
+                        <div class="indicator-chip border border-gray-600 rounded-lg px-3 py-2 text-center hover:border-purple-400 transition-colors">
+                            <span class="text-white text-sm font-medium">RSI</span>
+                        </div>
+                    </label>
+                    <label class="indicator-option flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" name="technical_indicators" value="MACD" class="hidden indicator-checkbox">
+                        <div class="indicator-chip border border-gray-600 rounded-lg px-3 py-2 text-center hover:border-purple-400 transition-colors">
+                            <span class="text-white text-sm font-medium">MACD</span>
+                        </div>
+                    </label>
+                    <label class="indicator-option flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" name="technical_indicators" value="Moving Averages" class="hidden indicator-checkbox">
+                        <div class="indicator-chip border border-gray-600 rounded-lg px-3 py-2 text-center hover:border-purple-400 transition-colors">
+                            <span class="text-white text-sm font-medium">Moving Averages</span>
+                        </div>
+                    </label>
+                    <label class="indicator-option flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" name="technical_indicators" value="Bollinger Bands" class="hidden indicator-checkbox">
+                        <div class="indicator-chip border border-gray-600 rounded-lg px-3 py-2 text-center hover:border-purple-400 transition-colors">
+                            <span class="text-white text-sm font-medium">Bollinger Bands</span>
+                        </div>
+                    </label>
+                    <label class="indicator-option flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" name="technical_indicators" value="Volume" class="hidden indicator-checkbox">
+                        <div class="indicator-chip border border-gray-600 rounded-lg px-3 py-2 text-center hover:border-purple-400 transition-colors">
+                            <span class="text-white text-sm font-medium">Volume</span>
+                        </div>
+                    </label>
+                    <label class="indicator-option flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" name="technical_indicators" value="Support/Resistance" class="hidden indicator-checkbox">
+                        <div class="indicator-chip border border-gray-600 rounded-lg px-3 py-2 text-center hover:border-purple-400 transition-colors">
+                            <span class="text-white text-sm font-medium">Support/Resistance</span>
+                        </div>
+                    </label>
+                </div>
+                <input type="hidden" name="technical_indicators_list" id="selectedIndicators" value="[]">
+            </div>
+
+            <!-- Submit Button -->
+            <div class="text-center pt-8">
+                <button type="submit" id="saveProfileBtn" 
+                        class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 rounded-lg text-lg font-semibold transition-all duration-200 transform hover:scale-105">
+                    <i class="fas fa-save mr-2"></i>
+                    Save Trading Profile
+                </button>
+                <p class="text-gray-500 text-sm mt-3">Your preferences will be used to generate personalized recommendations</p>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        let selectedSectors = [];
+        let selectedIndicators = [];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeProfileSetup();
+            loadExistingProfile();
+        });
+
+        function initializeProfileSetup() {
+            // Risk tolerance selection
+            document.querySelectorAll('.risk-option input').forEach(input => {
+                input.addEventListener('change', function() {
+                    document.querySelectorAll('.risk-card').forEach(card => card.classList.remove('border-blue-400'));
+                    this.parentElement.querySelector('.risk-card').classList.add('border-blue-400');
+                });
+            });
+
+            // Trading style selection
+            document.querySelectorAll('.style-option input').forEach(input => {
+                input.addEventListener('change', function() {
+                    document.querySelectorAll('.style-card').forEach(card => card.classList.remove('border-purple-400'));
+                    this.parentElement.querySelector('.style-card').classList.add('border-purple-400');
+                });
+            });
+
+            // Market cap selection
+            document.querySelectorAll('.cap-option input').forEach(input => {
+                input.addEventListener('change', function() {
+                    document.querySelectorAll('.cap-card').forEach(card => card.classList.remove('border-yellow-400'));
+                    this.parentElement.querySelector('.cap-card').classList.add('border-yellow-400');
+                });
+            });
+
+            // Sector selection
+            document.querySelectorAll('.sector-chip').forEach(chip => {
+                chip.addEventListener('click', function() {
+                    const sector = this.dataset.sector;
+                    if (this.classList.contains('selected')) {
+                        this.classList.remove('selected');
+                        selectedSectors = selectedSectors.filter(s => s !== sector);
+                    } else {
+                        if (selectedSectors.length < 5) {
+                            this.classList.add('selected');
+                            selectedSectors.push(sector);
+                        } else {
+                            alert('Please select maximum 5 sectors');
+                        }
+                    }
+                    document.getElementById('selectedSectors').value = JSON.stringify(selectedSectors);
+                });
+            });
+
+            // Technical indicators selection
+            document.querySelectorAll('.indicator-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    const indicator = this.querySelector('input').value;
+                    const chip = this.querySelector('.indicator-chip');
+                    
+                    if (chip.classList.contains('border-purple-400')) {
+                        chip.classList.remove('border-purple-400');
+                        chip.classList.add('border-gray-600');
+                        selectedIndicators = selectedIndicators.filter(i => i !== indicator);
+                    } else {
+                        chip.classList.remove('border-gray-600');
+                        chip.classList.add('border-purple-400');
+                        selectedIndicators.push(indicator);
+                    }
+                    document.getElementById('selectedIndicators').value = JSON.stringify(selectedIndicators);
+                });
+            });
+
+            // Price range sliders
+            const minSlider = document.getElementById('minPriceSlider');
+            const maxSlider = document.getElementById('maxPriceSlider');
+            const minDisplay = document.getElementById('minPriceDisplay');
+            const maxDisplay = document.getElementById('maxPriceDisplay');
+
+            minSlider.addEventListener('input', function() {
+                minDisplay.textContent = this.value;
+                if (parseInt(this.value) >= parseInt(maxSlider.value)) {
+                    maxSlider.value = parseInt(this.value) + 10;
+                    maxDisplay.textContent = maxSlider.value;
+                }
+            });
+
+            maxSlider.addEventListener('input', function() {
+                maxDisplay.textContent = this.value;
+                if (parseInt(this.value) <= parseInt(minSlider.value)) {
+                    minSlider.value = parseInt(this.value) - 10;
+                    minDisplay.textContent = minSlider.value;
+                }
+            });
+
+            // Holding period slider
+            const holdingSlider = document.getElementById('holdingPeriodSlider');
+            const holdingDisplay = document.getElementById('holdingPeriodDisplay');
+
+            holdingSlider.addEventListener('input', function() {
+                holdingDisplay.textContent = this.value;
+            });
+
+            // Form submission
+            document.getElementById('profileForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveProfile();
+            });
+        }
+
+        function loadExistingProfile() {
+            // Load existing profile data if available
+            // This would be populated from the server-side template
+            {% if profile %}
+            const profile = {{ profile.__dict__ | tojson | safe }};
+            
+            // Set risk tolerance
+            if (profile.risk_tolerance) {
+                document.querySelector(`input[name="risk_tolerance"][value="${profile.risk_tolerance}"]`).checked = true;
+                document.querySelector(`input[name="risk_tolerance"][value="${profile.risk_tolerance}"]`).dispatchEvent(new Event('change'));
+            }
+
+            // Set trading style
+            if (profile.trading_style) {
+                document.querySelector(`input[name="trading_style"][value="${profile.trading_style}"]`).checked = true;
+                document.querySelector(`input[name="trading_style"][value="${profile.trading_style}"]`).dispatchEvent(new Event('change'));
+            }
+
+            // Set market cap preference
+            if (profile.market_cap_preference) {
+                document.querySelector(`input[name="market_cap_preference"][value="${profile.market_cap_preference}"]`).checked = true;
+                document.querySelector(`input[name="market_cap_preference"][value="${profile.market_cap_preference}"]`).dispatchEvent(new Event('change'));
+            }
+
+            // Set preferred sectors
+            if (profile.preferred_sectors && Array.isArray(profile.preferred_sectors)) {
+                selectedSectors = profile.preferred_sectors;
+                profile.preferred_sectors.forEach(sector => {
+                    const chip = document.querySelector(`.sector-chip[data-sector="${sector}"]`);
+                    if (chip) chip.classList.add('selected');
+                });
+                document.getElementById('selectedSectors').value = JSON.stringify(selectedSectors);
+            }
+
+            // Set technical indicators
+            if (profile.technical_indicators && Array.isArray(profile.technical_indicators)) {
+                selectedIndicators = profile.technical_indicators;
+                profile.technical_indicators.forEach(indicator => {
+                    const chip = document.querySelector(`input[value="${indicator}"]`)?.parentElement.querySelector('.indicator-chip');
+                    if (chip) {
+                        chip.classList.remove('border-gray-600');
+                        chip.classList.add('border-purple-400');
+                    }
+                });
+                document.getElementById('selectedIndicators').value = JSON.stringify(selectedIndicators);
+            }
+
+            // Set price ranges
+            if (profile.price_range_min) {
+                document.getElementById('minPriceSlider').value = profile.price_range_min;
+                document.getElementById('minPriceDisplay').textContent = profile.price_range_min;
+            }
+            if (profile.price_range_max) {
+                document.getElementById('maxPriceSlider').value = profile.price_range_max;
+                document.getElementById('maxPriceDisplay').textContent = profile.price_range_max;
+            }
+
+            // Set holding period
+            if (profile.avg_holding_period) {
+                document.getElementById('holdingPeriodSlider').value = profile.avg_holding_period;
+                document.getElementById('holdingPeriodDisplay').textContent = profile.avg_holding_period;
+            }
+            {% endif %}
+        }
+
+        function saveProfile() {
+            const formData = new FormData(document.getElementById('profileForm'));
+            const profileData = {
+                risk_tolerance: formData.get('risk_tolerance'),
+                trading_style: formData.get('trading_style'),
+                market_cap_preference: formData.get('market_cap_preference'),
+                preferred_sectors: selectedSectors,
+                technical_indicators: selectedIndicators,
+                price_range_min: parseFloat(formData.get('price_range_min')),
+                price_range_max: parseFloat(formData.get('price_range_max')),
+                avg_holding_period: parseInt(formData.get('avg_holding_period'))
+            };
+
+            const saveBtn = document.getElementById('saveProfileBtn');
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
+
+            fetch('/api/update_trading_profile', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(profileData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    saveBtn.innerHTML = '<i class="fas fa-check mr-2"></i>Profile Saved!';
+                    saveBtn.classList.remove('from-blue-600', 'to-purple-600');
+                    saveBtn.classList.add('from-green-600', 'to-green-700');
+                    
+                    setTimeout(() => {
+                        window.location.href = '{{ url_for("recommendations_dashboard") }}';
+                    }, 1500);
+                } else {
+                    throw new Error(data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error saving profile:', error);
+                saveBtn.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>Error - Try Again';
+                saveBtn.classList.remove('from-blue-600', 'to-purple-600');
+                saveBtn.classList.add('from-red-600', 'to-red-700');
+                saveBtn.disabled = false;
+                
+                setTimeout(() => {
+                    saveBtn.innerHTML = '<i class="fas fa-save mr-2"></i>Save Trading Profile';
+                    saveBtn.classList.remove('from-red-600', 'to-red-700');
+                    saveBtn.classList.add('from-blue-600', 'to-purple-600');
+                }, 3000);
+            });
+        }
+    </script>
+</body>
+</html>

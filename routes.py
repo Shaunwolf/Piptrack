@@ -2170,3 +2170,289 @@ def test_journey_animation():
 def trading_journey_dashboard():
     """Trading journey progress dashboard page"""
     return render_template('trading_journey.html')
+
+# Personalized Stock Recommendation Routes
+
+# Initialize recommendation engine
+try:
+    recommender = PersonalizedRecommender()
+except Exception as e:
+    logging.error(f"Failed to initialize recommendation engine: {e}")
+    recommender = None
+
+@app.route('/recommendations')
+@login_required
+def recommendations_dashboard():
+    """Personalized stock recommendations dashboard"""
+    try:
+        if not recommender:
+            flash("Recommendation system is currently unavailable.", "warning")
+            return redirect(url_for('dashboard'))
+        
+        # Get user's latest recommendations
+        recent_recommendations = StockRecommendation.query.filter_by(
+            user_id=current_user.id
+        ).order_by(StockRecommendation.created_at.desc()).limit(10).all()
+        
+        # Get user's trading profile
+        user_profile = UserTradingProfile.query.filter_by(user_id=current_user.id).first()
+        
+        return render_template('recommendations.html', 
+                             recommendations=recent_recommendations,
+                             user_profile=user_profile)
+        
+    except Exception as e:
+        logging.error(f"Error loading recommendations dashboard: {e}")
+        flash("Error loading recommendations. Please try again.", "error")
+        return redirect(url_for('dashboard'))
+
+@app.route('/api/get_recommendations')
+@login_required
+def get_personalized_recommendations():
+    """Generate fresh personalized recommendations for user"""
+    try:
+        if not recommender:
+            return jsonify({'success': False, 'error': 'Recommendation system unavailable'})
+        
+        # Generate recommendations
+        recommendations_data = recommender.get_personalized_recommendations(
+            user_id=current_user.id, num_recommendations=10
+        )
+        
+        if not recommendations_data.get('recommendations'):
+            return jsonify({
+                'success': False, 
+                'error': 'No recommendations could be generated at this time'
+            })
+        
+        # Store recommendations in database
+        stored_recommendations = []
+        for rec_data in recommendations_data['recommendations']:
+            try:
+                # Create database record
+                recommendation = StockRecommendation(
+                    user_id=current_user.id,
+                    symbol=rec_data['symbol'],
+                    total_score=rec_data['total_score'],
+                    technical_score=rec_data.get('technical_score'),
+                    fundamental_score=rec_data.get('fundamental_score'),
+                    sentiment_score=rec_data.get('sentiment_score'),
+                    fit_score=rec_data.get('fit_score'),
+                    current_price=rec_data.get('current_price'),
+                    target_price=rec_data.get('target_price'),
+                    sector=rec_data.get('sector'),
+                    market_cap=rec_data.get('market_cap'),
+                    beta=rec_data.get('beta'),
+                    pe_ratio=rec_data.get('pe_ratio'),
+                    volume=rec_data.get('volume'),
+                    confidence_level=rec_data.get('confidence_level'),
+                    risk_assessment=rec_data.get('risk_assessment'),
+                    time_horizon=rec_data.get('time_horizon'),
+                    recommendation_reason=rec_data.get('recommendation_reason'),
+                    ai_insight=rec_data.get('ai_insight'),
+                    expires_at=datetime.utcnow() + pd.Timedelta(days=7)  # Expire in 1 week
+                )
+                
+                db.session.add(recommendation)
+                stored_recommendations.append({
+                    'symbol': recommendation.symbol,
+                    'current_price': recommendation.current_price,
+                    'target_price': recommendation.target_price,
+                    'confidence_level': recommendation.confidence_level,
+                    'risk_assessment': recommendation.risk_assessment,
+                    'time_horizon': recommendation.time_horizon,
+                    'ai_insight': recommendation.ai_insight,
+                    'total_score': recommendation.total_score
+                })
+                
+            except Exception as e:
+                logging.error(f"Error storing recommendation for {rec_data['symbol']}: {e}")
+                continue
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'recommendations': stored_recommendations,
+            'user_profile_summary': recommendations_data.get('user_profile_summary'),
+            'market_context': recommendations_data.get('market_context'),
+            'confidence_score': recommendations_data.get('confidence_score'),
+            'generated_at': recommendations_data.get('generated_at'),
+            'refresh_recommended_in': recommendations_data.get('refresh_recommended_in')
+        })
+        
+    except Exception as e:
+        logging.error(f"Error generating recommendations: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/recommendation_feedback', methods=['POST'])
+@login_required
+def submit_recommendation_feedback():
+    """Submit feedback on a recommendation"""
+    try:
+        data = request.get_json()
+        recommendation_id = data.get('recommendation_id')
+        feedback_type = data.get('feedback_type')  # positive, negative, neutral
+        rating = data.get('rating')  # 1-5 stars
+        comment = data.get('comment', '')
+        action_taken = data.get('action_taken')  # bought, watchlisted, ignored, rejected
+        
+        if not recommendation_id:
+            return jsonify({'success': False, 'error': 'Recommendation ID required'})
+        
+        # Verify recommendation belongs to user
+        recommendation = StockRecommendation.query.filter_by(
+            id=recommendation_id, user_id=current_user.id
+        ).first()
+        
+        if not recommendation:
+            return jsonify({'success': False, 'error': 'Recommendation not found'})
+        
+        # Create feedback record
+        feedback = RecommendationFeedback(
+            recommendation_id=recommendation_id,
+            user_id=current_user.id,
+            feedback_type=feedback_type,
+            rating=rating,
+            comment=comment,
+            action_taken=action_taken
+        )
+        
+        # Update recommendation record
+        recommendation.user_feedback = feedback_type
+        recommendation.action_taken = action_taken
+        recommendation.feedback_notes = comment
+        
+        db.session.add(feedback)
+        db.session.commit()
+        
+        # Update recommendation engine with feedback
+        if recommender:
+            recommender.update_user_feedback(
+                user_id=current_user.id,
+                recommendation_id=str(recommendation_id),
+                feedback=feedback_type,
+                action_taken=action_taken
+            )
+        
+        return jsonify({'success': True, 'message': 'Feedback submitted successfully'})
+        
+    except Exception as e:
+        logging.error(f"Error submitting recommendation feedback: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/update_trading_profile', methods=['POST'])
+@login_required
+def update_trading_profile():
+    """Update user's trading profile preferences"""
+    try:
+        data = request.get_json()
+        
+        # Get or create user profile
+        profile = UserTradingProfile.query.filter_by(user_id=current_user.id).first()
+        if not profile:
+            profile = UserTradingProfile(user_id=current_user.id)
+        
+        # Update profile fields
+        if 'risk_tolerance' in data:
+            profile.risk_tolerance = data['risk_tolerance']
+        if 'trading_style' in data:
+            profile.trading_style = data['trading_style']
+        if 'preferred_sectors' in data:
+            profile.preferred_sectors = data['preferred_sectors']
+        if 'market_cap_preference' in data:
+            profile.market_cap_preference = data['market_cap_preference']
+        if 'price_range_min' in data:
+            profile.price_range_min = float(data['price_range_min'])
+        if 'price_range_max' in data:
+            profile.price_range_max = float(data['price_range_max'])
+        if 'avg_holding_period' in data:
+            profile.avg_holding_period = int(data['avg_holding_period'])
+        if 'technical_indicators' in data:
+            profile.technical_indicators = data['technical_indicators']
+        
+        profile.updated_at = datetime.utcnow()
+        
+        db.session.add(profile)
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': 'Trading profile updated successfully'})
+        
+    except Exception as e:
+        logging.error(f"Error updating trading profile: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/recommendation_performance')
+@login_required
+def get_recommendation_performance():
+    """Get performance analysis of user's recommendations"""
+    try:
+        if not recommender:
+            return jsonify({'success': False, 'error': 'Recommendation system unavailable'})
+        
+        # Get performance data
+        performance = recommender.get_recommendation_performance(
+            user_id=current_user.id, days_back=30
+        )
+        
+        # Get recent recommendations with performance data
+        recent_recs = StockRecommendation.query.filter_by(
+            user_id=current_user.id
+        ).order_by(StockRecommendation.created_at.desc()).limit(20).all()
+        
+        recommendations_data = []
+        for rec in recent_recs:
+            recommendations_data.append({
+                'symbol': rec.symbol,
+                'created_at': rec.created_at.isoformat(),
+                'current_price': rec.current_price,
+                'target_price': rec.target_price,
+                'confidence_level': rec.confidence_level,
+                'action_taken': rec.action_taken,
+                'user_feedback': rec.user_feedback,
+                'total_score': rec.total_score
+            })
+        
+        return jsonify({
+            'success': True,
+            'performance': performance,
+            'recent_recommendations': recommendations_data
+        })
+        
+    except Exception as e:
+        logging.error(f"Error getting recommendation performance: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/market_analysis')
+def get_current_market_analysis():
+    """Get current market analysis for recommendations context"""
+    try:
+        if not recommender:
+            return jsonify({'success': False, 'error': 'Recommendation system unavailable'})
+        
+        # Get market analysis from recommendation engine
+        market_data = recommender._analyze_current_market()
+        
+        return jsonify({
+            'success': True,
+            'market_analysis': market_data
+        })
+        
+    except Exception as e:
+        logging.error(f"Error getting market analysis: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/recommendation_setup')
+@login_required
+def recommendation_setup():
+    """User preference setup for personalized recommendations"""
+    try:
+        # Get existing profile if any
+        profile = UserTradingProfile.query.filter_by(user_id=current_user.id).first()
+        
+        return render_template('recommendation_setup.html', profile=profile)
+        
+    except Exception as e:
+        logging.error(f"Error loading recommendation setup: {e}")
+        flash("Error loading setup page. Please try again.", "error")
+        return redirect(url_for('dashboard'))
