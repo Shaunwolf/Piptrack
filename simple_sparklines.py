@@ -8,26 +8,75 @@ import numpy as np
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 import logging
+import time
+import threading
+
+try:
+    from performance_optimizer import cached_api_call, perf_optimizer
+    PERFORMANCE_OPTIMIZED = True
+except ImportError:
+    PERFORMANCE_OPTIMIZED = False
+    def cached_api_call(ttl=300):
+        def decorator(func):
+            return func
+        return decorator
 
 class SimpleSparklines:
     def __init__(self):
         """Initialize the simple sparklines generator"""
         self.cache = {}
         self.cache_duration = 300  # 5 minutes
+        self.api_call_times = []
+        self.max_calls_per_minute = 30
+        self.lock = threading.Lock()
         
+        if PERFORMANCE_OPTIMIZED:
+            # Use performance optimizer's cache but fallback to dict interface
+            self.perf_cache = perf_optimizer.cache
+        else:
+            self.perf_cache = None
+        
+    def _rate_limit_check(self):
+        """Check and enforce API rate limiting"""
+        with self.lock:
+            now = time.time()
+            # Remove calls older than 1 minute
+            self.api_call_times = [t for t in self.api_call_times if now - t < 60]
+            
+            # Check if we're at the limit
+            if len(self.api_call_times) >= self.max_calls_per_minute:
+                sleep_time = 60 - (now - self.api_call_times[0])
+                if sleep_time > 0:
+                    time.sleep(sleep_time)
+            
+            # Record this call
+            self.api_call_times.append(now)
+
+    @cached_api_call(ttl=300)
+    def _fetch_stock_data(self, symbol: str, period: str = "1d", interval: str = "5m"):
+        """Fetch stock data with caching and rate limiting"""
+        self._rate_limit_check()
+        ticker = yf.Ticker(symbol)
+        return ticker.history(period=period, interval=interval)
+
     def generate_sparkline(self, symbol: str) -> Dict:
         """Generate sparkline data for a stock symbol"""
         try:
             # Check cache first
             cache_key = f"{symbol}_sparkline"
-            if cache_key in self.cache:
-                cached_data = self.cache[cache_key]
-                if datetime.now().timestamp() - cached_data['timestamp'] < self.cache_duration:
-                    return cached_data['data']
             
-            # Fetch recent stock data
-            ticker = yf.Ticker(symbol)
-            hist = ticker.history(period="1d", interval="5m")
+            if PERFORMANCE_OPTIMIZED and self.perf_cache:
+                cached_result = self.perf_cache.get(cache_key)
+                if cached_result:
+                    return cached_result
+            else:
+                if cache_key in self.cache:
+                    cached_data = self.cache[cache_key]
+                    if datetime.now().timestamp() - cached_data['timestamp'] < self.cache_duration:
+                        return cached_data['data']
+            
+            # Fetch recent stock data with rate limiting
+            hist = self._fetch_stock_data(symbol)
             
             if hist.empty:
                 return {'error': f'No data available for {symbol}'}
