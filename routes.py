@@ -1502,10 +1502,10 @@ def run_pump_backtest():
 def get_backtest_report():
     """Get detailed backtest report"""
     try:
-        from pump_backtest_analyzer import PumpBacktestAnalyzer
+        from simple_pump_analyzer import SimplePumpAnalyzer
         
-        analyzer = PumpBacktestAnalyzer()
-        report = analyzer.generate_backtest_report()
+        analyzer = SimplePumpAnalyzer()
+        report = analyzer.generate_report()
         
         return jsonify({
             'success': True,
@@ -1514,4 +1514,46 @@ def get_backtest_report():
         
     except Exception as e:
         logging.error(f"Error generating backtest report: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/enhanced_pump_scan')
+def enhanced_pump_scan():
+    """Run enhanced pump detection scan on current market"""
+    try:
+        from enhanced_pump_detector import EnhancedPumpDetector
+        
+        # Test with known symbols that historically showed pump characteristics
+        test_symbols = ['GME', 'AMC', 'BB', 'NOK', 'TSLA', 'NVDA', 'META', 'AAPL']
+        
+        detector = EnhancedPumpDetector()
+        candidates = detector.scan_for_pump_candidates(test_symbols)
+        
+        return jsonify({
+            'success': True,
+            'pump_candidates': candidates,
+            'scan_timestamp': datetime.now().isoformat(),
+            'symbols_scanned': len(test_symbols),
+            'candidates_found': len(candidates)
+        })
+        
+    except Exception as e:
+        logging.error(f"Error running enhanced pump scan: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/pump_analysis/<symbol>')
+def analyze_pump_potential(symbol):
+    """Analyze pump potential for specific symbol"""
+    try:
+        from enhanced_pump_detector import EnhancedPumpDetector
+        
+        detector = EnhancedPumpDetector()
+        analysis = detector.analyze_pump_potential(symbol.upper())
+        
+        return jsonify({
+            'success': True,
+            'analysis': analysis
+        })
+        
+    except Exception as e:
+        logging.error(f"Error analyzing pump potential for {symbol}: {e}")
         return jsonify({'success': False, 'error': str(e)})
