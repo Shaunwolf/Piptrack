@@ -48,19 +48,19 @@ try:
     from multi_timeframe_analyzer import MultiTimeframeAnalyzer
     from scanner_widgets import ScannerWidgets
     from physics_market_engine import PhysicsMarketEngine
-    from simple_sparklines import SimpleSparklines
+    from enhanced_stock_widgets import enhanced_widgets
     enhanced_journal = EnhancedTradingJournal()
     mtf_analyzer = MultiTimeframeAnalyzer()
     scanner_widgets = ScannerWidgets()
     physics_engine = PhysicsMarketEngine()
-    sparklines_engine = SimpleSparklines()
+    stock_widgets = enhanced_widgets
 except ImportError as e:
     logging.warning(f"Enhanced components not available: {e}")
     enhanced_journal = None
     mtf_analyzer = None
     scanner_widgets = None
     physics_engine = None
-    sparklines_engine = None
+    stock_widgets = None
 
 @app.route('/')
 @optimize_route
@@ -823,99 +823,68 @@ def quantum_tunneling_analysis(symbol):
         logging.error(f"Error in quantum tunneling analysis for {symbol}: {e}")
         return jsonify({'success': False, 'error': str(e)})
 
-# Enhanced Animated Sparklines Routes
+# Enhanced Stock Widgets with Fibonacci Scalers Routes
 
-@app.route('/api/sparkline/summary/<symbol>')
-def get_sparkline_summary(symbol):
-    """Get condensed sparkline summary for dashboard widgets"""
+@app.route('/api/widget/<symbol>')
+@optimize_route
+def get_stock_widget(symbol):
+    """Get enhanced stock widget with Fibonacci scaler and chart indicators"""
     try:
-        if sparklines_engine is None:
-            return jsonify({'success': False, 'error': 'Sparklines engine not available'})
+        if stock_widgets is None:
+            return jsonify({'success': False, 'error': 'Stock widgets not available'})
         
-        # Use the simple sparkline generator for summary data
-        sparkline_data = sparklines_engine.generate_sparkline(symbol)
-        if 'error' in sparkline_data:
-            return jsonify({'success': False, 'error': sparkline_data['error']})
+        symbol = symbol.upper()
+        chart_type = request.args.get('chart_type', 'rsi_momentum')
         
-        # Create summary from sparkline data
-        summary = {
-            'symbol': symbol,
-            'current_price': sparkline_data.get('current_price', 0),
-            'price_change': sparkline_data.get('price_change', 0),
-            'price_change_pct': sparkline_data.get('price_change_pct', 0),
-            'candle_guy_mood': sparkline_data.get('candle_guy_mood', 'neutral'),
-            'trend_direction': sparkline_data.get('trend_direction', 'flat'),
-            'volatility_score': sparkline_data.get('volatility_score', 0)
-        }
+        # Generate widget data
+        widget_data = stock_widgets.generate_widget_data(symbol, chart_type)
         
-        if 'error' in summary:
-            return jsonify({'success': False, 'error': summary['error']})
-        
-        return jsonify({'success': True, 'summary': summary})
-        
+        if widget_data and not widget_data.get('error'):
+            return jsonify({'success': True, 'data': widget_data})
+        else:
+            return jsonify({'success': False, 'error': widget_data.get('error', 'No data available')})
+            
     except Exception as e:
-        logging.error(f"Error getting sparkline summary for {symbol}: {e}")
+        logging.error(f"Error getting widget for {symbol}: {e}")
         return jsonify({'success': False, 'error': str(e)})
 
-@app.route('/api/sparklines/multiple')
+@app.route('/api/widgets/multiple')
 @optimize_route
-def get_multiple_sparklines():
-    """Get sparklines for multiple symbols"""
+def get_multiple_widgets():
+    """Get multiple enhanced widgets with Fibonacci scalers"""
     try:
-        if sparklines_engine is None:
-            return jsonify({'success': False, 'error': 'Sparklines engine not available'})
+        if stock_widgets is None:
+            return jsonify({'success': False, 'error': 'Stock widgets not available'})
         
         symbols = request.args.get('symbols', '').split(',')
-        symbols = [s.strip().upper() for s in symbols if s.strip()][:3]  # Limit to 3 symbols
+        symbols = [s.strip().upper() for s in symbols if s.strip()][:5]  # Limit to 5 symbols
+        chart_type = request.args.get('chart_type', 'rsi_momentum')
         
         if not symbols:
             return jsonify({'success': False, 'error': 'No symbols provided'})
         
-        # Use individual sparkline generation with better error handling
-        sparklines_data = {}
-        for symbol in symbols:
-            try:
-                data = sparklines_engine.generate_sparkline(symbol)
-                if data and not data.get('error'):
-                    sparklines_data[symbol] = data
-                else:
-                    sparklines_data[symbol] = {'error': 'No data available'}
-            except Exception as e:
-                logging.warning(f"Failed to get sparkline for {symbol}: {e}")
-                sparklines_data[symbol] = {'error': 'Data unavailable'}
+        # Generate multiple widgets
+        widgets_data = stock_widgets.generate_multiple_widgets(symbols, chart_type)
         
-        return jsonify({'success': True, 'data': sparklines_data})
+        return jsonify({'success': True, 'data': widgets_data})
         
     except Exception as e:
-        logging.error(f"Error getting multiple sparklines: {e}")
+        logging.error(f"Error getting multiple widgets: {e}")
         return jsonify({'success': False, 'error': str(e)})
 
-@app.route('/api/sparklines/cache/stats')
-def get_sparklines_cache_stats():
-    """Get sparklines cache statistics"""
+@app.route('/api/widgets/chart-types')
+def get_widget_chart_types():
+    """Get available chart indicator types for widgets"""
     try:
-        if sparklines_engine is None:
-            return jsonify({'success': False, 'error': 'Sparklines engine not available'})
+        if stock_widgets is None:
+            return jsonify({'success': False, 'error': 'Stock widgets not available'})
         
-        stats = sparklines_engine.get_cache_stats()
-        return jsonify({'success': True, 'cache_stats': stats})
+        chart_types = stock_widgets.get_available_chart_types()
+        
+        return jsonify({'success': True, 'chart_types': chart_types})
         
     except Exception as e:
-        logging.error(f"Error getting cache stats: {e}")
-        return jsonify({'success': False, 'error': str(e)})
-
-@app.route('/api/sparklines/cache/clear', methods=['POST'])
-def clear_sparklines_cache():
-    """Clear sparklines cache"""
-    try:
-        if sparklines_engine is None:
-            return jsonify({'success': False, 'error': 'Sparklines engine not available'})
-        
-        sparklines_engine.clear_cache()
-        return jsonify({'success': True, 'message': 'Cache cleared successfully'})
-        
-    except Exception as e:
-        logging.error(f"Error clearing cache: {e}")
+        logging.error(f"Error getting chart types: {e}")
         return jsonify({'success': False, 'error': str(e)})
 
 @app.route('/api/historical-comparison/<symbol>')
