@@ -21,8 +21,8 @@ try:
     def preload_symbols():
         try:
             for symbol in common_symbols:
-                if sparklines_engine:
-                    sparklines_engine.generate_sparkline(symbol)
+                if stock_widgets:
+                    stock_widgets.generate_widget_data(symbol, 'rsi_momentum')
         except Exception as e:
             logging.warning(f"Failed to preload symbols: {e}")
     
