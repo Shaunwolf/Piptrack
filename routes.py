@@ -1641,3 +1641,67 @@ def get_phase1_cost_summary():
     except Exception as e:
         logging.error(f"Error getting Phase 1 cost summary: {e}")
         return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/early_detection_scan')
+def early_detection_scan():
+    """Scan for early pre-pump signals across multiple symbol pools"""
+    try:
+        from early_detection_watchlist import EarlyDetectionWatchlist
+        
+        # Get symbol pools from query params (default to main pools)
+        pools = request.args.getlist('pools') or ['meme_stocks', 'high_short_interest', 'low_float']
+        
+        watchlist = EarlyDetectionWatchlist()
+        results = watchlist.scan_early_pump_signals(pools)
+        
+        return jsonify({
+            'success': True,
+            'early_detection_results': results,
+            'scan_timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logging.error(f"Error in early detection scan: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/early_detection/<symbol>')
+def analyze_early_signals(symbol):
+    """Analyze early pump signals for specific symbol"""
+    try:
+        from early_detection_watchlist import EarlyDetectionWatchlist
+        
+        watchlist = EarlyDetectionWatchlist()
+        analysis = watchlist.analyze_early_signals(symbol.upper())
+        
+        if analysis:
+            return jsonify({
+                'success': True,
+                'early_analysis': analysis
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': f'No early signals data available for {symbol}'
+            })
+        
+    except Exception as e:
+        logging.error(f"Error analyzing early signals for {symbol}: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/watchlist_summary')
+def get_watchlist_summary():
+    """Get early detection watchlist capabilities summary"""
+    try:
+        from early_detection_watchlist import EarlyDetectionWatchlist
+        
+        watchlist = EarlyDetectionWatchlist()
+        summary = watchlist.get_watchlist_summary()
+        
+        return jsonify({
+            'success': True,
+            'watchlist_summary': summary
+        })
+        
+    except Exception as e:
+        logging.error(f"Error getting watchlist summary: {e}")
+        return jsonify({'success': False, 'error': str(e)})
