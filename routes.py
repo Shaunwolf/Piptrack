@@ -55,7 +55,6 @@ def register():
             try:
                 # Create new user
                 user = User()
-                user.id = str(uuid.uuid4())
                 user.email = form.email.data.lower() if form.email.data else None
                 user.password_hash = generate_password_hash(form.password.data) if form.password.data else None
                 user.first_name = form.first_name.data
