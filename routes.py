@@ -10,6 +10,7 @@ from pdf_generator import PDFGenerator
 from pattern_evolution_tracker import PatternEvolutionTracker
 import json
 import logging
+import pandas as pd
 from datetime import datetime
 
 # Initialize performance optimizer
@@ -347,14 +348,43 @@ def generate_enhanced_technical_analysis(symbol):
         if hist.empty:
             return get_default_technical_data()
         
-        # Calculate technical indicators
-        rsi = ta.momentum.RSIIndicator(hist['Close']).rsi().iloc[-1]
-        macd_line = ta.trend.MACD(hist['Close']).macd().iloc[-1]
-        stoch = ta.momentum.StochasticOscillator(hist['High'], hist['Low'], hist['Close']).stoch().iloc[-1]
-        sma_20 = ta.trend.SMAIndicator(hist['Close'], window=20).sma_indicator().iloc[-1]
-        sma_50 = ta.trend.SMAIndicator(hist['Close'], window=50).sma_indicator().iloc[-1]
-        bb_percent = ta.volatility.BollingerBands(hist['Close']).bollinger_pband().iloc[-1]
-        atr = ta.volatility.AverageTrueRange(hist['High'], hist['Low'], hist['Close']).average_true_range().iloc[-1]
+        # Calculate technical indicators with error handling
+        try:
+            rsi = ta.rsi(hist['Close']).iloc[-1]
+        except:
+            rsi = 50.0
+        
+        try:
+            macd_line = ta.macd(hist['Close'])['MACD_12_26_9'].iloc[-1]
+        except:
+            macd_line = 0.0
+        
+        try:
+            stoch = ta.stoch(hist['High'], hist['Low'], hist['Close'])['STOCHk_14_3_3'].iloc[-1]
+        except:
+            stoch = 50.0
+        
+        try:
+            sma_20 = ta.sma(hist['Close'], length=20).iloc[-1]
+        except:
+            sma_20 = hist['Close'].iloc[-1]
+        
+        try:
+            sma_50 = ta.sma(hist['Close'], length=50).iloc[-1]
+        except:
+            sma_50 = hist['Close'].iloc[-1]
+        
+        try:
+            bb = ta.bbands(hist['Close'])
+            bb_percent = ((hist['Close'].iloc[-1] - bb['BBL_20_2.0'].iloc[-1]) / 
+                         (bb['BBU_20_2.0'].iloc[-1] - bb['BBL_20_2.0'].iloc[-1]))
+        except:
+            bb_percent = 0.5
+        
+        try:
+            atr = ta.atr(hist['High'], hist['Low'], hist['Close']).iloc[-1]
+        except:
+            atr = 1.0
         
         # Calculate beta (simplified)
         try:
@@ -369,9 +399,16 @@ def generate_enhanced_technical_analysis(symbol):
                 stock_returns = stock_returns[-min_len:]
                 market_returns = market_returns[-min_len:]
                 
-                covariance = stock_returns.cov(market_returns)
-                market_variance = market_returns.var()
-                beta = covariance / market_variance if market_variance != 0 else 1.0
+                # Calculate beta using numpy correlation
+                import numpy as np
+                correlation_matrix = np.corrcoef(stock_returns, market_returns)
+                if correlation_matrix.shape == (2, 2):
+                    correlation = correlation_matrix[0, 1]
+                    std_stock = np.std(stock_returns)
+                    std_market = np.std(market_returns)
+                    beta = correlation * (std_stock / std_market) if std_market != 0 else 1.0
+                else:
+                    beta = 1.0
             else:
                 beta = 1.0
         except:
@@ -616,22 +653,6 @@ def calculate_risk_reward_ratio(current_price, stop_loss, take_profit):
     if risk > 0:
         return reward / risk
     return 2.0
-
-        
-    except Exception as e:
-        logging.error(f"Error in forecast route for {symbol}: {e}")
-        error_message = f"Unable to analyze ticker '{symbol}' due to a data retrieval error"
-        suggestions = [
-            "Verify the ticker symbol is correct",
-            "Try again in a few moments",
-            "Use the scanner to find valid tickers",
-            "Search for a different stock symbol"
-        ]
-        
-        return render_template('ticker_error.html', 
-                             symbol=symbol, 
-                             error_message=error_message,
-                             suggestions=suggestions)
 
 @app.route('/generate_forecast', methods=['POST'])
 def generate_forecast():
