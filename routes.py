@@ -1761,13 +1761,13 @@ def validate_pump_detection(symbol):
         
         # Comparison
         comparison = {
-            'historical_gain': historical_case['gain_percent'],
-            'historical_catalyst': historical_case['catalyst'],
-            'current_detection_score': current_analysis.get('composite_pump_score', 0),
-            'historical_detection_score': historical_analysis['detection_results']['detection_score'],
-            'would_have_detected': historical_analysis['detection_results']['would_detect'],
-            'current_alerts': len(current_analysis.get('alerts', [])),
-            'lessons_learned': historical_analysis['lessons_learned']
+            'historical_gain': int(historical_case['gain_percent']),
+            'historical_catalyst': str(historical_case['catalyst']),
+            'current_detection_score': float(current_analysis.get('composite_pump_score', 0)),
+            'historical_detection_score': float(historical_analysis['detection_results']['detection_score']),
+            'would_have_detected': bool(historical_analysis['detection_results']['would_detect']),
+            'current_alerts': int(len(current_analysis.get('alerts', []))),
+            'lessons_learned': list(historical_analysis['lessons_learned'])
         }
         
         return jsonify({

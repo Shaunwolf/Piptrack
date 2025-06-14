@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historical Pump Backtest - CandleCast</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-black/20 backdrop-blur-sm border-b border-purple-500/20 p-4">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-6">
+                <h1 class="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                    CandleCast
+                </h1>
+                <nav class="flex space-x-6">
+                    <a href="/" class="text-purple-300 hover:text-white transition-colors">Dashboard</a>
+                    <a href="/scanner" class="text-purple-300 hover:text-white transition-colors">Scanner</a>
+                    <a href="/pump_analysis" class="text-purple-300 hover:text-white transition-colors">Pump Analysis</a>
+                    <a href="/historical_backtest" class="text-white font-semibold">Historical Backtest</a>
+                </nav>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto p-6">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-4xl font-bold mb-4 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                Historical Pump Detection Backtest
+            </h1>
+            <p class="text-xl text-purple-200 mb-6">
+                Validate Phase 1 algorithms against 50+ historical high-gain cases from 1990-2023
+            </p>
+            
+            <div class="flex space-x-4">
+                <button id="runBacktestBtn" 
+                        class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 px-6 py-3 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105">
+                    <i class="fas fa-play mr-2"></i>Run Comprehensive Backtest
+                </button>
+                <button id="exportReportBtn" 
+                        class="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 px-6 py-3 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105 opacity-50 cursor-not-allowed" 
+                        disabled>
+                    <i class="fas fa-download mr-2"></i>Export Report
+                </button>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="hidden text-center py-12">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-purple-400 mb-4"></div>
+            <p class="text-purple-200">Running historical backtest analysis...</p>
+        </div>
+
+        <!-- Results Dashboard -->
+        <div id="resultsContainer" class="hidden">
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="bg-gradient-to-br from-purple-800/50 to-pink-800/50 backdrop-blur-sm rounded-xl p-6 border border-purple-500/20">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-purple-200 text-sm">Detection Accuracy</p>
+                            <p id="detectionAccuracy" class="text-3xl font-bold text-green-400">--</p>
+                        </div>
+                        <div class="bg-green-500/20 p-3 rounded-lg">
+                            <i class="fas fa-bullseye text-green-400 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-br from-blue-800/50 to-cyan-800/50 backdrop-blur-sm rounded-xl p-6 border border-blue-500/20">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-blue-200 text-sm">Early Detection Rate</p>
+                            <p id="earlyDetectionRate" class="text-3xl font-bold text-blue-400">--</p>
+                        </div>
+                        <div class="bg-blue-500/20 p-3 rounded-lg">
+                            <i class="fas fa-clock text-blue-400 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-br from-orange-800/50 to-red-800/50 backdrop-blur-sm rounded-xl p-6 border border-orange-500/20">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-orange-200 text-sm">Volume Accuracy</p>
+                            <p id="volumeAccuracy" class="text-3xl font-bold text-orange-400">--</p>
+                        </div>
+                        <div class="bg-orange-500/20 p-3 rounded-lg">
+                            <i class="fas fa-chart-bar text-orange-400 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-br from-emerald-800/50 to-teal-800/50 backdrop-blur-sm rounded-xl p-6 border border-emerald-500/20">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-emerald-200 text-sm">Overall System Score</p>
+                            <p id="systemScore" class="text-3xl font-bold text-emerald-400">--</p>
+                        </div>
+                        <div class="bg-emerald-500/20 p-3 rounded-lg">
+                            <i class="fas fa-trophy text-emerald-400 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pattern Analysis -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <div class="bg-black/20 backdrop-blur-sm rounded-xl p-6 border border-purple-500/20">
+                    <h3 class="text-xl font-bold mb-4 text-purple-400">
+                        <i class="fas fa-chart-pie mr-2"></i>Sector Distribution
+                    </h3>
+                    <div id="sectorChart" class="h-64"></div>
+                </div>
+
+                <div class="bg-black/20 backdrop-blur-sm rounded-xl p-6 border border-purple-500/20">
+                    <h3 class="text-xl font-bold mb-4 text-purple-400">
+                        <i class="fas fa-rocket mr-2"></i>Catalyst Effectiveness
+                    </h3>
+                    <div id="catalystChart" class="h-64"></div>
+                </div>
+            </div>
+
+            <!-- Historical Cases Table -->
+            <div class="bg-black/20 backdrop-blur-sm rounded-xl p-6 border border-purple-500/20 mb-8">
+                <h3 class="text-xl font-bold mb-4 text-purple-400">
+                    <i class="fas fa-history mr-2"></i>Individual Case Analysis
+                </h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-purple-500/20">
+                                <th class="text-left py-3 px-4 text-purple-300">Symbol</th>
+                                <th class="text-left py-3 px-4 text-purple-300">Sector</th>
+                                <th class="text-left py-3 px-4 text-purple-300">Historical Gain</th>
+                                <th class="text-left py-3 px-4 text-purple-300">Catalyst</th>
+                                <th class="text-left py-3 px-4 text-purple-300">Detection Score</th>
+                                <th class="text-left py-3 px-4 text-purple-300">Would Detect</th>
+                                <th class="text-left py-3 px-4 text-purple-300">Early Detection</th>
+                            </tr>
+                        </thead>
+                        <tbody id="casesTable">
+                            <!-- Cases will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Enhancement Recommendations -->
+            <div class="bg-black/20 backdrop-blur-sm rounded-xl p-6 border border-purple-500/20">
+                <h3 class="text-xl font-bold mb-4 text-purple-400">
+                    <i class="fas fa-lightbulb mr-2"></i>Enhancement Recommendations
+                </h3>
+                <div id="recommendationsList" class="space-y-3">
+                    <!-- Recommendations will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let backtestResults = null;
+
+        // Run backtest
+        document.getElementById('runBacktestBtn').addEventListener('click', async () => {
+            const loadingState = document.getElementById('loadingState');
+            const resultsContainer = document.getElementById('resultsContainer');
+            const runBtn = document.getElementById('runBacktestBtn');
+            
+            loadingState.classList.remove('hidden');
+            resultsContainer.classList.add('hidden');
+            runBtn.disabled = true;
+            runBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Running...';
+            
+            try {
+                const response = await fetch('/api/historical_backtest');
+                const data = await response.json();
+                
+                if (data.success) {
+                    backtestResults = data.backtest_results;
+                    displayResults(backtestResults);
+                    document.getElementById('exportReportBtn').disabled = false;
+                    document.getElementById('exportReportBtn').classList.remove('opacity-50', 'cursor-not-allowed');
+                } else {
+                    alert('Error running backtest: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            } finally {
+                loadingState.classList.add('hidden');
+                runBtn.disabled = false;
+                runBtn.innerHTML = '<i class="fas fa-play mr-2"></i>Run Comprehensive Backtest';
+            }
+        });
+
+        function displayResults(results) {
+            const resultsContainer = document.getElementById('resultsContainer');
+            resultsContainer.classList.remove('hidden');
+            
+            // Update summary cards
+            const summary = results.backtest_summary;
+            document.getElementById('detectionAccuracy').textContent = summary.detection_accuracy;
+            document.getElementById('earlyDetectionRate').textContent = summary.early_detection_rate;
+            document.getElementById('volumeAccuracy').textContent = summary.volume_pattern_accuracy;
+            document.getElementById('systemScore').textContent = results.accuracy_metrics.overall_system_score.toFixed(1) + '%';
+            
+            // Create charts
+            createSectorChart(results.pattern_analysis);
+            createCatalystChart(results.pattern_analysis);
+            
+            // Populate cases table
+            populateCasesTable(results.individual_cases);
+            
+            // Display recommendations
+            displayRecommendations(results.enhancement_recommendations);
+        }
+
+        function createSectorChart(patternAnalysis) {
+            const sectorData = patternAnalysis.sector_patterns.distribution;
+            
+            const data = [{
+                values: Object.values(sectorData),
+                labels: Object.keys(sectorData),
+                type: 'pie',
+                marker: {
+                    colors: ['#8B5CF6', '#EC4899', '#06B6D4', '#10B981', '#F59E0B', '#EF4444']
+                },
+                textinfo: 'label+percent',
+                textfont: {
+                    color: 'white'
+                }
+            }];
+            
+            const layout = {
+                paper_bgcolor: 'transparent',
+                plot_bgcolor: 'transparent',
+                font: { color: 'white' },
+                margin: { t: 20, b: 20, l: 20, r: 20 },
+                showlegend: false
+            };
+            
+            Plotly.newPlot('sectorChart', data, layout, {responsive: true});
+        }
+
+        function createCatalystChart(patternAnalysis) {
+            const catalystData = patternAnalysis.catalyst_patterns.distribution;
+            
+            const data = [{
+                x: Object.keys(catalystData),
+                y: Object.values(catalystData),
+                type: 'bar',
+                marker: {
+                    color: '#8B5CF6',
+                    line: {
+                        color: '#A855F7',
+                        width: 1
+                    }
+                }
+            }];
+            
+            const layout = {
+                paper_bgcolor: 'transparent',
+                plot_bgcolor: 'transparent',
+                font: { color: 'white' },
+                margin: { t: 20, b: 40, l: 40, r: 20 },
+                xaxis: { 
+                    color: 'white',
+                    gridcolor: 'rgba(255,255,255,0.1)'
+                },
+                yaxis: { 
+                    color: 'white',
+                    gridcolor: 'rgba(255,255,255,0.1)'
+                }
+            };
+            
+            Plotly.newPlot('catalystChart', data, layout, {responsive: true});
+        }
+
+        function populateCasesTable(cases) {
+            const tbody = document.getElementById('casesTable');
+            tbody.innerHTML = '';
+            
+            cases.forEach(case => {
+                if (case.error) return;
+                
+                const row = document.createElement('tr');
+                row.className = 'border-b border-purple-500/10 hover:bg-purple-500/5';
+                
+                const detectionResult = case.detection_results;
+                const wouldDetect = detectionResult.would_detect;
+                const earlyDetection = detectionResult.early_detection_possible;
+                
+                row.innerHTML = `
+                    <td class="py-3 px-4 font-semibold text-purple-300">${case.symbol}</td>
+                    <td class="py-3 px-4 text-gray-300">${case.sector}</td>
+                    <td class="py-3 px-4 font-bold text-green-400">${case.historical_gain}</td>
+                    <td class="py-3 px-4 text-gray-300">${case.catalyst}</td>
+                    <td class="py-3 px-4">
+                        <span class="px-2 py-1 rounded text-xs font-semibold ${detectionResult.detection_score >= 70 ? 'bg-green-500/20 text-green-400' : detectionResult.detection_score >= 60 ? 'bg-yellow-500/20 text-yellow-400' : 'bg-red-500/20 text-red-400'}">
+                            ${detectionResult.detection_score.toFixed(1)}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4">
+                        <span class="px-2 py-1 rounded text-xs font-semibold ${wouldDetect ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}">
+                            ${wouldDetect ? 'YES' : 'NO'}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4">
+                        <span class="px-2 py-1 rounded text-xs font-semibold ${earlyDetection ? 'bg-blue-500/20 text-blue-400' : 'bg-gray-500/20 text-gray-400'}">
+                            ${earlyDetection ? 'YES' : 'NO'}
+                        </span>
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        function displayRecommendations(recommendations) {
+            const container = document.getElementById('recommendationsList');
+            container.innerHTML = '';
+            
+            recommendations.forEach((rec, index) => {
+                const div = document.createElement('div');
+                div.className = 'flex items-start space-x-3 p-3 bg-purple-500/10 rounded-lg';
+                div.innerHTML = `
+                    <span class="bg-purple-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center mt-0.5">
+                        ${index + 1}
+                    </span>
+                    <p class="text-gray-300 flex-1">${rec}</p>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // Export report
+        document.getElementById('exportReportBtn').addEventListener('click', () => {
+            if (!backtestResults) return;
+            
+            const report = {
+                timestamp: new Date().toISOString(),
+                results: backtestResults
+            };
+            
+            const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `pump-backtest-report-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+    </script>
+</body>
+</html>
