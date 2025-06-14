@@ -1,6 +1,8 @@
-from flask import render_template, request, jsonify, redirect, url_for, flash
+from flask import render_template, request, jsonify, redirect, url_for, flash, session
 from app import app, db
-from models import Stock, TradeJournal, ForecastPath, AIAnalysis, PatternEvolution
+from models import Stock, TradeJournal, ForecastPath, AIAnalysis, PatternEvolution, User, OAuth
+from replit_auth import require_login, make_replit_blueprint
+from flask_login import current_user
 from stock_scanner import StockScanner
 from forecasting_engine import ForecastingEngine
 from ai_coach import AICoach
@@ -12,6 +14,14 @@ import json
 import logging
 import pandas as pd
 from datetime import datetime
+
+# Register authentication blueprint
+app.register_blueprint(make_replit_blueprint(), url_prefix="/auth")
+
+# Make session permanent
+@app.before_request
+def make_session_permanent():
+    session.permanent = True
 
 # Initialize performance optimizer
 try:
@@ -64,6 +74,7 @@ except ImportError as e:
     stock_widgets = None
 
 @app.route('/')
+@require_login
 @optimize_route
 def index():
     """Main dashboard"""
