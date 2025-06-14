@@ -842,6 +842,19 @@ def generate_forecast():
         logging.error(f"Error generating forecast: {e}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/ai-picks')
+@login_required
+def ai_picks():
+    """AI stock picks page"""
+    try:
+        # Get top confidence stocks from AI analysis
+        ai_picks = Stock.query.filter(Stock.confidence_score >= 75).order_by(Stock.confidence_score.desc()).limit(10).all()
+        return render_template('ai_picks.html', picks=ai_picks)
+    except Exception as e:
+        logging.error(f"AI picks error: {str(e)}")
+        flash(f"Error loading AI picks: {str(e)}", "error")
+        return render_template('ai_picks.html', picks=[])
+
 @app.route('/journal')
 @login_required
 def journal():
