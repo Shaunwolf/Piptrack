@@ -95,31 +95,23 @@ class ChartIndicators:
         """Generate RSI momentum chart data"""
         rsi = ta.momentum.RSIIndicator(data['Close']).rsi()
         
+        current_rsi = float(rsi.iloc[-1]) if not rsi.empty and not pd.isna(rsi.iloc[-1]) else 50.0
+        rsi_values = [float(val) if not pd.isna(val) else 50.0 for val in rsi[-20:]]
+        
         chart_data = {
             'type': 'rsi_momentum',
             'title': 'RSI Momentum Analysis',
             'data': [
                 {
-                    'x': data.index[-20:].strftime('%H:%M').tolist(),
-                    'y': rsi[-20:].fillna(50).tolist(),
+                    'x': [str(ts) for ts in data.index[-20:]],
+                    'y': rsi_values,
                     'type': 'line',
                     'name': 'RSI',
                     'line': {'color': '#00ff88', 'width': 2}
                 }
             ],
-            'layout': {
-                'yaxis': {'range': [0, 100]},
-                'shapes': [
-                    # Overbought line
-                    {'type': 'line', 'x0': 0, 'x1': 1, 'y0': 70, 'y1': 70,
-                     'xref': 'paper', 'line': {'color': '#ff4444', 'dash': 'dash'}},
-                    # Oversold line
-                    {'type': 'line', 'x0': 0, 'x1': 1, 'y0': 30, 'y1': 30,
-                     'xref': 'paper', 'line': {'color': '#00ff88', 'dash': 'dash'}}
-                ]
-            },
-            'current_value': float(rsi.iloc[-1]) if not rsi.empty else 50,
-            'signal': 'BUY' if rsi.iloc[-1] < 30 else 'SELL' if rsi.iloc[-1] > 70 else 'HOLD'
+            'current_value': current_rsi,
+            'signal': 'BUY' if current_rsi < 30 else 'SELL' if current_rsi > 70 else 'HOLD'
         }
         
         return chart_data
@@ -128,37 +120,16 @@ class ChartIndicators:
         """Generate Bollinger Bands squeeze chart"""
         bb = ta.volatility.BollingerBands(data['Close'])
         
+        squeeze_detected = self._detect_squeeze(bb)
+        breakout_direction = self._predict_breakout(data, bb)
+        
         chart_data = {
             'type': 'bollinger_squeeze',
             'title': 'Bollinger Bands Analysis',
-            'data': [
-                {
-                    'x': data.index[-20:].strftime('%H:%M').tolist(),
-                    'y': data['Close'][-20:].tolist(),
-                    'type': 'line',
-                    'name': 'Price',
-                    'line': {'color': '#ffffff', 'width': 2}
-                },
-                {
-                    'x': data.index[-20:].strftime('%H:%M').tolist(),
-                    'y': bb.bollinger_hband()[-20:].tolist(),
-                    'type': 'line',
-                    'name': 'Upper Band',
-                    'line': {'color': '#ff4444', 'width': 1},
-                    'fill': None
-                },
-                {
-                    'x': data.index[-20:].strftime('%H:%M').tolist(),
-                    'y': bb.bollinger_lband()[-20:].tolist(),
-                    'type': 'line',
-                    'name': 'Lower Band',
-                    'line': {'color': '#ff4444', 'width': 1},
-                    'fill': 'tonexty',
-                    'fillcolor': 'rgba(255, 68, 68, 0.1)'
-                }
-            ],
-            'squeeze_detected': self._detect_squeeze(bb),
-            'breakout_direction': self._predict_breakout(data, bb)
+            'squeeze_detected': bool(squeeze_detected),
+            'breakout_direction': str(breakout_direction),
+            'status': 'Active Squeeze' if squeeze_detected else 'Normal Range',
+            'signal_color': '#ffcc00' if squeeze_detected else '#6b7280'
         }
         
         return chart_data
