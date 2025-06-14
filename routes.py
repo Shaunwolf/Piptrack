@@ -47,25 +47,31 @@ def register():
     
     form = RegistrationForm()
     if form.validate_on_submit():
-        # Create new user
-        user = User()
-        user.id = str(uuid.uuid4())
-        user.email = form.email.data.lower()
-        user.password_hash = generate_password_hash(form.password.data)
-        user.first_name = form.first_name.data
-        user.last_name = form.last_name.data
-        user.auth_method = 'email'
-        user.is_verified = True  # For now, skip email verification
-        user.beta_user_number = beta_count + 1
-        
-        db.session.add(user)
-        db.session.commit()
-        
-        flash(f"Welcome to the beta! You're user #{user.beta_user_number} of 100.", "success")
-        login_user(user, remember=True)
-        
-        next_page = request.args.get('next')
-        return redirect(next_page) if next_page else redirect(url_for('dashboard'))
+        try:
+            # Create new user
+            user = User()
+            user.id = str(uuid.uuid4())
+            user.email = form.email.data.lower()
+            user.password_hash = generate_password_hash(form.password.data)
+            user.first_name = form.first_name.data
+            user.last_name = form.last_name.data
+            user.auth_method = 'email'
+            user.is_verified = True  # For now, skip email verification
+            user.beta_user_number = beta_count + 1
+            
+            db.session.add(user)
+            db.session.commit()
+            
+            flash(f"Welcome to the beta! You're user #{user.beta_user_number} of 100.", "success")
+            login_user(user, remember=True)
+            
+            next_page = request.args.get('next')
+            return redirect(next_page) if next_page else redirect(url_for('dashboard'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Registration error: {str(e)}", "error")
+            logging.error(f"Registration error: {str(e)}")
+            return render_template('auth/register.html', form=form, beta_count=beta_count)
     
     return render_template('auth/register.html', form=form, beta_count=beta_count)
 
