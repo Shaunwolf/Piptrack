@@ -172,6 +172,14 @@ def landing():
     """Explicit landing page route"""
     return redirect(url_for('index'))
 
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    """Main dashboard for authenticated users"""
+    tracked_stocks = Stock.query.filter_by(is_tracked=True).limit(5).all()
+    recent_trades = TradeJournal.query.filter_by(user_id=current_user.id).order_by(TradeJournal.created_at.desc()).limit(10).all()
+    return render_template('index.html', tracked_stocks=tracked_stocks, recent_trades=recent_trades)
+
 @app.route('/scanner')
 @require_login
 def scanner():
