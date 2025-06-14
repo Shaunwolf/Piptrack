@@ -1470,3 +1470,48 @@ def get_leaderboard():
     except Exception as e:
         logging.error(f"Error getting leaderboard: {e}")
         return jsonify({'success': False, 'error': str(e)})
+
+# Pump Backtest Analysis Routes
+@app.route('/backtest')
+def pump_backtest_dashboard():
+    """Pump backtest analysis dashboard"""
+    return render_template('backtest_dashboard.html')
+
+@app.route('/api/run_pump_backtest')
+def run_pump_backtest():
+    """Run comprehensive pump backtest analysis"""
+    try:
+        from simple_pump_analyzer import SimplePumpAnalyzer
+        
+        analyzer = SimplePumpAnalyzer()
+        analysis = analyzer.run_full_analysis()
+        
+        return jsonify({
+            'success': True,
+            'backtest_results': analysis['backtest_results'],
+            'recommendations': analysis['recommendations'],
+            'enhanced_rules': analysis['enhanced_rules'],
+            'summary': analysis['summary']
+        })
+        
+    except Exception as e:
+        logging.error(f"Error running pump backtest: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/backtest_report')
+def get_backtest_report():
+    """Get detailed backtest report"""
+    try:
+        from pump_backtest_analyzer import PumpBacktestAnalyzer
+        
+        analyzer = PumpBacktestAnalyzer()
+        report = analyzer.generate_backtest_report()
+        
+        return jsonify({
+            'success': True,
+            'report': report
+        })
+        
+    except Exception as e:
+        logging.error(f"Error generating backtest report: {e}")
+        return jsonify({'success': False, 'error': str(e)})

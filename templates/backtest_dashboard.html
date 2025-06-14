@@ -1,0 +1,315 @@
+{% extends "base.html" %}
+
+{% block title %}Pump Backtest Analysis - CandleCast{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Header -->
+    <div class="text-center">
+        <h1 class="text-4xl font-bold mb-2">Historical Pump Backtest Analysis</h1>
+        <p class="text-gray-400">Analyze how CandleCast would have detected historical pump scenarios</p>
+    </div>
+    
+    <!-- Control Panel -->
+    <div class="bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-xl p-6 border border-blue-500/30">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-bold text-white">Backtest Control Panel</h2>
+            <button id="runBacktestBtn" class="btn-primary">
+                <i class="fas fa-play mr-2"></i>Run Backtest Analysis
+            </button>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="stat-card">
+                <div class="stat-icon bg-green-500">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div>
+                    <p class="stat-label">Cases Analyzed</p>
+                    <p class="stat-value" id="totalCases">-</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon bg-blue-500">
+                    <i class="fas fa-eye"></i>
+                </div>
+                <div>
+                    <p class="stat-label">Detection Rate</p>
+                    <p class="stat-value" id="detectionRate">-</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon bg-purple-500">
+                    <i class="fas fa-bullseye"></i>
+                </div>
+                <div>
+                    <p class="stat-label">High Value Catches</p>
+                    <p class="stat-value" id="highValueCatches">-</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon bg-red-500">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div>
+                    <p class="stat-label">Missed Opportunities</p>
+                    <p class="stat-value" id="missedOpportunities">-</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Container -->
+    <div id="backtestResults" class="hidden">
+        <!-- Individual Case Analysis -->
+        <div class="bg-dark-surface rounded-xl p-6 border border-gray-700">
+            <h3 class="text-xl font-bold text-white mb-4">Individual Case Analysis</h3>
+            <div id="caseAnalysisContainer" class="space-y-4">
+                <!-- Dynamic content will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Enhancement Recommendations -->
+        <div class="bg-dark-surface rounded-xl p-6 border border-gray-700">
+            <h3 class="text-xl font-bold text-white mb-4">Enhancement Recommendations</h3>
+            <div id="recommendationsContainer">
+                <!-- Dynamic content will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Enhanced Scanner Rules -->
+        <div class="bg-dark-surface rounded-xl p-6 border border-gray-700">
+            <h3 class="text-xl font-bold text-white mb-4">Proposed Enhanced Scanner Rules</h3>
+            <div id="enhancedRulesContainer">
+                <!-- Dynamic content will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div id="backtestLoading" class="hidden text-center py-8">
+        <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-accent-blue"></div>
+        <p class="mt-4 text-lg">Analyzing historical pump cases...</p>
+    </div>
+</div>
+
+<script>
+class BacktestAnalyzer {
+    constructor() {
+        this.initializeEventListeners();
+    }
+
+    initializeEventListeners() {
+        document.getElementById('runBacktestBtn').addEventListener('click', () => {
+            this.runBacktestAnalysis();
+        });
+    }
+
+    async runBacktestAnalysis() {
+        try {
+            // Show loading indicator
+            document.getElementById('backtestLoading').classList.remove('hidden');
+            document.getElementById('backtestResults').classList.add('hidden');
+            
+            const response = await fetch('/api/run_pump_backtest');
+            const data = await response.json();
+            
+            if (data.success) {
+                this.displayResults(data);
+            } else {
+                throw new Error(data.error || 'Failed to run backtest');
+            }
+            
+        } catch (error) {
+            console.error('Backtest analysis failed:', error);
+            alert('Failed to run backtest analysis: ' + error.message);
+        } finally {
+            document.getElementById('backtestLoading').classList.add('hidden');
+        }
+    }
+
+    displayResults(data) {
+        // Update summary stats
+        document.getElementById('totalCases').textContent = data.summary.total_cases;
+        document.getElementById('detectionRate').textContent = data.summary.detection_rate.toFixed(1) + '%';
+        document.getElementById('highValueCatches').textContent = data.summary.high_value_catches;
+        document.getElementById('missedOpportunities').textContent = data.summary.missed_opportunities;
+
+        // Display individual case analysis
+        this.renderCaseAnalysis(data.backtest_results);
+        
+        // Display recommendations
+        this.renderRecommendations(data.recommendations);
+        
+        // Display enhanced rules
+        this.renderEnhancedRules(data.enhanced_rules);
+        
+        // Show results
+        document.getElementById('backtestResults').classList.remove('hidden');
+    }
+
+    renderCaseAnalysis(results) {
+        const container = document.getElementById('caseAnalysisContainer');
+        container.innerHTML = '';
+
+        results.forEach(result => {
+            const status = result.would_alert ? '✓ DETECTED' : '✗ MISSED';
+            const statusClass = result.would_alert ? 'text-green-400' : 'text-red-400';
+            const scoreColor = result.detection_score > 70 ? 'text-green-400' : 
+                              result.detection_score > 40 ? 'text-yellow-400' : 'text-red-400';
+
+            const caseCard = document.createElement('div');
+            caseCard.className = 'bg-dark-accent rounded-lg p-4 border border-gray-600';
+            
+            caseCard.innerHTML = `
+                <div class="flex justify-between items-start mb-3">
+                    <div>
+                        <h4 class="font-bold text-white">${result.name} (${result.symbol})</h4>
+                        <p class="text-sm text-gray-400">${result.pump_date}</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="${statusClass} font-bold">${status}</span>
+                        <p class="text-sm ${scoreColor}">Score: ${result.detection_score}/100</p>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                    <div>
+                        <p class="text-sm text-gray-400">Pump Magnitude</p>
+                        <p class="font-bold text-green-400">+${result.pump_magnitude.toFixed(0)}%</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-400">Confidence Level</p>
+                        <p class="font-bold">${result.detection_confidence}</p>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <p class="text-sm text-gray-400 mb-1">Cause</p>
+                    <p class="text-sm text-gray-300">${result.cause}</p>
+                </div>
+                
+                ${result.detection_factors.length > 0 ? `
+                <div>
+                    <p class="text-sm text-gray-400 mb-1">Detection Factors</p>
+                    <div class="flex flex-wrap gap-1">
+                        ${result.detection_factors.map(factor => 
+                            `<span class="text-xs bg-blue-600/30 text-blue-300 px-2 py-1 rounded">${factor}</span>`
+                        ).join('')}
+                    </div>
+                </div>
+                ` : ''}
+            `;
+            
+            container.appendChild(caseCard);
+        });
+    }
+
+    renderRecommendations(recommendations) {
+        const container = document.getElementById('recommendationsContainer');
+        container.innerHTML = '';
+
+        if (recommendations.enhancements && recommendations.enhancements.length > 0) {
+            recommendations.enhancements.forEach(enhancement => {
+                const priorityColor = enhancement.priority === 'High' ? 'text-red-400' : 
+                                    enhancement.priority === 'Medium' ? 'text-yellow-400' : 'text-green-400';
+                
+                const enhancementCard = document.createElement('div');
+                enhancementCard.className = 'bg-dark-accent rounded-lg p-4 border border-gray-600 mb-4';
+                
+                enhancementCard.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <h4 class="font-bold text-white">${enhancement.type}</h4>
+                        <span class="${priorityColor} font-bold text-sm">Priority: ${enhancement.priority}</span>
+                    </div>
+                    <p class="text-gray-300 mb-3">${enhancement.description}</p>
+                    
+                    ${enhancement.missed_cases ? `
+                    <div>
+                        <p class="text-sm text-gray-400 mb-1">Would have caught:</p>
+                        <p class="text-sm text-green-400">${enhancement.missed_cases.join(', ')}</p>
+                    </div>
+                    ` : ''}
+                    
+                    ${enhancement.relevant_cases ? `
+                    <div>
+                        <p class="text-sm text-gray-400 mb-1">Relevant to:</p>
+                        <p class="text-sm text-blue-400">${enhancement.relevant_cases.join(', ')}</p>
+                    </div>
+                    ` : ''}
+                `;
+                
+                container.appendChild(enhancementCard);
+            });
+        }
+    }
+
+    renderEnhancedRules(rules) {
+        const container = document.getElementById('enhancedRulesContainer');
+        container.innerHTML = '';
+
+        // Render detection rules
+        if (rules.pump_detection_rules) {
+            const rulesCard = document.createElement('div');
+            rulesCard.className = 'bg-dark-accent rounded-lg p-4 border border-gray-600 mb-4';
+            
+            rulesCard.innerHTML = `
+                <h4 class="font-bold text-white mb-3">Detection Thresholds</h4>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div>
+                        <p class="text-sm text-gray-400">Volume Surge</p>
+                        <p class="font-bold text-blue-400">${rules.pump_detection_rules.volume_surge_threshold}x</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-400">RSI Oversold</p>
+                        <p class="font-bold text-yellow-400">&lt; ${rules.pump_detection_rules.rsi_oversold_threshold}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-400">Momentum</p>
+                        <p class="font-bold text-green-400">&gt; ${rules.pump_detection_rules.momentum_threshold}%</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-400">Volatility</p>
+                        <p class="font-bold text-purple-400">&gt; ${rules.pump_detection_rules.volatility_threshold}%</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-400">Social Weight</p>
+                        <p class="font-bold text-red-400">${rules.pump_detection_rules.social_mentions_weight} pts</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-400">Short Interest</p>
+                        <p class="font-bold text-orange-400">${rules.pump_detection_rules.short_interest_weight} pts</p>
+                    </div>
+                </div>
+            `;
+            
+            container.appendChild(rulesCard);
+        }
+
+        // Render alert triggers
+        if (rules.alert_triggers) {
+            rules.alert_triggers.forEach(trigger => {
+                const triggerCard = document.createElement('div');
+                triggerCard.className = 'bg-dark-accent rounded-lg p-4 border border-gray-600 mb-4';
+                
+                triggerCard.innerHTML = `
+                    <h4 class="font-bold text-white mb-2">${trigger.name}</h4>
+                    <p class="text-sm text-gray-400 mb-2">Minimum Score: ${trigger.min_score}</p>
+                    <div class="flex flex-wrap gap-2">
+                        ${trigger.conditions.map(condition => 
+                            `<span class="text-xs bg-green-600/30 text-green-300 px-2 py-1 rounded">${condition}</span>`
+                        ).join('')}
+                    </div>
+                `;
+                
+                container.appendChild(triggerCard);
+            });
+        }
+    }
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', () => {
+    new BacktestAnalyzer();
+});
+</script>
+{% endblock %}

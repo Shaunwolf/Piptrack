@@ -1,0 +1,11 @@
+Name,Pump Date,Price Before,Price Peak,Price After,Cause,Indicators (Pre-pump)
+GameStop (GME),2021-01-27,20,483,120,"Short squeeze via Reddit (WSB), Elon Musk tweet","140% short interest, low volume, RSI ~45"
+AMC Entertainment (AMC),2021-01-28,3,20,10,Meme stock surge linked to GME,"High short interest, low volatility, RSI ~50"
+BlackBerry (BB),2021-01-27,9,28,14,Reddit pump with GME/AMC,"Short float >30%, trending on forums"
+Koss Corporation (KOSS),2021-01-27,3,127,50,Reddit-driven spike,"Thin float, low average volume"
+Express Inc. (EXPR),2021-01-27,1,13,5,Meme pump,"Retail mentions, short interest rising"
+Bed Bath & Beyond (BBBY),2021-01-27,17,53,30,Meme stock rally,"High retail chatter, RSI ~60"
+Virgin Galactic (SPCE),2021-01-26,23,60,45,Meme surge + test flight news,"Volume rising, MACD bullish crossover"
+Nokia (NOK),2021-01-27,4,9,6,WSB mentions,"Flat chart, sudden breakout volume"
+Rocket Companies (RKT),2021-03-02,21,41,26,"Reddit squeeze, low float",Call option volume spike
+Volkswagen (VW),2008-10-28,200,1000,400,Porsche takeover attempt,Heavy institutional shorts
