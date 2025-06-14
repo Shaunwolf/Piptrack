@@ -1705,3 +1705,8 @@ def get_watchlist_summary():
     except Exception as e:
         logging.error(f"Error getting watchlist summary: {e}")
         return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/early_detection')
+def early_detection_dashboard():
+    """Early detection watchlist dashboard page"""
+    return render_template('early_detection.html')
