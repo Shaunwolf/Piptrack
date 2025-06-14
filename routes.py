@@ -123,18 +123,6 @@ def make_session_permanent():
 try:
     from performance_optimizer import optimize_route, perf_optimizer
     PERFORMANCE_OPTIMIZED = True
-    # Preload common symbols for better performance
-    common_symbols = ['AAPL', 'META', 'NVDA', 'TSLA', 'MSFT']
-    def preload_symbols():
-        try:
-            for symbol in common_symbols:
-                if stock_widgets:
-                    stock_widgets.generate_widget_data(symbol, 'rsi_momentum')
-        except Exception as e:
-            logging.warning(f"Failed to preload symbols: {e}")
-    
-    # Run preload in background
-    perf_optimizer.background_task(preload_symbols)
 except ImportError:
     PERFORMANCE_OPTIMIZED = False
     def optimize_route(func):
@@ -168,6 +156,22 @@ except ImportError as e:
     scanner_widgets = None
     physics_engine = None
     stock_widgets = None
+
+# Preload symbols for performance if components are available
+if PERFORMANCE_OPTIMIZED and stock_widgets:
+    common_symbols = ['AAPL', 'META', 'NVDA', 'TSLA', 'MSFT']
+    def preload_symbols():
+        try:
+            for symbol in common_symbols:
+                stock_widgets.generate_widget_data(symbol, 'rsi_momentum')
+        except Exception as e:
+            logging.warning(f"Failed to preload symbols: {e}")
+    
+    # Run preload in background
+    try:
+        perf_optimizer.background_task(preload_symbols)
+    except:
+        pass
 
 @app.route('/')
 def index():
