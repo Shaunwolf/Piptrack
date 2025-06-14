@@ -74,15 +74,19 @@ except ImportError as e:
     stock_widgets = None
 
 @app.route('/')
-@require_login
-@optimize_route
 def index():
-    """Main dashboard"""
-    tracked_stocks = Stock.query.filter_by(is_tracked=True).limit(5).all()
-    recent_trades = TradeJournal.query.order_by(TradeJournal.created_at.desc()).limit(10).all()
-    return render_template('index.html', tracked_stocks=tracked_stocks, recent_trades=recent_trades)
+    """Landing page for visitors, dashboard for authenticated users"""
+    if current_user.is_authenticated:
+        # Show dashboard for logged-in users
+        tracked_stocks = Stock.query.filter_by(is_tracked=True).limit(5).all()
+        recent_trades = TradeJournal.query.filter_by(user_id=current_user.id).order_by(TradeJournal.created_at.desc()).limit(10).all()
+        return render_template('index.html', tracked_stocks=tracked_stocks, recent_trades=recent_trades)
+    else:
+        # Show landing page for visitors
+        return render_template('landing.html')
 
 @app.route('/scanner')
+@require_login
 def scanner():
     """Stock scanner page"""
     stocks = Stock.query.order_by(Stock.confidence_score.desc()).all()
@@ -106,6 +110,7 @@ def scanner():
     return render_template('scanner.html', stocks=stocks_data)
 
 @app.route('/scan_stocks', methods=['POST'])
+@require_login
 def scan_stocks():
     """Scan for top gappers or selected tickers"""
     try:
@@ -684,6 +689,7 @@ def calculate_risk_reward_ratio(current_price, stop_loss, take_profit):
     return 2.0
 
 @app.route('/generate_forecast', methods=['POST'])
+@require_login
 def generate_forecast():
     """Generate spaghetti model forecast"""
     try:
@@ -716,9 +722,11 @@ def generate_forecast():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/journal')
+@require_login
 def journal():
     """Trade journal page"""
-    trades = TradeJournal.query.order_by(TradeJournal.created_at.desc()).all()
+    # Filter trades by current user
+    trades = TradeJournal.query.filter_by(user_id=current_user.id).order_by(TradeJournal.created_at.desc()).all()
     tracked_stocks = Stock.query.filter_by(is_tracked=True).all()
     
     # Convert trades to dictionaries for JSON serialization
