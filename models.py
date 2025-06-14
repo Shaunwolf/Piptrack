@@ -8,12 +8,12 @@ from sqlalchemy import UniqueConstraint
 # Enhanced User model supporting multiple authentication methods
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
-    id = db.Column(db.String, primary_key=True)
-    email = db.Column(db.String, unique=True, nullable=False)
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=True)  # For email/password auth
-    first_name = db.Column(db.String, nullable=True)
-    last_name = db.Column(db.String, nullable=True)
-    profile_image_url = db.Column(db.String, nullable=True)
+    first_name = db.Column(db.String(50), nullable=True)
+    last_name = db.Column(db.String(50), nullable=True)
+    profile_image_url = db.Column(db.String(200), nullable=True)
     
     # Authentication method tracking
     auth_method = db.Column(db.String(20), default='email')  # 'email', 'google', 'replit'
@@ -30,7 +30,7 @@ class User(UserMixin, db.Model):
 
 # (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
 class OAuth(OAuthConsumerMixin, db.Model):
-    user_id = db.Column(db.String, db.ForeignKey(User.id))
+    user_id = db.Column(db.Integer, db.ForeignKey(User.id))
     browser_session_key = db.Column(db.String, nullable=False)
     user = db.relationship(User)
 
@@ -57,6 +57,7 @@ class Stock(db.Model):
 
 class TradeJournal(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     symbol = db.Column(db.String(10), nullable=False)
     entry_price = db.Column(db.Float)
     stop_loss = db.Column(db.Float)
@@ -72,6 +73,9 @@ class TradeJournal(db.Model):
     lessons_learned = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationship
+    user = db.relationship('User', backref='trades')
 
 class ForecastPath(db.Model):
     id = db.Column(db.Integer, primary_key=True)

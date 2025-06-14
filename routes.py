@@ -92,14 +92,18 @@ def login():
     
     form = LoginForm()
     if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data.lower()).first()
-        
-        if user and user.password_hash and check_password_hash(user.password_hash, form.password.data):
-            login_user(user, remember=form.remember_me.data)
-            next_page = request.args.get('next')
-            return redirect(next_page) if next_page else redirect(url_for('dashboard'))
+        email = form.email.data
+        if email:
+            user = User.query.filter_by(email=email.lower()).first()
+            
+            if user and user.password_hash and form.password.data and check_password_hash(user.password_hash, form.password.data):
+                login_user(user, remember=form.remember_me.data)
+                next_page = request.args.get('next')
+                return redirect(next_page) if next_page else redirect(url_for('dashboard'))
+            else:
+                flash('Invalid email or password', 'error')
         else:
-            flash('Invalid email or password', 'error')
+            flash('Email is required', 'error')
     
     beta_count = User.query.filter(User.beta_user_number.isnot(None)).count()
     return render_template('auth/login.html', form=form, beta_count=beta_count)
