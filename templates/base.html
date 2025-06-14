@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Stock Scanner & AI Coach{% endblock %}</title>
+    <title>{% block title %}PipSqueak - AI Trading Intelligence{% endblock %}</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -45,8 +45,11 @@
                 <div class="flex items-center space-x-8">
                     <!-- Logo -->
                     <div class="flex-shrink-0">
-                        <a href="{{ url_for('index') }}" class="text-xl font-bold text-accent-blue">
-                            <i class="fas fa-chart-line mr-2"></i>CandleCast
+                        <a href="{{ url_for('index') }}" class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-gradient-to-br from-orange-400 via-red-400 to-yellow-400 rounded-lg flex items-center justify-center shadow-lg">
+                                <i class="fas fa-fire text-white text-lg"></i>
+                            </div>
+                            <span class="text-xl font-bold">PipSqueak</span>
                         </a>
                     </div>
                     
@@ -54,6 +57,9 @@
                     <div class="hidden md:flex space-x-6">
                         <a href="{{ url_for('index') }}" class="nav-link">
                             <i class="fas fa-home mr-1"></i>Dashboard
+                        </a>
+                        <a href="{{ url_for('recommendations_dashboard') }}" class="nav-link">
+                            <i class="fas fa-magic mr-1"></i>AI Picks
                         </a>
                         <a href="{{ url_for('scanner') }}" class="nav-link">
                             <i class="fas fa-search mr-1"></i>Scanner
