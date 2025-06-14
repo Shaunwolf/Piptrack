@@ -138,28 +138,14 @@ class ChartIndicators:
         """Generate MACD divergence chart"""
         macd = ta.trend.MACD(data['Close'])
         
+        bullish_div = self._detect_bullish_divergence(data, macd)
+        bearish_div = self._detect_bearish_divergence(data, macd)
+        
         chart_data = {
             'type': 'macd_divergence',
             'title': 'MACD Analysis',
-            'data': [
-                {
-                    'x': data.index[-20:].strftime('%H:%M').tolist(),
-                    'y': macd.macd()[-20:].fillna(0).tolist(),
-                    'type': 'line',
-                    'name': 'MACD',
-                    'line': {'color': '#00ff88', 'width': 2}
-                },
-                {
-                    'x': data.index[-20:].strftime('%H:%M').tolist(),
-                    'y': macd.macd_signal()[-20:].fillna(0).tolist(),
-                    'type': 'line',
-                    'name': 'Signal',
-                    'line': {'color': '#ff8800', 'width': 2}
-                }
-            ],
-            'histogram': macd.macd_diff()[-20:].fillna(0).tolist(),
-            'bullish_divergence': self._detect_bullish_divergence(data, macd),
-            'bearish_divergence': self._detect_bearish_divergence(data, macd)
+            'bullish_divergence': bool(bullish_div),
+            'bearish_divergence': bool(bearish_div)
         }
         
         return chart_data
@@ -168,23 +154,14 @@ class ChartIndicators:
         """Generate volume profile chart"""
         volume_sma = data['Volume'].rolling(window=10).mean()
         
+        current_volume = float(data['Volume'].iloc[-1])
+        avg_volume = float(volume_sma.iloc[-1]) if not pd.isna(volume_sma.iloc[-1]) else current_volume
+        
         chart_data = {
             'type': 'volume_profile',
             'title': 'Volume Analysis',
-            'data': [
-                {
-                    'x': data.index[-20:].strftime('%H:%M').tolist(),
-                    'y': data['Volume'][-20:].tolist(),
-                    'type': 'bar',
-                    'name': 'Volume',
-                    'marker': {
-                        'color': ['#00ff88' if v > avg else '#ff4444' 
-                                for v, avg in zip(data['Volume'][-20:], volume_sma[-20:])]
-                    }
-                }
-            ],
-            'volume_trend': self._analyze_volume_trend(data),
-            'unusual_volume': data['Volume'].iloc[-1] > volume_sma.iloc[-1] * 2
+            'volume_trend': str(self._analyze_volume_trend(data)),
+            'unusual_volume': bool(current_volume > avg_volume * 2)
         }
         
         return chart_data
@@ -192,24 +169,17 @@ class ChartIndicators:
     def generate_sr_chart(self, data: pd.DataFrame) -> Dict:
         """Generate support/resistance chart"""
         support_levels, resistance_levels = self._find_support_resistance(data)
+        key_distances = self._calculate_key_level_distance(data, support_levels, resistance_levels)
         
         chart_data = {
             'type': 'support_resistance',
             'title': 'Support & Resistance',
-            'data': [
-                {
-                    'x': data.index[-20:].strftime('%H:%M').tolist(),
-                    'y': data['Close'][-20:].tolist(),
-                    'type': 'candlestick',
-                    'open': data['Open'][-20:].tolist(),
-                    'high': data['High'][-20:].tolist(),
-                    'low': data['Low'][-20:].tolist(),
-                    'close': data['Close'][-20:].tolist()
-                }
-            ],
-            'support_levels': support_levels,
-            'resistance_levels': resistance_levels,
-            'key_level_distance': self._calculate_key_level_distance(data, support_levels, resistance_levels)
+            'support_level': float(support_levels) if support_levels else 0.0,
+            'resistance_level': float(resistance_levels) if resistance_levels else 0.0,
+            'key_level_distance': {
+                'support_distance': f"{key_distances.get('support_distance', 0):.2f}",
+                'resistance_distance': f"{key_distances.get('resistance_distance', 0):.2f}"
+            }
         }
         
         return chart_data

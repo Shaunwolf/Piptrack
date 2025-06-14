@@ -49,12 +49,12 @@ class EnhancedStockWidgets {
                     <div class="w-2 h-2 bg-accent-blue rounded-full animate-pulse"></div>
                     <span class="text-sm font-semibold text-white">Market Analysis</span>
                 </div>
-                <select class="chart-type-selector text-xs bg-gradient-to-r from-gray-800 to-gray-700 border border-gray-600/50 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-accent-blue focus:border-transparent transition-all duration-200 shadow-lg hover:shadow-xl" data-symbol="${symbol}">
-                    <option value="rsi_momentum">🎯 RSI Momentum</option>
-                    <option value="bollinger_squeeze">🟡 Bollinger Squeeze</option>
-                    <option value="macd_divergence">📊 MACD Divergence</option>
-                    <option value="volume_profile">📈 Volume Profile</option>
-                    <option value="support_resistance">🎚️ Support & Resistance</option>
+                <select class="chart-type-selector text-xs bg-gradient-to-r from-gray-800 to-gray-700 border border-gray-600/50 rounded-md px-2 py-1 text-white focus:ring-1 focus:ring-accent-blue focus:border-transparent transition-all duration-200 shadow-md hover:shadow-lg max-w-32" data-symbol="${symbol}">
+                    <option value="rsi_momentum">RSI</option>
+                    <option value="bollinger_squeeze">Squeeze</option>
+                    <option value="macd_divergence">MACD</option>
+                    <option value="volume_profile">Volume</option>
+                    <option value="support_resistance">S&R</option>
                 </select>
             </div>
             <div class="fibonacci-scaler mb-4" id="fibonacci-${symbol}">
