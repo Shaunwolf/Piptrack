@@ -871,9 +871,6 @@ def get_multiple_sparklines():
         if not symbols:
             return jsonify({'success': False, 'error': 'No symbols provided'})
         
-        period = request.args.get('period', '1d')
-        interval = request.args.get('interval', '15m')
-        
         # Use individual sparkline generation with better error handling
         sparklines_data = {}
         for symbol in symbols:
