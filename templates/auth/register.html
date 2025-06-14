@@ -126,31 +126,7 @@
                     </button>
                 </form>
 
-                <!-- Alternative Login Options -->
-                <div class="mt-8">
-                    <div class="relative">
-                        <div class="absolute inset-0 flex items-center">
-                            <div class="w-full border-t border-gray-600"></div>
-                        </div>
-                        <div class="relative flex justify-center text-sm">
-                            <span class="px-2 bg-transparent text-gray-400">Or continue with</span>
-                        </div>
-                    </div>
 
-                    <div class="mt-6 space-y-3">
-                        <!-- Google OAuth -->
-                        <a href="{{ url_for('google_auth.login') }}" class="w-full flex items-center justify-center px-4 py-3 border border-white/20 rounded-lg bg-white/5 hover:bg-white/10 transition-colors">
-                            <i class="fab fa-google text-red-400 mr-3"></i>
-                            <span class="text-white font-medium">Continue with Google</span>
-                        </a>
-
-                        <!-- Replit Auth -->
-                        <a href="{{ url_for('replit_auth.login') }}" class="w-full flex items-center justify-center px-4 py-3 border border-white/20 rounded-lg bg-white/5 hover:bg-white/10 transition-colors">
-                            <i class="fas fa-code text-orange-400 mr-3"></i>
-                            <span class="text-white font-medium">Continue with Replit</span>
-                        </a>
-                    </div>
-                </div>
             </div>
 
             <!-- Features Preview -->

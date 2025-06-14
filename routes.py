@@ -5,7 +5,7 @@ from app import app, db
 from models import Stock, TradeJournal, ForecastPath, AIAnalysis, PatternEvolution, User, OAuth, UserTradingProfile, StockRecommendation, RecommendationFeedback
 from replit_auth import require_login, make_replit_blueprint
 from auth_forms import RegistrationForm, LoginForm
-from google_auth import google_auth, is_google_configured
+# Google OAuth removed - using standard email/password only
 import uuid
 from stock_scanner import StockScanner
 from forecasting_engine import ForecastingEngine
@@ -32,7 +32,6 @@ def load_user(user_id):
 
 # Register authentication blueprints
 app.register_blueprint(make_replit_blueprint(), url_prefix="/auth")
-app.register_blueprint(google_auth, url_prefix="/auth")
 
 # Authentication routes
 @app.route('/register', methods=['GET', 'POST'])
@@ -88,8 +87,7 @@ def login():
             flash('Invalid email or password', 'error')
     
     beta_count = User.query.filter(User.beta_user_number.isnot(None)).count()
-    return render_template('auth/login.html', form=form, beta_count=beta_count, 
-                         google_configured=is_google_configured())
+    return render_template('auth/login.html', form=form, beta_count=beta_count)
 
 @app.route('/logout')
 @login_required
