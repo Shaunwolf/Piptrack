@@ -53,7 +53,7 @@ class EnhancedStockWidgets {
                     <option value="rsi_momentum">RSI</option>
                     <option value="bollinger_squeeze">Squeeze</option>
                     <option value="macd_divergence">MACD</option>
-                    <option value="volume_profile">Volume</option>
+                    <option value="volume_profile" selected>Volume</option>
                     <option value="support_resistance">S&R</option>
                 </select>
             </div>
@@ -90,7 +90,7 @@ class EnhancedStockWidgets {
         });
 
         // Load initial widget data
-        await this.updateWidget(symbol, 'rsi_momentum');
+        await this.updateWidget(symbol, 'volume_profile');
     }
 
     async updateWidget(symbol, chartType) {

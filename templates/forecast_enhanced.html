@@ -1,0 +1,965 @@
+{% extends "base.html" %}
+
+{% block title %}{{ stock.symbol }} Forecast Analysis - CandleCast{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+    <!-- Hero Section -->
+    <div class="relative overflow-hidden bg-gradient-to-r from-gray-900 via-blue-900/20 to-purple-900/20 border-b border-gray-700/50">
+        <div class="absolute inset-0 bg-grid-pattern opacity-5"></div>
+        <div class="relative px-6 py-12">
+            <div class="max-w-7xl mx-auto">
+                <div class="flex flex-col lg:flex-row items-start justify-between gap-8">
+                    <!-- Left: Stock Info -->
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-4 mb-6">
+                            <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-xl">
+                                <span class="text-2xl font-bold text-white">{{ stock.symbol[:2] }}</span>
+                            </div>
+                            <div>
+                                <h1 class="text-4xl font-bold text-white mb-2">{{ stock.symbol }}</h1>
+                                <p class="text-gray-300 text-lg">Advanced Forecast Analysis</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Price Display -->
+                        <div class="flex items-center space-x-6 mb-8">
+                            <div class="text-5xl font-bold text-white">${{ "%.2f"|format(stock.price) }}</div>
+                            <div class="flex flex-col space-y-2">
+                                <div class="confidence-badge confidence-{{ 'high' if stock.confidence_score >= 70 else 'medium' if stock.confidence_score >= 40 else 'low' }} text-lg px-4 py-2">
+                                    {{ stock.confidence_score }}% Confidence
+                                </div>
+                                <div class="text-sm text-gray-400">
+                                    Updated {{ current_time.strftime('%H:%M EST') }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right: Quick Actions -->
+                    <div class="flex flex-col space-y-4">
+                        <button onclick="refreshForecast()" class="btn-primary px-6 py-3 text-lg">
+                            <i class="fas fa-sync-alt mr-2"></i>Refresh Analysis
+                        </button>
+                        <button onclick="addToJournal()" class="btn-secondary px-6 py-3 text-lg">
+                            <i class="fas fa-book mr-2"></i>Add to Journal
+                        </button>
+                        <button onclick="exportForecast()" class="btn-outline px-6 py-3 text-lg">
+                            <i class="fas fa-download mr-2"></i>Export PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-6 py-8 space-y-8">
+        
+        <!-- Key Metrics Dashboard -->
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            <div class="metric-card bg-gradient-to-br from-blue-900/50 to-blue-800/30">
+                <div class="metric-icon bg-blue-500">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="metric-content">
+                    <p class="metric-label">RSI</p>
+                    <p class="metric-value">{{ "%.1f"|format(stock.rsi) }}</p>
+                    <p class="metric-change {{ 'text-green-400' if stock.rsi < 30 else 'text-red-400' if stock.rsi > 70 else 'text-gray-400' }}">
+                        {{ 'Oversold' if stock.rsi < 30 else 'Overbought' if stock.rsi > 70 else 'Neutral' }}
+                    </p>
+                </div>
+            </div>
+            
+            <div class="metric-card bg-gradient-to-br from-purple-900/50 to-purple-800/30">
+                <div class="metric-icon bg-purple-500">
+                    <i class="fas fa-volume-up"></i>
+                </div>
+                <div class="metric-content">
+                    <p class="metric-label">Volume</p>
+                    <p class="metric-value">{{ "%.1f"|format(stock.volume_spike) }}%</p>
+                    <p class="metric-change {{ 'text-green-400' if stock.volume_spike > 50 else 'text-yellow-400' if stock.volume_spike > 20 else 'text-gray-400' }}">
+                        {{ 'High' if stock.volume_spike > 50 else 'Elevated' if stock.volume_spike > 20 else 'Normal' }}
+                    </p>
+                </div>
+            </div>
+            
+            <div class="metric-card bg-gradient-to-br from-green-900/50 to-green-800/30">
+                <div class="metric-icon bg-green-500">
+                    <i class="fas fa-magic"></i>
+                </div>
+                <div class="metric-content">
+                    <p class="metric-label">Pattern</p>
+                    <p class="metric-value text-sm">{{ stock.pattern_type[:8] }}</p>
+                    <p class="metric-change text-green-400">Active</p>
+                </div>
+            </div>
+            
+            <div class="metric-card bg-gradient-to-br from-yellow-900/50 to-yellow-800/30">
+                <div class="metric-icon bg-yellow-500">
+                    <i class="fas fa-bolt"></i>
+                </div>
+                <div class="metric-content">
+                    <p class="metric-label">Momentum</p>
+                    <p class="metric-value">{{ momentum_score }}%</p>
+                    <p class="metric-change {{ 'text-green-400' if momentum_score > 60 else 'text-yellow-400' if momentum_score > 40 else 'text-red-400' }}">
+                        {{ 'Strong' if momentum_score > 60 else 'Moderate' if momentum_score > 40 else 'Weak' }}
+                    </p>
+                </div>
+            </div>
+            
+            <div class="metric-card bg-gradient-to-br from-red-900/50 to-red-800/30">
+                <div class="metric-icon bg-red-500">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div class="metric-content">
+                    <p class="metric-label">Risk Level</p>
+                    <p class="metric-value">{{ risk_level }}</p>
+                    <p class="metric-change {{ 'text-red-400' if risk_level == 'High' else 'text-yellow-400' if risk_level == 'Medium' else 'text-green-400' }}">
+                        {{ volatility_desc }}
+                    </p>
+                </div>
+            </div>
+            
+            <div class="metric-card bg-gradient-to-br from-indigo-900/50 to-indigo-800/30">
+                <div class="metric-icon bg-indigo-500">
+                    <i class="fas fa-target"></i>
+                </div>
+                <div class="metric-content">
+                    <p class="metric-label">Target</p>
+                    <p class="metric-value">${{ "%.2f"|format(price_target) }}</p>
+                    <p class="metric-change text-indigo-400">
+                        {{ "%.1f"|format(((price_target / stock.price) - 1) * 100) }}%
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Analysis & Historical Comparison -->
+        {% if ai_analysis %}
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- AI Analysis -->
+            <div class="analysis-card">
+                <div class="analysis-header">
+                    <h2 class="text-2xl font-bold text-white flex items-center">
+                        <i class="fas fa-robot text-blue-400 mr-3"></i>
+                        AI Analysis
+                        <span class="ml-3 text-3xl">{{ ai_analysis.mood_tag and {'breakout': '💥', 'reversal': '🔄', 'risky': '⚠️', 'confirmed': '🔒'}.get(ai_analysis.mood_tag, '📊') or '📊' }}</span>
+                    </h2>
+                    <button onclick="speakAnalysis('{{ ai_analysis.analysis_text }}')" class="btn-outline">
+                        <i class="fas fa-volume-up mr-2"></i>Listen
+                    </button>
+                </div>
+                
+                <div class="analysis-content">
+                    <div class="mb-6">
+                        <h3 class="text-lg font-semibold text-blue-400 mb-3">Current Setup Analysis</h3>
+                        <p class="text-gray-300 leading-relaxed">{{ ai_analysis.analysis_text }}</p>
+                    </div>
+                    
+                    <!-- Confidence Breakdown -->
+                    {% if ai_analysis.confidence_factors %}
+                    <div class="confidence-breakdown">
+                        <h3 class="text-lg font-semibold text-blue-400 mb-4">Confidence Breakdown</h3>
+                        <div class="space-y-3">
+                            <div class="confidence-factor">
+                                <div class="flex justify-between mb-1">
+                                    <span class="text-sm font-medium text-gray-300">RSI Position</span>
+                                    <span class="text-sm text-white">{{ ai_analysis.confidence_factors.rsi }}%</span>
+                                </div>
+                                <div class="confidence-bar">
+                                    <div class="confidence-fill bg-blue-500" style="width: {{ ai_analysis.confidence_factors.rsi }}%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="confidence-factor">
+                                <div class="flex justify-between mb-1">
+                                    <span class="text-sm font-medium text-gray-300">Volume Surge</span>
+                                    <span class="text-sm text-white">{{ ai_analysis.confidence_factors.volume_surge }}%</span>
+                                </div>
+                                <div class="confidence-bar">
+                                    <div class="confidence-fill bg-purple-500" style="width: {{ ai_analysis.confidence_factors.volume_surge }}%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="confidence-factor">
+                                <div class="flex justify-between mb-1">
+                                    <span class="text-sm font-medium text-gray-300">Momentum Score</span>
+                                    <span class="text-sm text-white">{{ ai_analysis.confidence_factors.momentum }}%</span>
+                                </div>
+                                <div class="confidence-bar">
+                                    <div class="confidence-fill bg-green-500" style="width: {{ ai_analysis.confidence_factors.momentum }}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Historical Comparison -->
+            <div class="analysis-card">
+                <div class="analysis-header">
+                    <h2 class="text-2xl font-bold text-white flex items-center">
+                        <i class="fas fa-history text-purple-400 mr-3"></i>
+                        Historical Comparison
+                    </h2>
+                </div>
+                
+                <div class="analysis-content">
+                    <p class="text-gray-300 leading-relaxed mb-6">
+                        {% if ai_analysis.historical_comparison is mapping and ai_analysis.historical_comparison.text %}
+                            {{ ai_analysis.historical_comparison.text }}
+                        {% else %}
+                            {{ ai_analysis.historical_comparison }}
+                        {% endif %}
+                    </p>
+                    
+                    <!-- Historical Chart -->
+                    {% if ai_analysis.historical_comparison is mapping and ai_analysis.historical_comparison.chart_data %}
+                    <div id="historical-chart-{{ stock.symbol }}" class="h-64 bg-gray-800/50 rounded-xl border border-gray-600/30"></div>
+                    {% endif %}
+                    
+                    <!-- Similar Patterns -->
+                    <div class="mt-6">
+                        <h3 class="text-lg font-semibold text-purple-400 mb-4">Similar Historical Patterns</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            {% for pattern in historical_patterns %}
+                            <div class="pattern-match-card">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-sm font-medium text-white">{{ pattern.date }}</span>
+                                    <span class="text-xs text-green-400">{{ pattern.similarity }}% match</span>
+                                </div>
+                                <div class="text-xs text-gray-400">
+                                    Outcome: <span class="text-white">{{ pattern.outcome }}</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Spaghetti Model Forecast -->
+        <div class="forecast-section">
+            <div class="forecast-header">
+                <h2 class="text-3xl font-bold text-white flex items-center">
+                    <i class="fas fa-chart-area text-green-400 mr-4"></i>
+                    Multi-Path Forecast Model
+                </h2>
+                <div class="flex space-x-3">
+                    <button onclick="toggleProbabilityMode()" class="btn-outline">
+                        <i class="fas fa-percent mr-2"></i>Probability View
+                    </button>
+                    <button onclick="generateNewForecast()" class="btn-primary">
+                        <i class="fas fa-magic mr-2"></i>Generate New
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Forecast Chart -->
+            <div class="forecast-chart-container">
+                <div id="forecastChart" class="h-96 w-full bg-gray-800/30 rounded-2xl border border-gray-600/30"></div>
+                
+                <!-- Chart Controls -->
+                <div class="chart-controls">
+                    <div class="flex items-center space-x-6">
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" id="showVolume" class="form-checkbox" checked>
+                            <span class="text-sm text-gray-300">Show Volume</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" id="showSupport" class="form-checkbox" checked>
+                            <span class="text-sm text-gray-300">Support/Resistance</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" id="showFib" class="form-checkbox">
+                            <span class="text-sm text-gray-300">Fibonacci Levels</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Forecast Paths Grid -->
+            <div class="forecast-paths-grid">
+                {% for path in forecast_paths %}
+                <div class="forecast-path-card {{ 'primary-path' if loop.index == 1 else '' }}" style="border-left: 4px solid {{ path.color }}">
+                    <div class="path-header">
+                        <div class="path-title">
+                            <h3 class="text-lg font-bold text-white capitalize">{{ path.type.replace('_', ' ') }}</h3>
+                            <span class="probability-badge" style="background-color: {{ path.color }}20; color: {{ path.color }}; border: 1px solid {{ path.color }}40;">
+                                {{ (path.probability * 100)|round }}% Probability
+                            </span>
+                        </div>
+                        <div class="path-confidence">
+                            <div class="confidence-meter">
+                                <div class="confidence-fill" style="width: {{ (path.probability * 100)|round }}%; background-color: {{ path.color }};"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="path-content">
+                        <p class="path-description">{{ path.description }}</p>
+                        
+                        <div class="path-metrics">
+                            <div class="metric-row">
+                                <span class="metric-label">Target Range:</span>
+                                <span class="metric-value">${{ "%.2f"|format(path.targets|first) }} - ${{ "%.2f"|format(path.targets|last) }}</span>
+                            </div>
+                            
+                            {% if path.risk_zones %}
+                            <div class="metric-row">
+                                <span class="metric-label">Risk Zone:</span>
+                                <span class="metric-value text-red-400">${{ "%.2f"|format(path.risk_zones|first) }} - ${{ "%.2f"|format(path.risk_zones|last) }}</span>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="metric-row">
+                                <span class="metric-label">Time Frame:</span>
+                                <span class="metric-value">{{ path.timeframe or '3-5 days' }}</span>
+                            </div>
+                            
+                            <div class="metric-row">
+                                <span class="metric-label">Key Catalyst:</span>
+                                <span class="metric-value">{{ path.catalyst or 'Market momentum' }}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Action Items -->
+                        <div class="path-actions">
+                            <h4 class="text-sm font-semibold text-gray-300 mb-2">Action Items:</h4>
+                            <ul class="text-xs text-gray-400 space-y-1">
+                                {% for action in path.actions %}
+                                <li class="flex items-center">
+                                    <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                                    {{ action }}
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Technical Analysis Deep Dive -->
+        <div class="technical-analysis-section">
+            <div class="section-header">
+                <h2 class="text-3xl font-bold text-white flex items-center">
+                    <i class="fas fa-microscope text-yellow-400 mr-4"></i>
+                    Technical Analysis Deep Dive
+                </h2>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Momentum Indicators -->
+                <div class="analysis-panel">
+                    <h3 class="panel-title">
+                        <i class="fas fa-tachometer-alt text-blue-400 mr-2"></i>
+                        Momentum Indicators
+                    </h3>
+                    <div class="indicator-list">
+                        <div class="indicator-item">
+                            <span class="indicator-name">RSI (14)</span>
+                            <span class="indicator-value">{{ "%.1f"|format(technical_data.rsi) }}</span>
+                            <span class="indicator-signal {{ 'bullish' if technical_data.rsi < 30 else 'bearish' if technical_data.rsi > 70 else 'neutral' }}">
+                                {{ 'Oversold' if technical_data.rsi < 30 else 'Overbought' if technical_data.rsi > 70 else 'Neutral' }}
+                            </span>
+                        </div>
+                        <div class="indicator-item">
+                            <span class="indicator-name">MACD</span>
+                            <span class="indicator-value">{{ "%.3f"|format(technical_data.macd) }}</span>
+                            <span class="indicator-signal {{ 'bullish' if technical_data.macd > 0 else 'bearish' }}">
+                                {{ 'Bullish' if technical_data.macd > 0 else 'Bearish' }}
+                            </span>
+                        </div>
+                        <div class="indicator-item">
+                            <span class="indicator-name">Stochastic</span>
+                            <span class="indicator-value">{{ "%.1f"|format(technical_data.stoch) }}</span>
+                            <span class="indicator-signal {{ 'bullish' if technical_data.stoch < 20 else 'bearish' if technical_data.stoch > 80 else 'neutral' }}">
+                                {{ 'Oversold' if technical_data.stoch < 20 else 'Overbought' if technical_data.stoch > 80 else 'Neutral' }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Trend Analysis -->
+                <div class="analysis-panel">
+                    <h3 class="panel-title">
+                        <i class="fas fa-trending-up text-green-400 mr-2"></i>
+                        Trend Analysis
+                    </h3>
+                    <div class="indicator-list">
+                        <div class="indicator-item">
+                            <span class="indicator-name">SMA (20)</span>
+                            <span class="indicator-value">${{ "%.2f"|format(technical_data.sma_20) }}</span>
+                            <span class="indicator-signal {{ 'bullish' if stock.price > technical_data.sma_20 else 'bearish' }}">
+                                {{ 'Above' if stock.price > technical_data.sma_20 else 'Below' }}
+                            </span>
+                        </div>
+                        <div class="indicator-item">
+                            <span class="indicator-name">SMA (50)</span>
+                            <span class="indicator-value">${{ "%.2f"|format(technical_data.sma_50) }}</span>
+                            <span class="indicator-signal {{ 'bullish' if stock.price > technical_data.sma_50 else 'bearish' }}">
+                                {{ 'Above' if stock.price > technical_data.sma_50 else 'Below' }}
+                            </span>
+                        </div>
+                        <div class="indicator-item">
+                            <span class="indicator-name">Trend Strength</span>
+                            <span class="indicator-value">{{ trend_strength }}%</span>
+                            <span class="indicator-signal {{ 'bullish' if trend_strength > 60 else 'bearish' if trend_strength < 40 else 'neutral' }}">
+                                {{ 'Strong' if trend_strength > 60 else 'Weak' if trend_strength < 40 else 'Moderate' }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Volatility & Risk -->
+                <div class="analysis-panel">
+                    <h3 class="panel-title">
+                        <i class="fas fa-exclamation-triangle text-red-400 mr-2"></i>
+                        Volatility & Risk
+                    </h3>
+                    <div class="indicator-list">
+                        <div class="indicator-item">
+                            <span class="indicator-name">Bollinger %B</span>
+                            <span class="indicator-value">{{ "%.2f"|format(technical_data.bb_percent) }}</span>
+                            <span class="indicator-signal {{ 'bearish' if technical_data.bb_percent > 1 else 'bullish' if technical_data.bb_percent < 0 else 'neutral' }}">
+                                {{ 'Overbought' if technical_data.bb_percent > 1 else 'Oversold' if technical_data.bb_percent < 0 else 'Normal' }}
+                            </span>
+                        </div>
+                        <div class="indicator-item">
+                            <span class="indicator-name">ATR (14)</span>
+                            <span class="indicator-value">${{ "%.2f"|format(technical_data.atr) }}</span>
+                            <span class="indicator-signal neutral">{{ volatility_level }}</span>
+                        </div>
+                        <div class="indicator-item">
+                            <span class="indicator-name">Beta</span>
+                            <span class="indicator-value">{{ "%.2f"|format(technical_data.beta) }}</span>
+                            <span class="indicator-signal {{ 'bearish' if technical_data.beta > 1.5 else 'bullish' if technical_data.beta < 0.8 else 'neutral' }}">
+                                {{ 'High Risk' if technical_data.beta > 1.5 else 'Low Risk' if technical_data.beta < 0.8 else 'Market Risk' }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Trading Plan Generator -->
+        <div class="trading-plan-section">
+            <div class="section-header">
+                <h2 class="text-3xl font-bold text-white flex items-center">
+                    <i class="fas fa-map text-indigo-400 mr-4"></i>
+                    Personalized Trading Plan
+                </h2>
+                <button onclick="generateTradingPlan()" class="btn-primary">
+                    <i class="fas fa-magic mr-2"></i>Generate Plan
+                </button>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Entry Strategy -->
+                <div class="trading-card">
+                    <h3 class="trading-card-title">
+                        <i class="fas fa-sign-in-alt text-green-400 mr-2"></i>
+                        Entry Strategy
+                    </h3>
+                    <div class="trading-card-content">
+                        <div class="strategy-item">
+                            <span class="strategy-label">Optimal Entry Zone:</span>
+                            <span class="strategy-value">${{ "%.2f"|format(entry_zone.low) }} - ${{ "%.2f"|format(entry_zone.high) }}</span>
+                        </div>
+                        <div class="strategy-item">
+                            <span class="strategy-label">Entry Trigger:</span>
+                            <span class="strategy-value">{{ entry_trigger }}</span>
+                        </div>
+                        <div class="strategy-item">
+                            <span class="strategy-label">Position Size:</span>
+                            <span class="strategy-value">{{ position_size }}% of portfolio</span>
+                        </div>
+                        <div class="strategy-item">
+                            <span class="strategy-label">Risk Per Trade:</span>
+                            <span class="strategy-value">{{ risk_per_trade }}%</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Exit Strategy -->
+                <div class="trading-card">
+                    <h3 class="trading-card-title">
+                        <i class="fas fa-sign-out-alt text-red-400 mr-2"></i>
+                        Exit Strategy
+                    </h3>
+                    <div class="trading-card-content">
+                        <div class="strategy-item">
+                            <span class="strategy-label">Stop Loss:</span>
+                            <span class="strategy-value text-red-400">${{ "%.2f"|format(stop_loss) }}</span>
+                        </div>
+                        <div class="strategy-item">
+                            <span class="strategy-label">Take Profit 1:</span>
+                            <span class="strategy-value text-green-400">${{ "%.2f"|format(take_profit_1) }}</span>
+                        </div>
+                        <div class="strategy-item">
+                            <span class="strategy-label">Take Profit 2:</span>
+                            <span class="strategy-value text-green-400">${{ "%.2f"|format(take_profit_2) }}</span>
+                        </div>
+                        <div class="strategy-item">
+                            <span class="strategy-label">Risk/Reward:</span>
+                            <span class="strategy-value">1:{{ "%.1f"|format(risk_reward_ratio) }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Advanced Checklist -->
+            <div class="advanced-checklist">
+                <h3 class="checklist-title">Pre-Trade Verification Checklist</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="checklist-category">
+                        <h4 class="category-title">Technical Setup</h4>
+                        <div class="checklist-items">
+                            <label class="checklist-item">
+                                <input type="checkbox" class="form-checkbox">
+                                <span>Pattern confirmed on multiple timeframes</span>
+                                <i class="fas fa-info-circle tooltip-trigger" data-tooltip="Check 15m, 1h, and 4h charts"></i>
+                            </label>
+                            <label class="checklist-item">
+                                <input type="checkbox" class="form-checkbox">
+                                <span>Volume surge validates breakout</span>
+                                <i class="fas fa-info-circle tooltip-trigger" data-tooltip="Volume should be 150%+ of average"></i>
+                            </label>
+                            <label class="checklist-item">
+                                <input type="checkbox" class="form-checkbox">
+                                <span>Key resistance level identified</span>
+                                <i class="fas fa-info-circle tooltip-trigger" data-tooltip="Mark horizontal resistance levels"></i>
+                            </label>
+                            <label class="checklist-item">
+                                <input type="checkbox" class="form-checkbox">
+                                <span>RSI in favorable zone</span>
+                                <i class="fas fa-info-circle tooltip-trigger" data-tooltip="Ideally 30-70 range for entries"></i>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="checklist-category">
+                        <h4 class="category-title">Risk Management</h4>
+                        <div class="checklist-items">
+                            <label class="checklist-item">
+                                <input type="checkbox" class="form-checkbox">
+                                <span>Position size calculated</span>
+                                <i class="fas fa-info-circle tooltip-trigger" data-tooltip="Use 1-2% risk per trade rule"></i>
+                            </label>
+                            <label class="checklist-item">
+                                <input type="checkbox" class="form-checkbox">
+                                <span>Stop loss level set</span>
+                                <i class="fas fa-info-circle tooltip-trigger" data-tooltip="Below recent swing low"></i>
+                            </label>
+                            <label class="checklist-item">
+                                <input type="checkbox" class="form-checkbox">
+                                <span>Risk/reward ratio favorable</span>
+                                <i class="fas fa-info-circle tooltip-trigger" data-tooltip="Minimum 1:2 ratio required"></i>
+                            </label>
+                            <label class="checklist-item">
+                                <input type="checkbox" class="form-checkbox">
+                                <span>Market conditions suitable</span>
+                                <i class="fas fa-info-circle tooltip-trigger" data-tooltip="Check VIX and market sentiment"></i>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="checklist-category">
+                        <h4 class="category-title">Execution</h4>
+                        <div class="checklist-items">
+                            <label class="checklist-item">
+                                <input type="checkbox" class="form-checkbox">
+                                <span>Entry plan documented</span>
+                                <i class="fas fa-info-circle tooltip-trigger" data-tooltip="Screenshot and notes ready"></i>
+                            </label>
+                            <label class="checklist-item">
+                                <input type="checkbox" class="form-checkbox">
+                                <span>Exit strategy defined</span>
+                                <i class="fas fa-info-circle tooltip-trigger" data-tooltip="Know when to take profits"></i>
+                            </label>
+                            <label class="checklist-item">
+                                <input type="checkbox" class="form-checkbox">
+                                <span>Market hours verified</span>
+                                <i class="fas fa-info-circle tooltip-trigger" data-tooltip="Avoid low volume periods"></i>
+                            </label>
+                            <label class="checklist-item">
+                                <input type="checkbox" class="form-checkbox">
+                                <span>News catalysts checked</span>
+                                <i class="fas fa-info-circle tooltip-trigger" data-tooltip="Earnings, FDA approvals, etc."></i>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart Story Mode -->
+        <div class="chart-story-section">
+            <div class="section-header">
+                <h2 class="text-3xl font-bold text-white flex items-center">
+                    <i class="fas fa-comments text-purple-400 mr-4"></i>
+                    Interactive Chart Story
+                </h2>
+                <label class="flex items-center space-x-3">
+                    <input type="checkbox" id="chartStoryToggle" class="form-checkbox" onchange="toggleChartStory()">
+                    <span class="text-gray-300">Enable hover insights</span>
+                </label>
+            </div>
+            
+            <div id="chartStoryContainer" class="hidden">
+                <div id="priceChart" class="h-80 w-full bg-gray-800/30 rounded-2xl border border-gray-600/30 mb-6"></div>
+                <div id="chartComments" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Comments populated dynamically -->
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Floating Action Button -->
+<div class="fixed bottom-6 right-6 z-50">
+    <div class="flex flex-col space-y-3">
+        <button onclick="exportForecast()" class="fab-button bg-blue-600 hover:bg-blue-700">
+            <i class="fas fa-download"></i>
+        </button>
+        <button onclick="shareAnalysis()" class="fab-button bg-green-600 hover:bg-green-700">
+            <i class="fas fa-share-alt"></i>
+        </button>
+        <button onclick="addToWatchlist()" class="fab-button bg-purple-600 hover:bg-purple-700">
+            <i class="fas fa-star"></i>
+        </button>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block styles %}
+<style>
+/* Enhanced Forecast Page Styles */
+.bg-grid-pattern {
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='7' cy='7' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+.metric-card {
+    @apply bg-gray-800/50 rounded-2xl p-6 border border-gray-600/30 backdrop-blur-sm;
+    transition: all 0.3s ease;
+}
+
+.metric-card:hover {
+    @apply transform -translate-y-1 shadow-2xl border-gray-500/50;
+}
+
+.metric-icon {
+    @apply w-12 h-12 rounded-xl flex items-center justify-center text-white text-xl mb-4;
+}
+
+.metric-content {
+    @apply space-y-1;
+}
+
+.metric-label {
+    @apply text-xs text-gray-400 font-medium uppercase tracking-wide;
+}
+
+.metric-value {
+    @apply text-2xl font-bold text-white;
+}
+
+.metric-change {
+    @apply text-xs font-medium;
+}
+
+.analysis-card {
+    @apply bg-gray-800/40 rounded-2xl border border-gray-600/30 backdrop-blur-sm overflow-hidden;
+}
+
+.analysis-header {
+    @apply p-6 border-b border-gray-600/30 flex items-center justify-between;
+}
+
+.analysis-content {
+    @apply p-6;
+}
+
+.confidence-breakdown {
+    @apply bg-gray-700/30 rounded-xl p-4;
+}
+
+.confidence-factor {
+    @apply space-y-1;
+}
+
+.confidence-bar {
+    @apply w-full bg-gray-600 rounded-full h-2 overflow-hidden;
+}
+
+.confidence-fill {
+    @apply h-full rounded-full transition-all duration-700 ease-out;
+}
+
+.pattern-match-card {
+    @apply bg-gray-700/50 rounded-lg p-3 border border-gray-600/20;
+}
+
+.forecast-section {
+    @apply space-y-6;
+}
+
+.forecast-header {
+    @apply flex items-center justify-between mb-8;
+}
+
+.forecast-chart-container {
+    @apply space-y-4;
+}
+
+.chart-controls {
+    @apply bg-gray-800/30 rounded-xl p-4 border border-gray-600/30;
+}
+
+.forecast-paths-grid {
+    @apply grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6;
+}
+
+.forecast-path-card {
+    @apply bg-gray-800/40 rounded-2xl p-6 border border-gray-600/30 backdrop-blur-sm;
+    transition: all 0.3s ease;
+}
+
+.forecast-path-card.primary-path {
+    @apply ring-2 ring-blue-500/50 bg-gray-800/60;
+}
+
+.forecast-path-card:hover {
+    @apply transform -translate-y-1 shadow-2xl;
+}
+
+.path-header {
+    @apply space-y-3 mb-4;
+}
+
+.path-title {
+    @apply flex items-center justify-between;
+}
+
+.probability-badge {
+    @apply px-3 py-1 rounded-full text-xs font-bold;
+}
+
+.path-confidence {
+    @apply w-full;
+}
+
+.confidence-meter {
+    @apply w-full bg-gray-600 rounded-full h-1 overflow-hidden;
+}
+
+.path-content {
+    @apply space-y-4;
+}
+
+.path-description {
+    @apply text-sm text-gray-300 leading-relaxed;
+}
+
+.path-metrics {
+    @apply space-y-2;
+}
+
+.metric-row {
+    @apply flex justify-between items-center text-sm;
+}
+
+.metric-label {
+    @apply text-gray-400;
+}
+
+.metric-value {
+    @apply text-white font-medium;
+}
+
+.path-actions {
+    @apply bg-gray-700/30 rounded-lg p-3;
+}
+
+.technical-analysis-section {
+    @apply space-y-6;
+}
+
+.section-header {
+    @apply mb-8;
+}
+
+.analysis-panel {
+    @apply bg-gray-800/40 rounded-2xl p-6 border border-gray-600/30;
+}
+
+.panel-title {
+    @apply text-lg font-bold text-white mb-4 flex items-center;
+}
+
+.indicator-list {
+    @apply space-y-3;
+}
+
+.indicator-item {
+    @apply flex items-center justify-between text-sm;
+}
+
+.indicator-name {
+    @apply text-gray-400 font-medium;
+}
+
+.indicator-value {
+    @apply text-white font-bold;
+}
+
+.indicator-signal {
+    @apply px-2 py-1 rounded-full text-xs font-medium;
+}
+
+.indicator-signal.bullish {
+    @apply bg-green-500/20 text-green-400;
+}
+
+.indicator-signal.bearish {
+    @apply bg-red-500/20 text-red-400;
+}
+
+.indicator-signal.neutral {
+    @apply bg-gray-500/20 text-gray-400;
+}
+
+.trading-plan-section {
+    @apply space-y-6;
+}
+
+.trading-card {
+    @apply bg-gray-800/40 rounded-2xl p-6 border border-gray-600/30;
+}
+
+.trading-card-title {
+    @apply text-lg font-bold text-white mb-4 flex items-center;
+}
+
+.trading-card-content {
+    @apply space-y-3;
+}
+
+.strategy-item {
+    @apply flex justify-between items-center text-sm;
+}
+
+.strategy-label {
+    @apply text-gray-400;
+}
+
+.strategy-value {
+    @apply text-white font-bold;
+}
+
+.advanced-checklist {
+    @apply mt-8;
+}
+
+.checklist-title {
+    @apply text-xl font-bold text-white mb-6;
+}
+
+.checklist-category {
+    @apply bg-gray-800/40 rounded-xl p-6 border border-gray-600/30;
+}
+
+.category-title {
+    @apply text-lg font-semibold text-white mb-4;
+}
+
+.checklist-items {
+    @apply space-y-3;
+}
+
+.checklist-item {
+    @apply flex items-center space-x-3 text-sm text-gray-300 cursor-pointer;
+    transition: all 0.2s ease;
+}
+
+.checklist-item:hover {
+    @apply text-white;
+}
+
+.tooltip-trigger {
+    @apply text-gray-500 hover:text-blue-400 cursor-help ml-2;
+}
+
+.chart-story-section {
+    @apply space-y-6;
+}
+
+.fab-button {
+    @apply w-14 h-14 rounded-full flex items-center justify-center text-white shadow-lg transition-all duration-200;
+}
+
+.fab-button:hover {
+    @apply transform scale-110 shadow-2xl;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+    .forecast-paths-grid {
+        @apply grid-cols-1 lg:grid-cols-2;
+    }
+    
+    .metric-card {
+        @apply p-4;
+    }
+    
+    .metric-icon {
+        @apply w-10 h-10 text-lg mb-3;
+    }
+    
+    .metric-value {
+        @apply text-xl;
+    }
+}
+
+@media (max-width: 768px) {
+    .forecast-paths-grid {
+        @apply grid-cols-1;
+    }
+    
+    .analysis-header {
+        @apply flex-col space-y-4 items-start;
+    }
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/forecast.js') }}"></script>
+<script src="{{ url_for('static', filename='js/forecast_enhanced.js') }}"></script>
+<script>
+// Enhanced forecast page initialization
+const stockData = {
+    symbol: '{{ stock.symbol }}',
+    price: {{ stock.price }},
+    rsi: {{ stock.rsi }},
+    volume_spike: {{ stock.volume_spike }},
+    confidence_score: {{ stock.confidence_score }}
+};
+
+const forecastPaths = {{ forecast_paths|tojson }};
+const aiAnalysis = {{ ai_analysis|tojson }};
+const technicalData = {{ technical_data|tojson }};
+
+document.addEventListener('DOMContentLoaded', function() {
+    initializeEnhancedForecast();
+});
+</script>
+{% endblock %}
