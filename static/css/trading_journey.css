@@ -1,0 +1,674 @@
+/* Animated Trading Journey Progress Bar Styles */
+
+.trading-journey-card {
+    background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+    border-radius: 20px;
+    padding: 24px;
+    margin: 20px 0;
+    border: 1px solid rgba(75, 85, 99, 0.3);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.trading-journey-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #3B82F6, #10B981, #F59E0B, #8B5CF6, #EF4444, #6366F1);
+    animation: shimmer 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+}
+
+/* Journey Header */
+.journey-header {
+    margin-bottom: 24px;
+}
+
+.current-stage-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    position: relative;
+}
+
+.current-stage-icon::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    z-index: -1;
+    animation: rotate 4s linear infinite;
+}
+
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.stage-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 4px;
+}
+
+.stage-description {
+    color: #9CA3AF;
+    font-size: 14px;
+}
+
+.xp-display {
+    text-align: center;
+    padding: 12px 20px;
+    background: rgba(59, 130, 246, 0.1);
+    border-radius: 12px;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.xp-amount {
+    font-size: 24px;
+    font-weight: 700;
+    color: #3B82F6;
+    margin-bottom: 4px;
+}
+
+.xp-label {
+    font-size: 12px;
+    color: #9CA3AF;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Progress Section */
+.progress-section {
+    margin-bottom: 24px;
+}
+
+.stage-progress {
+    margin-bottom: 20px;
+}
+
+.progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.progress-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: white;
+}
+
+.progress-percentage {
+    font-size: 14px;
+    font-weight: 700;
+    color: #10B981;
+}
+
+.progress-bar-container {
+    position: relative;
+    height: 12px;
+    background: rgba(55, 65, 81, 0.8);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 16px;
+}
+
+.progress-bar {
+    height: 100%;
+    border-radius: 6px;
+    position: relative;
+    transition: width 1s ease-out;
+    background: linear-gradient(90deg, #3B82F6, #10B981);
+}
+
+.progress-bar.animated {
+    width: 0%;
+}
+
+.progress-bar.glowing {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
+}
+
+.progress-bar.complete {
+    background: linear-gradient(90deg, #10B981, #34D399);
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.6);
+}
+
+.progress-glow {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 4px;
+    height: 100%;
+    opacity: 0.8;
+    filter: blur(2px);
+}
+
+/* Progress Requirements */
+.progress-requirements {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.requirement-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    background: rgba(55, 65, 81, 0.5);
+    border-radius: 8px;
+    border-left: 3px solid #374151;
+    transition: all 0.3s ease;
+}
+
+.requirement-item.completed {
+    border-left-color: #10B981;
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.requirement-icon {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    color: #9CA3AF;
+}
+
+.requirement-item.completed .requirement-icon {
+    color: #10B981;
+}
+
+.requirement-text {
+    flex: 1;
+    color: #E5E7EB;
+    font-size: 14px;
+}
+
+.requirement-progress {
+    font-size: 12px;
+    color: #9CA3AF;
+    font-weight: 600;
+}
+
+/* Overall Progress */
+.overall-progress {
+    margin-top: 20px;
+}
+
+.journey-stages {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 16px;
+    padding: 20px;
+    background: rgba(17, 24, 39, 0.8);
+    border-radius: 12px;
+    position: relative;
+}
+
+.journey-stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+}
+
+.stage-connector {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    width: calc(100% + 40px);
+    height: 2px;
+    background: #374151;
+    z-index: 1;
+}
+
+.stage-connector.has-next::after {
+    content: '';
+    position: absolute;
+    right: -20px;
+    top: -3px;
+    width: 8px;
+    height: 8px;
+    background: #374151;
+    border-radius: 50%;
+}
+
+.stage-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #374151;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9CA3AF;
+    margin-bottom: 8px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.journey-stage.completed .stage-circle {
+    background: var(--stage-color);
+    color: white;
+    box-shadow: 0 0 20px var(--stage-color);
+}
+
+.journey-stage.current .stage-circle {
+    background: var(--stage-color);
+    color: white;
+    transform: scale(1.2);
+    box-shadow: 0 0 30px var(--stage-color);
+}
+
+.journey-stage.current.pulse .stage-circle {
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1.2); box-shadow: 0 0 30px var(--stage-color); }
+    50% { transform: scale(1.3); box-shadow: 0 0 40px var(--stage-color); }
+}
+
+.stage-label {
+    font-size: 12px;
+    color: #9CA3AF;
+    text-align: center;
+    font-weight: 500;
+}
+
+.journey-stage.completed .stage-label,
+.journey-stage.current .stage-label {
+    color: white;
+    font-weight: 600;
+}
+
+/* Milestones Section */
+.milestones-section {
+    margin-top: 24px;
+}
+
+.section-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+}
+
+.milestones-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.milestone-card {
+    background: rgba(55, 65, 81, 0.6);
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid rgba(75, 85, 99, 0.3);
+    transition: all 0.3s ease;
+}
+
+.milestone-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+.milestone-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.milestone-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: white;
+}
+
+.milestone-percentage {
+    font-size: 12px;
+    color: #10B981;
+    font-weight: 700;
+}
+
+.milestone-progress-bar {
+    height: 6px;
+    background: rgba(55, 65, 81, 0.8);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.milestone-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3B82F6, #10B981);
+    border-radius: 3px;
+    transition: width 0.8s ease-out;
+}
+
+.milestone-details {
+    font-size: 12px;
+    color: #9CA3AF;
+    text-align: center;
+}
+
+.milestone-current {
+    color: #10B981;
+    font-weight: 600;
+}
+
+.milestone-separator {
+    margin: 0 4px;
+}
+
+.milestone-target {
+    color: #9CA3AF;
+}
+
+/* Achievements Section */
+.achievements-section {
+    margin-top: 24px;
+}
+
+.achievements-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.achievement-card {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    background: rgba(55, 65, 81, 0.6);
+    border-radius: 12px;
+    border: 1px solid rgba(75, 85, 99, 0.3);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.achievement-card.unlocked {
+    border-color: var(--achievement-color);
+    background: linear-gradient(135deg, rgba(55, 65, 81, 0.6), rgba(var(--achievement-color), 0.1));
+}
+
+.achievement-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+.achievement-card.hover-glow {
+    box-shadow: 0 0 20px var(--achievement-color);
+}
+
+.achievement-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--achievement-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 20px;
+    margin-right: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.achievement-info {
+    flex: 1;
+}
+
+.achievement-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 4px;
+}
+
+.achievement-description {
+    font-size: 14px;
+    color: #9CA3AF;
+    margin-bottom: 4px;
+}
+
+.achievement-date {
+    font-size: 12px;
+    color: #6B7280;
+}
+
+/* Badges Section */
+.badges-section {
+    margin-top: 24px;
+}
+
+.badges-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.badge-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 16px;
+    background: var(--badge-color);
+    border-radius: 20px;
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.badge-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.badge-item i {
+    margin-right: 8px;
+    font-size: 16px;
+}
+
+.badge-name {
+    white-space: nowrap;
+}
+
+/* XP Notification */
+.xp-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+}
+
+.xp-notification.show {
+    transform: translateX(0);
+}
+
+.xp-notification-content {
+    background: linear-gradient(135deg, #10B981, #34D399);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+    font-weight: 600;
+}
+
+.xp-notification-content i {
+    font-size: 18px;
+    animation: star-glow 1.5s ease-in-out infinite;
+}
+
+@keyframes star-glow {
+    0%, 100% { color: white; }
+    50% { color: #FCD34D; text-shadow: 0 0 10px #FCD34D; }
+}
+
+.xp-notification-content small {
+    font-size: 12px;
+    opacity: 0.9;
+}
+
+/* Tooltip */
+.journey-tooltip {
+    position: absolute;
+    background: rgba(17, 24, 39, 0.95);
+    color: white;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    max-width: 200px;
+    z-index: 1000;
+    transform: translate(-50%, -100%);
+    border: 1px solid rgba(75, 85, 99, 0.5);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.journey-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-top: 6px solid rgba(17, 24, 39, 0.95);
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+}
+
+.tooltip-title {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.tooltip-content {
+    font-size: 12px;
+    color: #9CA3AF;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .trading-journey-card {
+        padding: 16px;
+        margin: 10px 0;
+    }
+    
+    .journey-header {
+        flex-direction: column;
+        gap: 16px;
+    }
+    
+    .current-stage-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+    }
+    
+    .stage-title {
+        font-size: 18px;
+    }
+    
+    .journey-stages {
+        padding: 16px;
+        overflow-x: auto;
+    }
+    
+    .stage-circle {
+        width: 36px;
+        height: 36px;
+        font-size: 14px;
+    }
+    
+    .journey-stage.current .stage-circle {
+        transform: scale(1.1);
+    }
+    
+    .journey-stage.current.pulse .stage-circle {
+        animation: pulse-mobile 2s ease-in-out infinite;
+    }
+    
+    @keyframes pulse-mobile {
+        0%, 100% { transform: scale(1.1); }
+        50% { transform: scale(1.2); }
+    }
+    
+    .milestones-grid,
+    .achievements-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .progress-requirements {
+        grid-template-columns: 1fr;
+    }
+    
+    .badges-container {
+        justify-content: center;
+    }
+    
+    .xp-notification {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        transform: translateY(-100%);
+    }
+    
+    .xp-notification.show {
+        transform: translateY(0);
+    }
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+    .trading-journey-card {
+        background: linear-gradient(135deg, #0F172A 0%, #020617 100%);
+        border-color: rgba(51, 65, 85, 0.3);
+    }
+    
+    .progress-bar-container {
+        background: rgba(30, 41, 59, 0.8);
+    }
+    
+    .requirement-item {
+        background: rgba(30, 41, 59, 0.5);
+        border-left-color: #334155;
+    }
+    
+    .milestone-card,
+    .achievement-card {
+        background: rgba(30, 41, 59, 0.6);
+        border-color: rgba(51, 65, 85, 0.3);
+    }
+}
