@@ -1392,3 +1392,63 @@ def get_historical_comparison_api(symbol):
             'error': str(e),
             'message': 'Historical comparison analysis failed'
         }), 500
+
+# Trading Journey API Routes
+@app.route('/api/trading_journey')
+def get_trading_journey():
+    """Get user's trading journey progress"""
+    try:
+        from trading_journey import TradingJourney
+        
+        journey = TradingJourney()
+        progress = journey.calculate_user_progress()
+        
+        return jsonify({
+            'success': True,
+            'progress': progress
+        })
+        
+    except Exception as e:
+        logging.error(f"Error getting trading journey: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/award_xp', methods=['POST'])
+def award_xp():
+    """Award XP for user activities"""
+    try:
+        from trading_journey import TradingJourney
+        
+        data = request.get_json()
+        activity = data.get('activity', 'Unknown Activity')
+        amount = data.get('amount', 0)
+        
+        journey = TradingJourney()
+        result = journey.award_xp(activity, amount)
+        
+        return jsonify({
+            'success': True,
+            'xp_awarded': amount,
+            'activity': activity
+        })
+        
+    except Exception as e:
+        logging.error(f"Error awarding XP: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/leaderboard')
+def get_leaderboard():
+    """Get leaderboard data"""
+    try:
+        from trading_journey import TradingJourney
+        
+        journey = TradingJourney()
+        leaderboard = journey.get_leaderboard_data()
+        
+        return jsonify({
+            'success': True,
+            'leaderboard': leaderboard
+        })
+        
+    except Exception as e:
+        logging.error(f"Error getting leaderboard: {e}")
+        return jsonify({'success': False, 'error': str(e)})
