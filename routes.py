@@ -161,8 +161,15 @@ def index():
         recent_trades = TradeJournal.query.filter_by(user_id=current_user.id).order_by(TradeJournal.created_at.desc()).limit(10).all()
         return render_template('index.html', tracked_stocks=tracked_stocks, recent_trades=recent_trades)
     else:
-        # Show landing page for visitors
-        return render_template('landing.html')
+        # Show landing page for visitors with beta counter
+        beta_count = User.query.filter(User.beta_user_number.isnot(None)).count()
+        spots_remaining = max(0, 100 - beta_count)
+        return render_template('landing.html', beta_count=beta_count, spots_remaining=spots_remaining)
+
+@app.route('/landing')
+def landing():
+    """Explicit landing page route"""
+    return redirect(url_for('index'))
 
 @app.route('/scanner')
 @require_login
