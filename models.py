@@ -54,6 +54,9 @@ class Stock(db.Model):
     is_tracked = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def __init__(self, **kwargs):
+        super(Stock, self).__init__(**kwargs)
 
 class TradeJournal(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -76,6 +79,9 @@ class TradeJournal(db.Model):
     
     # Relationship
     user = db.relationship('User', backref='trades')
+    
+    def __init__(self, **kwargs):
+        super(TradeJournal, self).__init__(**kwargs)
 
 class ForecastPath(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -86,6 +92,9 @@ class ForecastPath(db.Model):
     timeframe_days = db.Column(db.Integer, default=5)
     risk_zones = db.Column(db.JSON)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def __init__(self, **kwargs):
+        super(ForecastPath, self).__init__(**kwargs)
 
 class AIAnalysis(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -129,12 +138,15 @@ class PatternEvolution(db.Model):
     
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def __init__(self, **kwargs):
+        super(PatternEvolution, self).__init__(**kwargs)
 
 # Personalized Recommendation System Models
 class UserTradingProfile(db.Model):
     __tablename__ = 'user_trading_profiles'
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     
     # Risk and style preferences
     risk_tolerance = db.Column(db.String(20), default='moderate')  # conservative, moderate, aggressive
@@ -165,6 +177,9 @@ class UserTradingProfile(db.Model):
     
     # Relationships
     user = db.relationship('User', backref='trading_profile')
+    
+    def __init__(self, **kwargs):
+        super(UserTradingProfile, self).__init__(**kwargs)
 
 class StockRecommendation(db.Model):
     __tablename__ = 'stock_recommendations'
