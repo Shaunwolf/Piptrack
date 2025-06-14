@@ -184,7 +184,7 @@ class UserTradingProfile(db.Model):
 class StockRecommendation(db.Model):
     __tablename__ = 'stock_recommendations'
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     symbol = db.Column(db.String(10), nullable=False)
     
     # Scoring components
@@ -226,12 +226,15 @@ class StockRecommendation(db.Model):
     
     # Relationships
     user = db.relationship('User', backref='recommendations')
+    
+    def __init__(self, **kwargs):
+        super(StockRecommendation, self).__init__(**kwargs)
 
 class RecommendationFeedback(db.Model):
     __tablename__ = 'recommendation_feedback'
     id = db.Column(db.Integer, primary_key=True)
     recommendation_id = db.Column(db.Integer, db.ForeignKey('stock_recommendations.id'), nullable=False)
-    user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     
     # Feedback details
     feedback_type = db.Column(db.String(20))     # positive, negative, neutral
@@ -252,3 +255,6 @@ class RecommendationFeedback(db.Model):
     # Relationships
     recommendation = db.relationship('StockRecommendation', backref='feedback')
     user = db.relationship('User', backref='recommendation_feedback')
+    
+    def __init__(self, **kwargs):
+        super(RecommendationFeedback, self).__init__(**kwargs)
