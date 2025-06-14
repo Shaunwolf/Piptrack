@@ -3,7 +3,7 @@ from flask_login import LoginManager, login_user, logout_user, login_required, c
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import app, db
 from models import Stock, TradeJournal, ForecastPath, AIAnalysis, PatternEvolution, User, OAuth, UserTradingProfile, StockRecommendation, RecommendationFeedback
-from replit_auth import require_login, make_replit_blueprint
+# Removed replit_auth import - using standard Flask-Login
 from auth_forms import RegistrationForm, LoginForm
 # Google OAuth removed - using standard email/password only
 import uuid
@@ -31,7 +31,7 @@ def load_user(user_id):
     return User.query.get(user_id)
 
 # Register authentication blueprints
-app.register_blueprint(make_replit_blueprint(), url_prefix="/auth")
+# Standard Flask-Login authentication - no blueprint registration needed
 
 # Authentication routes
 @app.route('/register', methods=['GET', 'POST'])
@@ -207,7 +207,7 @@ def dashboard():
         return render_template('index.html', tracked_stocks=[], recent_trades=[])
 
 @app.route('/scanner')
-@require_login
+@login_required
 def scanner():
     """Stock scanner page"""
     stocks = Stock.query.order_by(Stock.confidence_score.desc()).all()
@@ -231,7 +231,7 @@ def scanner():
     return render_template('scanner.html', stocks=stocks_data)
 
 @app.route('/scan_stocks', methods=['POST'])
-@require_login
+@login_required
 def scan_stocks():
     """Scan for top gappers or selected tickers"""
     try:
@@ -810,7 +810,7 @@ def calculate_risk_reward_ratio(current_price, stop_loss, take_profit):
     return 2.0
 
 @app.route('/generate_forecast', methods=['POST'])
-@require_login
+@login_required
 def generate_forecast():
     """Generate spaghetti model forecast"""
     try:
@@ -843,7 +843,7 @@ def generate_forecast():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/journal')
-@require_login
+@login_required
 def journal():
     """Trade journal page"""
     # Filter trades by current user
