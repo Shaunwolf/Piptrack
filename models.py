@@ -5,15 +5,24 @@ from flask_login import UserMixin
 from sqlalchemy import UniqueConstraint
 
 
-# (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
+# Enhanced User model supporting multiple authentication methods
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
     id = db.Column(db.String, primary_key=True)
-    email = db.Column(db.String, unique=True, nullable=True)
+    email = db.Column(db.String, unique=True, nullable=False)
+    password_hash = db.Column(db.String(256), nullable=True)  # For email/password auth
     first_name = db.Column(db.String, nullable=True)
     last_name = db.Column(db.String, nullable=True)
     profile_image_url = db.Column(db.String, nullable=True)
-
+    
+    # Authentication method tracking
+    auth_method = db.Column(db.String(20), default='email')  # 'email', 'google', 'replit'
+    is_verified = db.Column(db.Boolean, default=False)
+    verification_token = db.Column(db.String(64), nullable=True)
+    
+    # Beta access tracking
+    beta_user_number = db.Column(db.Integer, nullable=True)  # 1-100 for first 100 users
+    
     created_at = db.Column(db.DateTime, default=datetime.now)
     updated_at = db.Column(db.DateTime,
                            default=datetime.now,

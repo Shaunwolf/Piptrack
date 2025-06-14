@@ -1,8 +1,12 @@
 from flask import render_template, request, jsonify, redirect, url_for, flash, session
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
 from app import app, db
 from models import Stock, TradeJournal, ForecastPath, AIAnalysis, PatternEvolution, User, OAuth
 from replit_auth import require_login, make_replit_blueprint
-from flask_login import current_user
+from auth_forms import RegistrationForm, LoginForm
+from google_auth import google_auth, is_google_configured
+import uuid
 from stock_scanner import StockScanner
 from forecasting_engine import ForecastingEngine
 from ai_coach import AICoach
@@ -15,8 +19,83 @@ import logging
 import pandas as pd
 from datetime import datetime
 
-# Register authentication blueprint
+# Initialize Flask-Login
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+login_manager.login_message = "Please log in to access this page."
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(user_id)
+
+# Register authentication blueprints
 app.register_blueprint(make_replit_blueprint(), url_prefix="/auth")
+app.register_blueprint(google_auth, url_prefix="/auth")
+
+# Authentication routes
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+    
+    # Check if beta spots are available
+    beta_count = User.query.filter(User.beta_user_number.isnot(None)).count()
+    if beta_count >= 100:
+        flash("Beta testing is full. We'll notify you when the app launches publicly!", "info")
+        return redirect(url_for("landing"))
+    
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        # Create new user
+        user = User(
+            id=str(uuid.uuid4()),
+            email=form.email.data.lower(),
+            password_hash=generate_password_hash(form.password.data),
+            first_name=form.first_name.data,
+            last_name=form.last_name.data,
+            auth_method='email',
+            is_verified=True,  # For now, skip email verification
+            beta_user_number=beta_count + 1
+        )
+        
+        db.session.add(user)
+        db.session.commit()
+        
+        flash(f"Welcome to the beta! You're user #{user.beta_user_number} of 100.", "success")
+        login_user(user, remember=True)
+        
+        next_page = request.args.get('next')
+        return redirect(next_page) if next_page else redirect(url_for('dashboard'))
+    
+    return render_template('auth/register.html', form=form, beta_count=beta_count)
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+    
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data.lower()).first()
+        
+        if user and user.password_hash and check_password_hash(user.password_hash, form.password.data):
+            login_user(user, remember=form.remember_me.data)
+            next_page = request.args.get('next')
+            return redirect(next_page) if next_page else redirect(url_for('dashboard'))
+        else:
+            flash('Invalid email or password', 'error')
+    
+    beta_count = User.query.filter(User.beta_user_number.isnot(None)).count()
+    return render_template('auth/login.html', form=form, beta_count=beta_count, 
+                         google_configured=is_google_configured())
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    flash('You have been logged out.', 'info')
+    return redirect(url_for('landing'))
 
 # Make session permanent
 @app.before_request
