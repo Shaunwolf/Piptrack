@@ -1710,3 +1710,82 @@ def get_watchlist_summary():
 def early_detection_dashboard():
     """Early detection watchlist dashboard page"""
     return render_template('early_detection.html')
+
+@app.route('/api/historical_backtest')
+def run_historical_backtest():
+    """Run comprehensive historical pump backtest"""
+    try:
+        from historical_pump_backtest import HistoricalPumpBacktest
+        
+        backtest = HistoricalPumpBacktest()
+        results = backtest.run_comprehensive_backtest()
+        
+        return jsonify({
+            'success': True,
+            'backtest_results': results,
+            'analysis_timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logging.error(f"Error running historical backtest: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/validate_detection/<symbol>')
+def validate_pump_detection(symbol):
+    """Validate current detection system against specific historical case"""
+    try:
+        from historical_pump_backtest import HistoricalPumpBacktest
+        from phase1_pump_detector import Phase1PumpDetector
+        
+        backtest = HistoricalPumpBacktest()
+        detector = Phase1PumpDetector()
+        
+        # Find historical case
+        historical_case = None
+        for case in backtest.historical_pumps:
+            if case['symbol'].upper() == symbol.upper():
+                historical_case = case
+                break
+        
+        if not historical_case:
+            return jsonify({
+                'success': False,
+                'error': f'No historical pump case found for {symbol}'
+            })
+        
+        # Run current detection on the symbol
+        current_analysis = detector.comprehensive_pump_analysis(symbol.upper())
+        
+        # Historical analysis
+        historical_analysis = backtest.analyze_historical_case(historical_case)
+        
+        # Comparison
+        comparison = {
+            'historical_gain': historical_case['gain_percent'],
+            'historical_catalyst': historical_case['catalyst'],
+            'current_detection_score': current_analysis.get('composite_pump_score', 0),
+            'historical_detection_score': historical_analysis['detection_results']['detection_score'],
+            'would_have_detected': historical_analysis['detection_results']['would_detect'],
+            'current_alerts': len(current_analysis.get('alerts', [])),
+            'lessons_learned': historical_analysis['lessons_learned']
+        }
+        
+        return jsonify({
+            'success': True,
+            'validation_results': {
+                'symbol': symbol.upper(),
+                'historical_case': historical_case,
+                'historical_analysis': historical_analysis,
+                'current_analysis': current_analysis,
+                'comparison': comparison
+            }
+        })
+        
+    except Exception as e:
+        logging.error(f"Error validating detection for {symbol}: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/historical_backtest')
+def historical_backtest_dashboard():
+    """Historical backtesting dashboard page"""
+    return render_template('historical_backtest.html')
