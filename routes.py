@@ -1540,6 +1540,11 @@ def enhanced_pump_scan():
         logging.error(f"Error running enhanced pump scan: {e}")
         return jsonify({'success': False, 'error': str(e)})
 
+@app.route('/pump-analysis')
+def pump_analysis_dashboard():
+    """Pump detection analysis dashboard page"""
+    return render_template('pump_analysis.html')
+
 @app.route('/api/pump_analysis/<symbol>')
 def analyze_pump_potential(symbol):
     """Analyze pump potential for specific symbol"""
@@ -1556,4 +1561,22 @@ def analyze_pump_potential(symbol):
         
     except Exception as e:
         logging.error(f"Error analyzing pump potential for {symbol}: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/pump_enhancement_summary')
+def get_pump_enhancement_summary():
+    """Get comprehensive pump detection enhancement summary"""
+    try:
+        from enhanced_pump_detector import EnhancedPumpDetector
+        
+        detector = EnhancedPumpDetector()
+        summary = detector.get_enhancement_summary()
+        
+        return jsonify({
+            'success': True,
+            'enhancement_summary': summary
+        })
+        
+    except Exception as e:
+        logging.error(f"Error getting enhancement summary: {e}")
         return jsonify({'success': False, 'error': str(e)})
