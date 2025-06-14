@@ -12,6 +12,27 @@ import json
 import logging
 from datetime import datetime
 
+# Initialize performance optimizer
+try:
+    from performance_optimizer import optimize_route, perf_optimizer
+    PERFORMANCE_OPTIMIZED = True
+    # Preload common symbols for better performance
+    common_symbols = ['AAPL', 'META', 'NVDA', 'TSLA', 'MSFT']
+    def preload_symbols():
+        try:
+            for symbol in common_symbols:
+                if sparklines_engine:
+                    sparklines_engine.generate_sparkline(symbol)
+        except Exception as e:
+            logging.warning(f"Failed to preload symbols: {e}")
+    
+    # Run preload in background
+    perf_optimizer.background_task(preload_symbols)
+except ImportError:
+    PERFORMANCE_OPTIMIZED = False
+    def optimize_route(func):
+        return func
+
 # Initialize components
 stock_scanner = StockScanner()
 forecasting_engine = ForecastingEngine()
@@ -42,6 +63,7 @@ except ImportError as e:
     sparklines_engine = None
 
 @app.route('/')
+@optimize_route
 def index():
     """Main dashboard"""
     tracked_stocks = Stock.query.filter_by(is_tracked=True).limit(5).all()
@@ -836,6 +858,7 @@ def get_sparkline_summary(symbol):
         return jsonify({'success': False, 'error': str(e)})
 
 @app.route('/api/sparklines/multiple')
+@optimize_route
 def get_multiple_sparklines():
     """Get sparklines for multiple symbols"""
     try:
@@ -843,7 +866,7 @@ def get_multiple_sparklines():
             return jsonify({'success': False, 'error': 'Sparklines engine not available'})
         
         symbols = request.args.get('symbols', '').split(',')
-        symbols = [s.strip().upper() for s in symbols if s.strip()]
+        symbols = [s.strip().upper() for s in symbols if s.strip()][:3]  # Limit to 3 symbols
         
         if not symbols:
             return jsonify({'success': False, 'error': 'No symbols provided'})
@@ -851,7 +874,18 @@ def get_multiple_sparklines():
         period = request.args.get('period', '1d')
         interval = request.args.get('interval', '15m')
         
-        sparklines_data = sparklines_engine.generate_multiple_sparklines(symbols, period, interval)
+        # Use individual sparkline generation with better error handling
+        sparklines_data = {}
+        for symbol in symbols:
+            try:
+                data = sparklines_engine.generate_sparkline(symbol)
+                if data and not data.get('error'):
+                    sparklines_data[symbol] = data
+                else:
+                    sparklines_data[symbol] = {'error': 'No data available'}
+            except Exception as e:
+                logging.warning(f"Failed to get sparkline for {symbol}: {e}")
+                sparklines_data[symbol] = {'error': 'Data unavailable'}
         
         return jsonify({'success': True, 'data': sparklines_data})
         
