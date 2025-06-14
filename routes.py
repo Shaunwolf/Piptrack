@@ -48,16 +48,15 @@ def register():
     form = RegistrationForm()
     if form.validate_on_submit():
         # Create new user
-        user = User(
-            id=str(uuid.uuid4()),
-            email=form.email.data.lower(),
-            password_hash=generate_password_hash(form.password.data),
-            first_name=form.first_name.data,
-            last_name=form.last_name.data,
-            auth_method='email',
-            is_verified=True,  # For now, skip email verification
-            beta_user_number=beta_count + 1
-        )
+        user = User()
+        user.id = str(uuid.uuid4())
+        user.email = form.email.data.lower()
+        user.password_hash = generate_password_hash(form.password.data)
+        user.first_name = form.first_name.data
+        user.last_name = form.last_name.data
+        user.auth_method = 'email'
+        user.is_verified = True  # For now, skip email verification
+        user.beta_user_number = beta_count + 1
         
         db.session.add(user)
         db.session.commit()
