@@ -1895,3 +1895,172 @@ def get_enhancement_summary():
 def enhanced_detector_dashboard():
     """Enhanced detector dashboard page"""
     return render_template('enhanced_detector.html')
+
+@app.route('/api/trading_journey_progress')
+def get_trading_journey_progress():
+    """Get animated trading journey progress data"""
+    try:
+        from animated_trading_journey import TradingJourneyProgressBar
+        
+        journey = TradingJourneyProgressBar()
+        
+        # Get user trading stats (in production, this would come from database)
+        user_stats = {
+            'total_trades': 127,
+            'profitable_trades': 89,
+            'win_rate': 0.70,
+            'avg_risk_reward_ratio': 2.1,
+            'trading_days': 45,
+            'patterns_identified': 34,
+            'journal_entries': 156,
+            'achievements_earned': ['first_trade', 'profit_streak_5'],
+            'technical_trades': 98,
+            'indicator_accuracy': 0.75,
+            'max_drawdown_ratio': 0.15,
+            'stop_loss_adherence': 0.85,
+            'position_sizing_score': 0.78,
+            'pattern_success_rate': 0.72,
+            'early_detection_count': 12,
+            'emotional_control_score': 0.82,
+            'fomo_resistance_score': 0.76,
+            'patience_score': 0.88,
+            'stress_management_score': 0.79,
+            'entry_timing_score': 0.84,
+            'exit_timing_score': 0.81,
+            'speed_execution_score': 0.73,
+            'max_win_streak': 8,
+            'max_profitable_days_streak': 12,
+            'diamond_hands_count': 2,
+            'avg_execution_time': 1.8,
+            'max_comeback_percentage': 18,
+            'recent_trades_7d': 14,
+            'recent_profit_rate_7d': 0.64,
+            'consistency_score': 0.74,
+            'first_trade_date': '2024-04-01T09:30:00Z'
+        }
+        
+        progress_data = journey.calculate_journey_progress(user_stats)
+        
+        return jsonify({
+            'success': True,
+            'journey_progress': progress_data,
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logging.error(f"Error getting trading journey progress: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/journey_achievements')
+def get_journey_achievements():
+    """Get detailed achievement data for progress tracking"""
+    try:
+        from animated_trading_journey import TradingJourneyProgressBar
+        
+        journey = TradingJourneyProgressBar()
+        
+        return jsonify({
+            'success': True,
+            'achievement_system': {
+                'total_achievements': len(journey.achievement_badges),
+                'achievement_categories': {
+                    'trading_milestones': ['first_trade', 'profit_streak_5', 'perfect_week'],
+                    'skill_mastery': ['risk_master', 'pattern_hunter', 'market_sage'],
+                    'performance_excellence': ['diamond_hands', 'speed_demon', 'consistency_king'],
+                    'resilience': ['comeback_kid']
+                },
+                'achievement_details': journey.achievement_badges,
+                'skill_categories': journey.skill_categories
+            }
+        })
+        
+    except Exception as e:
+        logging.error(f"Error getting journey achievements: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/journey_animation_test')
+def test_journey_animation():
+    """Test journey animation with different experience levels"""
+    try:
+        from animated_trading_journey import TradingJourneyProgressBar
+        
+        journey = TradingJourneyProgressBar()
+        
+        # Test different skill levels
+        test_scenarios = {
+            'beginner': {
+                'total_trades': 15,
+                'profitable_trades': 8,
+                'win_rate': 0.53,
+                'trading_days': 7,
+                'patterns_identified': 3,
+                'achievements_earned': ['first_trade']
+            },
+            'intermediate': {
+                'total_trades': 75,
+                'profitable_trades': 52,
+                'win_rate': 0.69,
+                'trading_days': 28,
+                'patterns_identified': 18,
+                'achievements_earned': ['first_trade', 'profit_streak_5']
+            },
+            'advanced': {
+                'total_trades': 250,
+                'profitable_trades': 185,
+                'win_rate': 0.74,
+                'trading_days': 85,
+                'patterns_identified': 67,
+                'achievements_earned': ['first_trade', 'profit_streak_5', 'pattern_hunter', 'risk_master']
+            }
+        }
+        
+        animation_tests = {}
+        
+        for level, stats in test_scenarios.items():
+            # Add default values for missing stats
+            complete_stats = {
+                'avg_risk_reward_ratio': 1.5 + (0.5 * (['beginner', 'intermediate', 'advanced'].index(level))),
+                'journal_entries': stats['total_trades'] * 1.2,
+                'technical_trades': stats['total_trades'] * 0.8,
+                'indicator_accuracy': 0.6 + (0.1 * (['beginner', 'intermediate', 'advanced'].index(level))),
+                'max_drawdown_ratio': 0.25 - (0.05 * (['beginner', 'intermediate', 'advanced'].index(level))),
+                'stop_loss_adherence': 0.7 + (0.1 * (['beginner', 'intermediate', 'advanced'].index(level))),
+                'position_sizing_score': 0.6 + (0.1 * (['beginner', 'intermediate', 'advanced'].index(level))),
+                'pattern_success_rate': 0.6 + (0.1 * (['beginner', 'intermediate', 'advanced'].index(level))),
+                'early_detection_count': stats['patterns_identified'] // 3,
+                'emotional_control_score': 0.65 + (0.1 * (['beginner', 'intermediate', 'advanced'].index(level))),
+                'fomo_resistance_score': 0.6 + (0.1 * (['beginner', 'intermediate', 'advanced'].index(level))),
+                'patience_score': 0.7 + (0.1 * (['beginner', 'intermediate', 'advanced'].index(level))),
+                'stress_management_score': 0.65 + (0.1 * (['beginner', 'intermediate', 'advanced'].index(level))),
+                'entry_timing_score': 0.6 + (0.15 * (['beginner', 'intermediate', 'advanced'].index(level))),
+                'exit_timing_score': 0.6 + (0.15 * (['beginner', 'intermediate', 'advanced'].index(level))),
+                'speed_execution_score': 0.5 + (0.2 * (['beginner', 'intermediate', 'advanced'].index(level))),
+                'max_win_streak': 3 + (2 * (['beginner', 'intermediate', 'advanced'].index(level))),
+                'max_profitable_days_streak': 5 + (4 * (['beginner', 'intermediate', 'advanced'].index(level))),
+                'diamond_hands_count': (['beginner', 'intermediate', 'advanced'].index(level)),
+                'avg_execution_time': 5.0 - (1.5 * (['beginner', 'intermediate', 'advanced'].index(level))),
+                'max_comeback_percentage': 10 + (8 * (['beginner', 'intermediate', 'advanced'].index(level))),
+                'recent_trades_7d': max(1, stats['total_trades'] // 10),
+                'recent_profit_rate_7d': stats['win_rate'] * 0.9,
+                'consistency_score': 0.5 + (0.15 * (['beginner', 'intermediate', 'advanced'].index(level))),
+                'first_trade_date': '2024-04-01T09:30:00Z',
+                **stats
+            }
+            
+            progress_data = journey.calculate_journey_progress(complete_stats)
+            animation_tests[level] = progress_data
+        
+        return jsonify({
+            'success': True,
+            'animation_test_data': animation_tests,
+            'test_timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logging.error(f"Error testing journey animation: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/trading_journey')
+def trading_journey_dashboard():
+    """Trading journey progress dashboard page"""
+    return render_template('trading_journey.html')
