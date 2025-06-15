@@ -16,6 +16,7 @@ class RegistrationForm(FlaskForm):
     password = PasswordField('Password', validators=[DataRequired(), Length(min=6)])
     password2 = PasswordField('Confirm Password', validators=[
         DataRequired(), EqualTo('password', message='Passwords must match')])
+    agree_terms = BooleanField('I agree to the Terms of Service', validators=[DataRequired()])
     submit = SubmitField('Register')
 
     def validate_email(self, email):
