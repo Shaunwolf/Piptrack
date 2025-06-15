@@ -13,6 +13,7 @@ from pattern_evolution_tracker import PatternEvolutionTracker
 from personalized_recommender import PersonalizedRecommender
 from google_sheets_integration import GoogleSheetsIntegration
 from pdf_generator import PDFGenerator
+from stock_widgets import StockWidgets
 import json
 import logging
 import pandas as pd
@@ -28,6 +29,28 @@ login_manager.login_message = "Please log in to access this page."
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(user_id)
+
+# Initialize components
+try:
+    stock_scanner = StockScanner()
+    forecasting_engine = ForecastingEngine()
+    ai_coach = AICoach()
+    confidence_scorer = ConfidenceScorer()
+    pattern_tracker = PatternEvolutionTracker()
+    sheets_integration = GoogleSheetsIntegration()
+    pdf_generator = PDFGenerator()
+    stock_widgets = StockWidgets()
+    logging.info("All components initialized successfully")
+except Exception as e:
+    logging.error(f"Error initializing components: {e}")
+    stock_scanner = StockScanner() if 'StockScanner' in globals() else None
+    forecasting_engine = ForecastingEngine() if 'ForecastingEngine' in globals() else None
+    ai_coach = AICoach() if 'AICoach' in globals() else None
+    confidence_scorer = ConfidenceScorer() if 'ConfidenceScorer' in globals() else None
+    pattern_tracker = PatternEvolutionTracker() if 'PatternEvolutionTracker' in globals() else None
+    sheets_integration = None
+    pdf_generator = None
+    stock_widgets = StockWidgets() if 'StockWidgets' in globals() else None
 
 # Register authentication blueprints
 # Standard Flask-Login authentication - no blueprint registration needed
