@@ -596,8 +596,16 @@ def calculate_momentum_score(symbol):
         price_score = min(100, max(0, (price_change + 10) * 5))  # Normalize to 0-100
         
         # RSI momentum (30%)
-        rsi = ta.momentum.RSIIndicator(hist['Close']).rsi().iloc[-1]
-        rsi_score = min(100, max(0, rsi)) if not pd.isna(rsi) else 50
+        try:
+            delta = hist['Close'].diff()
+            gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+            loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+            rs = gain / loss
+            rsi = 100 - (100 / (1 + rs))
+            rsi_value = rsi.iloc[-1]
+            rsi_score = min(100, max(0, rsi_value)) if not pd.isna(rsi_value) else 50
+        except:
+            rsi_score = 50
         
         # Volume momentum (30%)
         avg_volume = hist['Volume'].mean()
@@ -606,10 +614,14 @@ def calculate_momentum_score(symbol):
         volume_score = min(100, max(0, volume_ratio * 50))
         
         # MACD momentum (20%)
-        macd = ta.trend.MACD(hist['Close'])
-        macd_line = macd.macd().iloc[-1]
-        macd_signal = macd.macd_signal().iloc[-1]
-        macd_score = 60 if macd_line > macd_signal else 40
+        try:
+            exp1 = hist['Close'].ewm(span=12).mean()
+            exp2 = hist['Close'].ewm(span=26).mean()
+            macd_line = exp1 - exp2
+            macd_signal = macd_line.ewm(span=9).mean()
+            macd_score = 60 if macd_line.iloc[-1] > macd_signal.iloc[-1] else 40
+        except:
+            macd_score = 50
         
         # Weighted average
         momentum = (price_score * 0.2 + rsi_score * 0.3 + volume_score * 0.3 + macd_score * 0.2)
@@ -693,8 +705,11 @@ def calculate_trend_strength(symbol):
             return 50
         
         # SMA alignment (40%)
-        sma_10 = ta.trend.SMAIndicator(hist['Close'], window=10).sma_indicator().iloc[-1]
-        sma_20 = ta.trend.SMAIndicator(hist['Close'], window=20).sma_indicator().iloc[-1]
+        try:
+            sma_10 = hist['Close'].rolling(window=10).mean().iloc[-1]
+            sma_20 = hist['Close'].rolling(window=20).mean().iloc[-1]
+        except:
+            sma_10 = sma_20 = hist['Close'].iloc[-1]
         current_price = hist['Close'].iloc[-1]
         
         alignment_score = 0

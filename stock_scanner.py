@@ -7,7 +7,6 @@ import logging
 import requests
 import os
 import time
-from multi_timeframe_analyzer import MultiTimeframeAnalyzer
 from pattern_evolution_tracker import PatternEvolutionTracker
 from confidence_scorer import ConfidenceScorer
 
@@ -15,7 +14,6 @@ class StockScanner:
     def __init__(self):
         self.api_key = os.environ.get('ALPHA_VANTAGE_API_KEY')
         self.base_url = 'https://www.alphavantage.co/query'
-        self.mtf_analyzer = MultiTimeframeAnalyzer()
         self.pattern_tracker = PatternEvolutionTracker()
         self.confidence_scorer = ConfidenceScorer()
         
