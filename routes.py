@@ -14,6 +14,8 @@ from personalized_recommender import PersonalizedRecommender
 from google_sheets_integration import GoogleSheetsIntegration
 from pdf_generator import PDFGenerator
 from stock_widgets import StockWidgets
+from market_data_engine import MarketDataEngine
+from background_scanner import background_scanner
 import json
 import logging
 import pandas as pd
@@ -40,7 +42,11 @@ try:
     sheets_integration = GoogleSheetsIntegration()
     pdf_generator = PDFGenerator()
     stock_widgets = StockWidgets()
-    logging.info("All components initialized successfully")
+    market_engine = MarketDataEngine()
+    
+    # Start background scanning
+    background_scanner.start_background_scanning()
+    logging.info("All components initialized successfully including high-performance market scanner")
 except Exception as e:
     logging.error(f"Error initializing components: {e}")
     stock_scanner = StockScanner() if 'StockScanner' in globals() else None
@@ -48,6 +54,7 @@ except Exception as e:
     ai_coach = AICoach() if 'AICoach' in globals() else None
     confidence_scorer = ConfidenceScorer() if 'ConfidenceScorer' in globals() else None
     pattern_tracker = PatternEvolutionTracker() if 'PatternEvolutionTracker' in globals() else None
+    market_engine = MarketDataEngine() if 'MarketDataEngine' in globals() else None
     sheets_integration = None
     pdf_generator = None
     stock_widgets = StockWidgets() if 'StockWidgets' in globals() else None
@@ -265,6 +272,153 @@ def scan_stocks():
     
     except Exception as e:
         logging.error(f"Error scanning stocks: {e}")
+        return jsonify({'error': str(e)}), 500
+
+# High-Performance Market Data API Endpoints
+
+@app.route('/api/market/quick-scan')
+def api_quick_market_scan():
+    """API endpoint for quick market scan of high-volume stocks"""
+    try:
+        limit = request.args.get('limit', 50, type=int)
+        results = market_engine.quick_market_scan(limit)
+        return jsonify({
+            'success': True,
+            'results': results,
+            'total_scanned': len(results),
+            'scan_type': 'quick'
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/market/comprehensive-scan')
+def api_comprehensive_market_scan():
+    """API endpoint for comprehensive market scan"""
+    try:
+        limit = request.args.get('limit', 200, type=int)
+        results = market_engine.comprehensive_market_scan(limit)
+        return jsonify({
+            'success': True,
+            'results': results,
+            'total_scanned': len(results),
+            'scan_type': 'comprehensive'
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/market/segment/<segment>')
+def api_market_segment_scan(segment):
+    """API endpoint for market segment scanning"""
+    try:
+        limit = request.args.get('limit', 100, type=int)
+        valid_segments = ['large_cap', 'tech', 'small_cap', 'biotech', 'crypto', 'etfs']
+        
+        if segment not in valid_segments:
+            return jsonify({'error': f'Invalid segment. Valid options: {valid_segments}'}), 400
+        
+        results = market_engine.scan_market_segment(segment, limit)
+        return jsonify({
+            'success': True,
+            'results': results,
+            'segment': segment,
+            'total_scanned': len(results)
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/market/movers')
+def api_market_movers():
+    """API endpoint for market movers"""
+    try:
+        scan_type = request.args.get('type', 'quick')
+        movers = market_engine.get_market_movers(scan_type)
+        return jsonify({
+            'success': True,
+            'movers': movers
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/background-scan/status')
+def api_background_scan_status():
+    """API endpoint for background scanner status"""
+    try:
+        overview = background_scanner.get_market_overview()
+        performance = background_scanner.get_performance_stats()
+        
+        return jsonify({
+            'success': True,
+            'overview': overview,
+            'performance': performance
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/background-scan/opportunities')
+def api_background_scan_opportunities():
+    """API endpoint for top trading opportunities from background scanner"""
+    try:
+        limit = request.args.get('limit', 10, type=int)
+        opportunities = background_scanner.get_top_opportunities(limit)
+        
+        return jsonify({
+            'success': True,
+            'opportunities': opportunities,
+            'total_found': len(opportunities)
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/background-scan/results/<scan_type>')
+def api_background_scan_results(scan_type):
+    """API endpoint for specific background scan results"""
+    try:
+        results = background_scanner.get_latest_results(scan_type)
+        return jsonify({
+            'success': True,
+            'scan_type': scan_type,
+            'results': results
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/background-scan/force/<scan_type>')
+def api_force_background_scan(scan_type):
+    """API endpoint to force an immediate scan"""
+    try:
+        results = background_scanner.force_scan(scan_type)
+        return jsonify({
+            'success': True,
+            'scan_type': scan_type,
+            'results': results,
+            'forced': True
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/market/cache/stats')
+def api_cache_stats():
+    """API endpoint for cache statistics"""
+    try:
+        stats = market_engine.get_cache_stats()
+        return jsonify({
+            'success': True,
+            'cache_stats': stats
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/market/cache/clear')
+def api_clear_cache():
+    """API endpoint to clear market data cache"""
+    try:
+        market_engine.clear_cache()
+        background_scanner.clear_cache()
+        return jsonify({
+            'success': True,
+            'message': 'All caches cleared successfully'
+        })
+    except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 @app.route('/track_stock/<symbol>')
