@@ -3,707 +3,161 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trading Journey Progress - CandleCast</title>
+    <title>Trading Journey - PipSqueak</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-        
-        .progress-glow {
-            box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
-            animation: pulse-glow 2s ease-in-out infinite alternate;
-        }
-        
-        @keyframes pulse-glow {
-            from { box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
-            to { box-shadow: 0 0 30px rgba(59, 130, 246, 0.7); }
-        }
-        
-        .skill-radar {
-            transition: all 0.3s ease;
-        }
-        
-        .achievement-badge {
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-        
-        .achievement-badge:hover {
-            transform: scale(1.1);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-        }
-        
-        .progress-bar {
-            transition: width 2s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .progress-bar::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-            animation: shimmer 2s infinite;
-        }
-        
-        @keyframes shimmer {
-            0% { left: -100%; }
-            100% { left: 100%; }
-        }
-        
-        .milestone-marker {
-            position: absolute;
-            top: -8px;
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background: white;
-            border: 3px solid #3b82f6;
-            transform: translateX(-50%);
-            transition: all 0.3s ease;
-        }
-        
-        .milestone-marker.completed {
-            background: #22c55e;
-            border-color: #22c55e;
-            box-shadow: 0 0 15px rgba(34, 197, 94, 0.5);
-        }
-        
-        .experience-counter {
-            font-size: 2.5rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        .stage-title {
-            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            font-weight: 600;
-        }
-        
-        .particle {
-            position: absolute;
-            width: 4px;
-            height: 4px;
-            background: #3b82f6;
-            border-radius: 50%;
-            pointer-events: none;
-            animation: particle-float 2s ease-out forwards;
-        }
-        
-        @keyframes particle-float {
-            0% {
-                transform: translateY(0) scale(1);
-                opacity: 1;
-            }
-            100% {
-                transform: translateY(-50px) scale(0);
-                opacity: 0;
-            }
-        }
-        
-        .stat-card {
-            background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-        
-        .journey-stage {
-            position: relative;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            transition: all 0.3s ease;
-        }
-        
-        .journey-stage.active {
-            transform: scale(1.02);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-        }
-    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-<body class="bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 text-white min-h-screen">
+<body class="bg-gray-900 text-white">
+    <!-- Navigation -->
+    <nav class="bg-gray-800 p-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <h1 class="text-xl font-bold text-yellow-400">🕯️ PipSqueak</h1>
+                <span class="text-gray-300">Trading Journey</span>
+            </div>
+            <div class="flex space-x-4">
+                <a href="{{ url_for('dashboard') }}" class="text-gray-300 hover:text-white">Dashboard</a>
+                <a href="{{ url_for('scanner') }}" class="text-gray-300 hover:text-white">Scanner</a>
+                <a href="{{ url_for('logout') }}" class="text-gray-300 hover:text-white">Logout</a>
+            </div>
+        </div>
+    </nav>
+
     <div class="container mx-auto px-4 py-8">
-        <!-- Navigation -->
-        <div class="mb-6">
-            <a href="/" class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-                </svg>
-                Back to Dashboard
-            </a>
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold mb-2">Your Trading Journey</h1>
+            <p class="text-gray-400">Track your progress and unlock achievements as you grow as a trader</p>
         </div>
 
-        <!-- Header -->
-        <div class="text-center mb-8">
-            <h1 class="text-4xl font-bold mb-2">Trading Journey Progress</h1>
-            <p class="text-gray-300">Track your evolution from novice to trading master</p>
+        <!-- Progress Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- Level Card -->
+            <div class="bg-gray-800 rounded-lg p-6">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mr-4">
+                        <i class="fas fa-trophy text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold">Trader Level</h3>
+                        <p class="text-gray-400">{{ journey.level if journey else 1 }}</p>
+                    </div>
+                </div>
+                <div class="w-full bg-gray-700 rounded-full h-2">
+                    <div class="bg-blue-600 h-2 rounded-full" style="width: {{ (journey.experience % 100) if journey else 0 }}%"></div>
+                </div>
+                <p class="text-sm text-gray-400 mt-2">{{ journey.experience if journey else 0 }} XP</p>
+            </div>
+
+            <!-- Stats Card -->
+            <div class="bg-gray-800 rounded-lg p-6">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center mr-4">
+                        <i class="fas fa-chart-line text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold">Trade Stats</h3>
+                        <p class="text-gray-400">{{ journey.total_trades if journey else 0 }} total trades</p>
+                    </div>
+                </div>
+                <div class="text-sm text-gray-400">
+                    <p>Win Rate: {{ journey.win_rate if journey else 0 }}%</p>
+                    <p>Winning Trades: {{ journey.winning_trades if journey else 0 }}</p>
+                </div>
+            </div>
+
+            <!-- Achievements Card -->
+            <div class="bg-gray-800 rounded-lg p-6">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center mr-4">
+                        <i class="fas fa-medal text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold">Achievements</h3>
+                        <p class="text-gray-400">{{ journey.achievements|length if journey and journey.achievements else 0 }} unlocked</p>
+                    </div>
+                </div>
+                <div class="flex space-x-1">
+                    {% if journey and journey.achievements %}
+                        {% for achievement in journey.achievements[:3] %}
+                        <div class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center">
+                            <i class="fas fa-star text-white text-xs"></i>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                    {% if journey and journey.achievements and journey.achievements|length > 3 %}
+                    <div class="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
+                        <span class="text-xs">+{{ journey.achievements|length - 3 }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
         </div>
 
-        <!-- Main Progress Section -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-            <!-- Experience & Stage Info -->
-            <div class="lg:col-span-2">
-                <div class="bg-gray-800/50 rounded-xl p-6 backdrop-blur-sm border border-gray-700">
-                    <div class="flex items-center justify-between mb-4">
-                        <div>
-                            <h2 class="text-2xl font-semibold mb-1" id="current-stage">Loading...</h2>
-                            <p class="text-gray-400" id="stage-description">Calculating your journey...</p>
+        <!-- Milestones -->
+        <div class="bg-gray-800 rounded-lg p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-4">Trading Milestones</h2>
+            <div class="space-y-4">
+                {% if milestones %}
+                    {% for milestone in milestones %}
+                    <div class="flex items-center justify-between p-4 bg-gray-700 rounded-lg">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-10 h-10 bg-{{ 'green' if journey and journey.total_trades >= milestone.trades_required else 'gray' }}-600 rounded-full flex items-center justify-center">
+                                {% if journey and journey.total_trades >= milestone.trades_required %}
+                                <i class="fas fa-check text-white"></i>
+                                {% else %}
+                                <span class="text-white font-bold">{{ milestone.level }}</span>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <h3 class="font-semibold">{{ milestone.name }}</h3>
+                                <p class="text-sm text-gray-400">{{ milestone.trades_required }} trades required</p>
+                            </div>
                         </div>
                         <div class="text-right">
-                            <div class="experience-counter" id="experience-points">0</div>
-                            <p class="text-sm text-gray-400">Experience Points</p>
+                            {% if journey and journey.total_trades >= milestone.trades_required %}
+                            <span class="text-green-400 font-semibold">Completed</span>
+                            {% else %}
+                            <span class="text-gray-400">{{ journey.total_trades if journey else 0 }}/{{ milestone.trades_required }}</span>
+                            {% endif %}
                         </div>
                     </div>
-                    
-                    <!-- Main Progress Bar -->
-                    <div class="relative mb-6">
-                        <div class="w-full bg-gray-700 rounded-full h-6 relative overflow-hidden">
-                            <div class="progress-bar h-full bg-gradient-to-r from-blue-500 to-purple-600 rounded-full" 
-                                 id="main-progress-bar" style="width: 0%"></div>
-                            <!-- Milestone markers will be added here -->
-                            <div id="milestone-markers"></div>
-                        </div>
-                        <div class="flex justify-between mt-2 text-sm text-gray-400">
-                            <span id="current-progress">0%</span>
-                            <span id="next-milestone">Next: Expert Level</span>
-                        </div>
-                    </div>
-                    
-                    <!-- Journey Stats -->
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div class="stat-card rounded-lg p-4 text-center">
-                            <div class="text-2xl font-bold text-blue-400" id="total-trades">0</div>
-                            <div class="text-sm text-gray-400">Total Trades</div>
-                        </div>
-                        <div class="stat-card rounded-lg p-4 text-center">
-                            <div class="text-2xl font-bold text-green-400" id="win-rate">0%</div>
-                            <div class="text-sm text-gray-400">Win Rate</div>
-                        </div>
-                        <div class="stat-card rounded-lg p-4 text-center">
-                            <div class="text-2xl font-bold text-purple-400" id="trading-days">0</div>
-                            <div class="text-sm text-gray-400">Trading Days</div>
-                        </div>
-                        <div class="stat-card rounded-lg p-4 text-center">
-                            <div class="text-2xl font-bold text-yellow-400" id="rank-percentile">0%</div>
-                            <div class="text-sm text-gray-400">Rank Percentile</div>
-                        </div>
-                    </div>
+                    {% endfor %}
+                {% else %}
+                <div class="text-center py-8 text-gray-400">
+                    <i class="fas fa-map text-4xl mb-4"></i>
+                    <p>Start trading to unlock your journey milestones!</p>
                 </div>
-            </div>
-            
-            <!-- Quick Stats -->
-            <div class="space-y-4">
-                <div class="bg-gray-800/50 rounded-xl p-6 backdrop-blur-sm border border-gray-700">
-                    <h3 class="text-lg font-semibold mb-4">Skill Progress</h3>
-                    <div class="space-y-3" id="skill-progress-bars">
-                        <!-- Skill bars will be populated here -->
-                    </div>
-                </div>
-                
-                <div class="bg-gray-800/50 rounded-xl p-6 backdrop-blur-sm border border-gray-700">
-                    <h3 class="text-lg font-semibold mb-4">Next Milestones</h3>
-                    <div class="space-y-3" id="next-milestones">
-                        <!-- Milestones will be populated here -->
-                    </div>
-                </div>
+                {% endif %}
             </div>
         </div>
 
-        <!-- Skill Radar Chart -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            <div class="bg-gray-800/50 rounded-xl p-6 backdrop-blur-sm border border-gray-700">
-                <h3 class="text-xl font-semibold mb-4">Skill Radar</h3>
-                <div id="skill-radar-chart" class="h-80"></div>
-            </div>
-            
-            <!-- Journey Stages -->
-            <div class="bg-gray-800/50 rounded-xl p-6 backdrop-blur-sm border border-gray-700">
-                <h3 class="text-xl font-semibold mb-4">Journey Stages</h3>
-                <div class="space-y-3" id="journey-stages">
-                    <!-- Journey stages will be populated here -->
+        <!-- Recent Achievements -->
+        <div class="bg-gray-800 rounded-lg p-6">
+            <h2 class="text-xl font-semibold mb-4">Recent Achievements</h2>
+            {% if journey and journey.achievements %}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {% for achievement in journey.achievements %}
+                <div class="bg-gray-700 rounded-lg p-4 flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center">
+                        <i class="fas fa-star text-white"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold">{{ achievement }}</h3>
+                        <p class="text-xs text-gray-400">Achievement unlocked</p>
+                    </div>
                 </div>
+                {% endfor %}
             </div>
-        </div>
-
-        <!-- Achievements Section -->
-        <div class="bg-gray-800/50 rounded-xl p-6 backdrop-blur-sm border border-gray-700 mb-8">
-            <h3 class="text-xl font-semibold mb-6">Achievements</h3>
-            
-            <!-- Achievement Categories -->
-            <div class="mb-6">
-                <div class="flex flex-wrap gap-2 mb-4">
-                    <button class="achievement-filter px-4 py-2 rounded-lg bg-blue-600 text-white" data-filter="all">All</button>
-                    <button class="achievement-filter px-4 py-2 rounded-lg bg-gray-600 text-gray-300" data-filter="earned">Earned</button>
-                    <button class="achievement-filter px-4 py-2 rounded-lg bg-gray-600 text-gray-300" data-filter="available">Available</button>
-                </div>
+            {% else %}
+            <div class="text-center py-8 text-gray-400">
+                <i class="fas fa-trophy text-4xl mb-4"></i>
+                <p>Complete your first trade to start earning achievements!</p>
+                <a href="{{ url_for('scanner') }}" class="inline-block mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                    Start Trading
+                </a>
             </div>
-            
-            <!-- Achievement Grid -->
-            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4" id="achievements-grid">
-                <!-- Achievement badges will be populated here -->
-            </div>
-        </div>
-
-        <!-- Progress Predictions -->
-        <div class="bg-gray-800/50 rounded-xl p-6 backdrop-blur-sm border border-gray-700">
-            <h3 class="text-xl font-semibold mb-4">Progress Predictions</h3>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="text-center">
-                    <div class="text-3xl font-bold text-blue-400 mb-2" id="next-stage-days">--</div>
-                    <div class="text-sm text-gray-400">Days to Next Stage</div>
-                    <div class="text-xs text-gray-500 mt-1" id="prediction-confidence">-- confidence</div>
-                </div>
-                <div class="text-center">
-                    <div class="text-3xl font-bold text-green-400 mb-2" id="next-achievement-days">--</div>
-                    <div class="text-sm text-gray-400">Days to Next Achievement</div>
-                    <div class="text-xs text-gray-500 mt-1" id="next-achievement-name">--</div>
-                </div>
-                <div class="text-center">
-                    <div class="text-3xl font-bold text-purple-400 mb-2" id="progress-velocity">--</div>
-                    <div class="text-sm text-gray-400">XP per Day (7d avg)</div>
-                    <div class="text-xs text-gray-500 mt-1">Progress velocity</div>
-                </div>
-            </div>
+            {% endif %}
         </div>
     </div>
-
-    <script>
-        let journeyData = null;
-        let achievementData = null;
-        
-        // Initialize the dashboard
-        async function initializeDashboard() {
-            try {
-                await Promise.all([
-                    loadJourneyProgress(),
-                    loadAchievementData()
-                ]);
-                
-                updateUI();
-                startAnimations();
-            } catch (error) {
-                console.error('Failed to initialize dashboard:', error);
-            }
-        }
-        
-        // Load journey progress data
-        async function loadJourneyProgress() {
-            const response = await fetch('/api/trading_journey_progress');
-            const data = await response.json();
-            
-            if (data.success) {
-                journeyData = data.journey_progress;
-            } else {
-                throw new Error(data.error);
-            }
-        }
-        
-        // Load achievement data
-        async function loadAchievementData() {
-            const response = await fetch('/api/journey_achievements');
-            const data = await response.json();
-            
-            if (data.success) {
-                achievementData = data.achievement_system;
-            } else {
-                throw new Error(data.error);
-            }
-        }
-        
-        // Update UI with loaded data
-        function updateUI() {
-            if (!journeyData) return;
-            
-            updateMainProgress();
-            updateStageInfo();
-            updateStats();
-            updateSkillProgress();
-            updateMilestones();
-            updateJourneyStages();
-            updateAchievements();
-            updatePredictions();
-            createSkillRadarChart();
-        }
-        
-        // Update main progress bar and experience
-        function updateMainProgress() {
-            const experienceEl = document.getElementById('experience-points');
-            const progressBar = document.getElementById('main-progress-bar');
-            const progressText = document.getElementById('current-progress');
-            const nextMilestone = document.getElementById('next-milestone');
-            
-            // Animate experience counter
-            animateCounter(experienceEl, 0, journeyData.total_experience, 2000);
-            
-            // Update progress bar
-            setTimeout(() => {
-                progressBar.style.width = journeyData.stage_progress + '%';
-                progressText.textContent = Math.round(journeyData.stage_progress) + '%';
-            }, 500);
-            
-            // Update next milestone
-            const stages = ['novice', 'developing', 'competent', 'proficient', 'expert', 'master'];
-            const currentIndex = stages.indexOf(journeyData.current_stage);
-            if (currentIndex < stages.length - 1) {
-                const nextStage = stages[currentIndex + 1];
-                nextMilestone.textContent = `Next: ${nextStage.charAt(0).toUpperCase() + nextStage.slice(1)} Level`;
-            } else {
-                nextMilestone.textContent = 'Master Level Achieved!';
-            }
-            
-            // Add glow effect when progress is high
-            if (journeyData.stage_progress > 80) {
-                progressBar.classList.add('progress-glow');
-            }
-        }
-        
-        // Update stage information
-        function updateStageInfo() {
-            document.getElementById('current-stage').textContent = 
-                journeyData.current_stage.charAt(0).toUpperCase() + journeyData.current_stage.slice(1) + ' Trader';
-            
-            const stageDescriptions = {
-                'novice': 'Learning the fundamentals of trading',
-                'developing': 'Building core trading skills',
-                'competent': 'Developing consistent strategies',
-                'proficient': 'Achieving reliable performance',
-                'expert': 'Mastering advanced techniques',
-                'master': 'Elite trading expertise'
-            };
-            
-            document.getElementById('stage-description').textContent = 
-                stageDescriptions[journeyData.current_stage] || 'Trading journey in progress';
-        }
-        
-        // Update statistics
-        function updateStats() {
-            const stats = journeyData.journey_stats;
-            
-            document.getElementById('total-trades').textContent = stats.total_achievements || '0';
-            document.getElementById('win-rate').textContent = Math.round(stats.skill_average || 0) + '%';
-            document.getElementById('trading-days').textContent = stats.days_trading || '0';
-            document.getElementById('rank-percentile').textContent = Math.round(stats.rank_percentile || 0) + '%';
-        }
-        
-        // Update skill progress bars
-        function updateSkillProgress() {
-            const skillContainer = document.getElementById('skill-progress-bars');
-            skillContainer.innerHTML = '';
-            
-            const skillNames = {
-                'technical_analysis': 'Technical Analysis',
-                'risk_management': 'Risk Management',
-                'pattern_recognition': 'Pattern Recognition',
-                'market_psychology': 'Market Psychology',
-                'execution_timing': 'Execution Timing'
-            };
-            
-            Object.entries(journeyData.skill_scores).forEach(([skill, score]) => {
-                const percentage = (score / 1000) * 100;
-                
-                const skillDiv = document.createElement('div');
-                skillDiv.innerHTML = `
-                    <div class="flex justify-between mb-1">
-                        <span class="text-sm">${skillNames[skill]}</span>
-                        <span class="text-sm text-gray-400">${Math.round(percentage)}%</span>
-                    </div>
-                    <div class="w-full bg-gray-700 rounded-full h-2">
-                        <div class="skill-bar h-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full transition-all duration-1000" 
-                             style="width: 0%"></div>
-                    </div>
-                `;
-                
-                skillContainer.appendChild(skillDiv);
-                
-                // Animate skill bars
-                setTimeout(() => {
-                    skillDiv.querySelector('.skill-bar').style.width = percentage + '%';
-                }, 1000 + Object.keys(journeyData.skill_scores).indexOf(skill) * 200);
-            });
-        }
-        
-        // Update next milestones
-        function updateMilestones() {
-            const milestonesContainer = document.getElementById('next-milestones');
-            milestonesContainer.innerHTML = '';
-            
-            if (journeyData.milestone_predictions?.next_stage) {
-                const prediction = journeyData.milestone_predictions.next_stage;
-                const milestoneDiv = document.createElement('div');
-                milestoneDiv.className = 'flex justify-between items-center p-3 bg-gray-700/50 rounded-lg';
-                milestoneDiv.innerHTML = `
-                    <div>
-                        <div class="font-medium">Next Stage</div>
-                        <div class="text-sm text-gray-400">${prediction.experience_needed} XP needed</div>
-                    </div>
-                    <div class="text-right">
-                        <div class="font-bold text-blue-400">${prediction.days} days</div>
-                        <div class="text-xs text-gray-500">${Math.round(prediction.confidence * 100)}% confidence</div>
-                    </div>
-                `;
-                milestonesContainer.appendChild(milestoneDiv);
-            }
-            
-            // Add available achievements
-            if (journeyData.available_achievements?.slice(0, 2)) {
-                journeyData.available_achievements.slice(0, 2).forEach(achievement => {
-                    const achievementDiv = document.createElement('div');
-                    achievementDiv.className = 'flex justify-between items-center p-3 bg-gray-700/50 rounded-lg';
-                    achievementDiv.innerHTML = `
-                        <div>
-                            <div class="font-medium">${achievement.title}</div>
-                            <div class="text-sm text-gray-400">${achievement.points} XP</div>
-                        </div>
-                        <div class="text-2xl">${achievement.icon}</div>
-                    `;
-                    milestonesContainer.appendChild(achievementDiv);
-                });
-            }
-        }
-        
-        // Update journey stages
-        function updateJourneyStages() {
-            const stagesContainer = document.getElementById('journey-stages');
-            stagesContainer.innerHTML = '';
-            
-            const stages = [
-                { name: 'novice', title: 'Novice', threshold: 0, color: '#ef4444' },
-                { name: 'developing', title: 'Developing', threshold: 100, color: '#f97316' },
-                { name: 'competent', title: 'Competent', threshold: 500, color: '#eab308' },
-                { name: 'proficient', title: 'Proficient', threshold: 1500, color: '#22c55e' },
-                { name: 'expert', title: 'Expert', threshold: 5000, color: '#3b82f6' },
-                { name: 'master', title: 'Master', threshold: 15000, color: '#8b5cf6' }
-            ];
-            
-            stages.forEach(stage => {
-                const isCompleted = journeyData.total_experience >= stage.threshold;
-                const isCurrent = stage.name === journeyData.current_stage;
-                
-                const stageDiv = document.createElement('div');
-                stageDiv.className = `journey-stage ${isCurrent ? 'active' : ''} ${isCompleted ? 'opacity-100' : 'opacity-50'}`;
-                stageDiv.style.borderLeft = `4px solid ${stage.color}`;
-                stageDiv.innerHTML = `
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <div class="font-medium">${stage.title}</div>
-                            <div class="text-sm text-gray-400">${stage.threshold.toLocaleString()} XP</div>
-                        </div>
-                        <div class="text-2xl">
-                            ${isCompleted ? '✅' : isCurrent ? '🎯' : '⏳'}
-                        </div>
-                    </div>
-                `;
-                
-                stagesContainer.appendChild(stageDiv);
-            });
-        }
-        
-        // Update achievements section
-        function updateAchievements() {
-            const achievementsGrid = document.getElementById('achievements-grid');
-            achievementsGrid.innerHTML = '';
-            
-            // Add earned achievements
-            journeyData.earned_achievements.forEach(achievementId => {
-                if (achievementData.achievement_details[achievementId]) {
-                    const achievement = achievementData.achievement_details[achievementId];
-                    createAchievementBadge(achievement, true, achievementId);
-                }
-            });
-            
-            // Add available achievements
-            journeyData.available_achievements.slice(0, 8).forEach(achievement => {
-                createAchievementBadge(achievement, false, achievement.id);
-            });
-        }
-        
-        // Create achievement badge
-        function createAchievementBadge(achievement, isEarned, achievementId) {
-            const achievementsGrid = document.getElementById('achievements-grid');
-            
-            const badgeDiv = document.createElement('div');
-            badgeDiv.className = `achievement-badge p-4 rounded-lg text-center ${isEarned ? 'bg-green-600/20 border border-green-500' : 'bg-gray-700/50 border border-gray-600'}`;
-            badgeDiv.innerHTML = `
-                <div class="text-3xl mb-2">${achievement.icon}</div>
-                <div class="font-medium text-sm">${achievement.title}</div>
-                <div class="text-xs text-gray-400 mt-1">${achievement.points} XP</div>
-                ${!isEarned && achievement.progress ? `<div class="text-xs text-blue-400 mt-1">${Math.round(achievement.progress)}% progress</div>` : ''}
-            `;
-            
-            achievementsGrid.appendChild(badgeDiv);
-            
-            // Add click handler for details
-            badgeDiv.addEventListener('click', () => showAchievementDetails(achievement, isEarned));
-        }
-        
-        // Update predictions
-        function updatePredictions() {
-            if (journeyData.milestone_predictions?.next_stage) {
-                const prediction = journeyData.milestone_predictions.next_stage;
-                document.getElementById('next-stage-days').textContent = prediction.days;
-                document.getElementById('prediction-confidence').textContent = Math.round(prediction.confidence * 100) + '% confidence';
-            }
-            
-            if (journeyData.milestone_predictions?.next_achievements?.[0]) {
-                const nextAchievement = journeyData.milestone_predictions.next_achievements[0];
-                document.getElementById('next-achievement-days').textContent = nextAchievement.estimated_days;
-                document.getElementById('next-achievement-name').textContent = nextAchievement.achievement.replace('_', ' ');
-            }
-            
-            document.getElementById('progress-velocity').textContent = Math.round(journeyData.progress_velocity || 0);
-        }
-        
-        // Create skill radar chart
-        function createSkillRadarChart() {
-            const skillNames = {
-                'technical_analysis': 'Technical Analysis',
-                'risk_management': 'Risk Management',
-                'pattern_recognition': 'Pattern Recognition',
-                'market_psychology': 'Market Psychology',
-                'execution_timing': 'Execution Timing'
-            };
-            
-            const categories = Object.keys(skillNames);
-            const values = categories.map(skill => (journeyData.skill_scores[skill] / 1000) * 100);
-            
-            const data = [{
-                type: 'scatterpolar',
-                r: values,
-                theta: categories.map(skill => skillNames[skill]),
-                fill: 'toself',
-                fillcolor: 'rgba(59, 130, 246, 0.2)',
-                line: {
-                    color: 'rgba(59, 130, 246, 1)'
-                }
-            }];
-            
-            const layout = {
-                polar: {
-                    radialaxis: {
-                        visible: true,
-                        range: [0, 100],
-                        gridcolor: 'rgba(255, 255, 255, 0.1)',
-                        tickcolor: 'rgba(255, 255, 255, 0.3)'
-                    },
-                    angularaxis: {
-                        gridcolor: 'rgba(255, 255, 255, 0.1)',
-                        tickcolor: 'rgba(255, 255, 255, 0.8)'
-                    }
-                },
-                showlegend: false,
-                paper_bgcolor: 'rgba(0,0,0,0)',
-                plot_bgcolor: 'rgba(0,0,0,0)',
-                font: {
-                    color: 'white'
-                }
-            };
-            
-            const config = {
-                displayModeBar: false,
-                responsive: true
-            };
-            
-            Plotly.newPlot('skill-radar-chart', data, layout, config);
-        }
-        
-        // Animate counter
-        function animateCounter(element, start, end, duration) {
-            const range = end - start;
-            const increment = range / (duration / 16);
-            let current = start;
-            
-            const timer = setInterval(() => {
-                current += increment;
-                element.textContent = Math.round(current).toLocaleString();
-                
-                if (current >= end) {
-                    element.textContent = end.toLocaleString();
-                    clearInterval(timer);
-                }
-            }, 16);
-        }
-        
-        // Start animations
-        function startAnimations() {
-            // Add particle effects for high progress
-            if (journeyData && journeyData.stage_progress > 80) {
-                createParticleEffect();
-            }
-            
-            // Animate achievement badges
-            const badges = document.querySelectorAll('.achievement-badge');
-            badges.forEach((badge, index) => {
-                badge.style.animationDelay = index * 100 + 'ms';
-                badge.style.animation = 'fadeIn 0.5s ease-out forwards';
-            });
-        }
-        
-        // Create particle effect
-        function createParticleEffect() {
-            const progressBar = document.getElementById('main-progress-bar');
-            
-            setInterval(() => {
-                const particle = document.createElement('div');
-                particle.className = 'particle';
-                particle.style.left = Math.random() * 100 + '%';
-                particle.style.top = '50%';
-                
-                progressBar.appendChild(particle);
-                
-                setTimeout(() => {
-                    particle.remove();
-                }, 2000);
-            }, 500);
-        }
-        
-        // Show achievement details
-        function showAchievementDetails(achievement, isEarned) {
-            alert(`${achievement.title}\n\n${isEarned ? 'Earned!' : achievement.requirements || 'Keep working towards this achievement!'}\n\nReward: ${achievement.points} XP`);
-        }
-        
-        // Achievement filter functionality
-        document.addEventListener('DOMContentLoaded', () => {
-            const filterButtons = document.querySelectorAll('.achievement-filter');
-            filterButtons.forEach(button => {
-                button.addEventListener('click', (e) => {
-                    // Update active filter
-                    filterButtons.forEach(btn => {
-                        btn.classList.remove('bg-blue-600', 'text-white');
-                        btn.classList.add('bg-gray-600', 'text-gray-300');
-                    });
-                    e.target.classList.remove('bg-gray-600', 'text-gray-300');
-                    e.target.classList.add('bg-blue-600', 'text-white');
-                    
-                    // Filter achievements (implementation would go here)
-                    const filter = e.target.dataset.filter;
-                    // For now, just reload all achievements
-                    updateAchievements();
-                });
-            });
-        });
-        
-        // Add CSS animation for fade in
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes fadeIn {
-                from { opacity: 0; transform: translateY(20px); }
-                to { opacity: 1; transform: translateY(0); }
-            }
-        `;
-        document.head.appendChild(style);
-        
-        // Initialize dashboard when page loads
-        document.addEventListener('DOMContentLoaded', initializeDashboard);
-    </script>
 </body>
 </html>

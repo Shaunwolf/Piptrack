@@ -2238,10 +2238,56 @@ def test_journey_animation():
         logging.error(f"Error testing journey animation: {e}")
         return jsonify({'success': False, 'error': str(e)})
 
-@app.route('/trading_journey')
-def trading_journey_page():
+@app.route('/trading_journey_dashboard')
+@login_required
+def trading_journey_dashboard():
     """Trading journey progress dashboard page"""
-    return render_template('trading_journey.html')
+    try:
+        # Calculate user's trading progress
+        user_trades = TradeJournal.query.filter_by(user_id=current_user.id).all()
+        
+        # Trading journey data
+        journey_data = {
+            'level': min(5, len(user_trades) // 10 + 1),  # Level up every 10 trades
+            'experience': len(user_trades) * 10,
+            'total_trades': len(user_trades),
+            'winning_trades': len([t for t in user_trades if t.pnl and t.pnl > 0]),
+            'current_streak': 0,
+            'best_streak': 0,
+            'achievements': []
+        }
+        
+        # Calculate win rate
+        if journey_data['total_trades'] > 0:
+            journey_data['win_rate'] = round((journey_data['winning_trades'] / journey_data['total_trades']) * 100, 1)
+        else:
+            journey_data['win_rate'] = 0
+        
+        # Add achievements based on progress
+        if journey_data['total_trades'] >= 1:
+            journey_data['achievements'].append('First Trade')
+        if journey_data['total_trades'] >= 10:
+            journey_data['achievements'].append('Consistent Trader')
+        if journey_data['win_rate'] >= 60:
+            journey_data['achievements'].append('Profitable Trader')
+        
+        # Milestones for progression
+        milestones = [
+            {'name': 'Novice', 'trades_required': 5, 'level': 1},
+            {'name': 'Intermediate', 'trades_required': 25, 'level': 2},
+            {'name': 'Advanced', 'trades_required': 50, 'level': 3},
+            {'name': 'Expert', 'trades_required': 100, 'level': 4},
+            {'name': 'Master', 'trades_required': 250, 'level': 5}
+        ]
+        
+        return render_template('trading_journey.html', 
+                             journey=journey_data,
+                             milestones=milestones)
+        
+    except Exception as e:
+        logging.error(f"Error loading trading journey: {e}")
+        flash("Error loading trading journey. Please try again.", "error")
+        return redirect(url_for('dashboard'))
 
 # Personalized Stock Recommendation Routes
 
