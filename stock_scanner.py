@@ -248,9 +248,10 @@ class StockScanner:
             return 0.5
     
     def scan_stocks(self, symbols=None, max_results=20):
-        """Main scanning function with performance optimization"""
+        """Main scanning function with access to entire market universe"""
         if symbols is None:
-            symbols = self.top_gappers[:80]  # Use our curated list instead of API call
+            # Get comprehensive market universe
+            symbols = self.get_comprehensive_market_universe(max_results * 10)
         
         results = []
         processed = 0
@@ -264,7 +265,7 @@ class StockScanner:
                 time.sleep(0.1)
                 
                 analysis = self.analyze_stock(symbol)
-                if analysis and analysis.get('confidence_score', 0) > 30:  # Lower threshold to get more results
+                if analysis and analysis.get('confidence_score', 0) > 30:
                     results.append(analysis)
                     logging.info(f"Scanner found: {symbol} - Confidence: {analysis.get('confidence_score')}")
                     
@@ -274,16 +275,17 @@ class StockScanner:
                 logging.error(f"Error processing {symbol}: {e}")
                 continue
         
-        # If we still don't have enough results, lower the threshold
+        # If we still don't have enough results, expand search
         if len(results) < 5:
-            for symbol in symbols[processed:]:
+            extended_symbols = self.get_extended_universe(max_results * 20)
+            for symbol in extended_symbols[processed:]:
                 if len(results) >= max_results:
                     break
                 try:
                     analysis = self.analyze_stock(symbol)
                     if analysis and analysis.get('confidence_score', 0) > 15:
                         results.append(analysis)
-                        logging.info(f"Scanner fallback: {symbol} - Confidence: {analysis.get('confidence_score')}")
+                        logging.info(f"Scanner extended: {symbol} - Confidence: {analysis.get('confidence_score')}")
                         time.sleep(0.1)
                 except:
                     continue
@@ -291,8 +293,162 @@ class StockScanner:
         # Sort by confidence score
         results.sort(key=lambda x: x.get('confidence_score', 0), reverse=True)
         
-        logging.info(f"Stock scanner completed. Found {len(results)} stocks")
+        logging.info(f"Stock scanner completed. Found {len(results)} stocks from market universe")
         return results[:max_results]
+    
+    def get_comprehensive_market_universe(self, limit=1000):
+        """Get comprehensive stock universe from multiple exchanges"""
+        symbols = set()
+        
+        # S&P 500 symbols
+        symbols.update(self.get_sp500_universe())
+        
+        # NASDAQ listed stocks
+        symbols.update(self.get_nasdaq_universe())
+        
+        # NYSE listed stocks  
+        symbols.update(self.get_nyse_universe())
+        
+        # Russell 2000 small caps
+        symbols.update(self.get_small_cap_universe())
+        
+        # Biotech and pharma universe
+        symbols.update(self.get_biotech_universe())
+        
+        # Crypto-related stocks
+        symbols.update(self.get_crypto_stocks())
+        
+        # Meme stocks and high volume tickers
+        symbols.update(self.get_trending_stocks())
+        
+        # Convert to list and shuffle for diversity
+        import random
+        symbol_list = list(symbols)
+        random.shuffle(symbol_list)
+        
+        logging.info(f"Loaded comprehensive universe: {len(symbol_list)} symbols")
+        return symbol_list[:limit]
+    
+    def get_sp500_universe(self):
+        """Get expanded S&P 500 universe"""
+        return [
+            'AAPL', 'MSFT', 'GOOGL', 'GOOG', 'AMZN', 'TSLA', 'META', 'NVDA', 'BRK.B', 'UNH',
+            'JNJ', 'XOM', 'JPM', 'V', 'PG', 'HD', 'CVX', 'MA', 'PFE', 'ABBV',
+            'BAC', 'KO', 'AVGO', 'PEP', 'TMO', 'COST', 'DHR', 'MRK', 'ABT', 'ACN',
+            'VZ', 'ADBE', 'NKE', 'WMT', 'CRM', 'NFLX', 'T', 'NEE', 'CSCO', 'ORCL',
+            'AMD', 'TXN', 'LLY', 'QCOM', 'WFC', 'MS', 'RTX', 'MDT', 'HON', 'UPS',
+            'IBM', 'AMGN', 'LOW', 'CAT', 'INTC', 'DE', 'GS', 'SBUX', 'BMY', 'BA',
+            'SPGI', 'AXP', 'BLK', 'GILD', 'MMM', 'C', 'CVS', 'MO', 'USB', 'LMT',
+            'ISRG', 'TJX', 'PNC', 'ADP', 'SYK', 'BKNG', 'AMT', 'MDLZ', 'CI', 'SO',
+            'VRTX', 'FIS', 'CB', 'DUK', 'CCI', 'NSC', 'PYPL', 'AON', 'BSX', 'CL'
+        ]
+    
+    def get_nasdaq_universe(self):
+        """Get NASDAQ universe including growth stocks"""
+        return [
+            'AAPL', 'MSFT', 'AMZN', 'TSLA', 'GOOGL', 'GOOG', 'META', 'NVDA', 'NFLX', 'ADBE',
+            'PYPL', 'INTC', 'CSCO', 'CMCSA', 'PEP', 'COST', 'AVGO', 'TXN', 'QCOM', 'AMD',
+            'INTU', 'TMUS', 'AMAT', 'SBUX', 'CHTR', 'ISRG', 'GILD', 'BKNG', 'REGN', 'MU',
+            'ADI', 'FISV', 'CSX', 'ATVI', 'MRNA', 'PANW', 'ADP', 'ILMN', 'LRCX', 'MDLZ',
+            'KLAC', 'KDP', 'SNPS', 'EXC', 'CDNS', 'MCHP', 'ORLY', 'CTAS', 'BIIB', 'LULU',
+            'PLTR', 'SNOW', 'COIN', 'RBLX', 'U', 'DKNG', 'ROKU', 'SQ', 'SHOP', 'PINS'
+        ]
+    
+    def get_nyse_universe(self):
+        """Get NYSE universe including traditional stocks"""
+        return [
+            'BRK.B', 'UNH', 'JNJ', 'XOM', 'JPM', 'V', 'PG', 'HD', 'CVX', 'MA',
+            'BAC', 'KO', 'TMO', 'DHR', 'MRK', 'ABT', 'ACN', 'VZ', 'NKE', 'WMT',
+            'CRM', 'T', 'NEE', 'WFC', 'MS', 'RTX', 'MDT', 'HON', 'UPS', 'IBM',
+            'AMGN', 'LOW', 'CAT', 'DE', 'GS', 'BMY', 'BA', 'SPGI', 'AXP', 'BLK',
+            'MMM', 'C', 'CVS', 'MO', 'USB', 'LMT', 'TJX', 'PNC', 'SYK', 'AMT',
+            'CI', 'SO', 'FIS', 'CB', 'DUK', 'NSC', 'AON', 'BSX', 'CL', 'F',
+            'GM', 'DIS', 'UBER', 'LYFT', 'ABNB', 'DASH', 'TWTR', 'SNAP', 'ZM', 'DOCU'
+        ]
+    
+    def get_small_cap_universe(self):
+        """Get small cap and Russell 2000 stocks"""
+        return [
+            'AMC', 'GME', 'BBBY', 'KOSS', 'EXPR', 'NAKD', 'SNDL', 'NOK', 'BB', 'PLTR',
+            'WISH', 'CLOV', 'MVIS', 'TLRY', 'WKHS', 'SKLZ', 'RIDE', 'SPCE', 'RKT', 'SOFI',
+            'UWMC', 'OPEN', 'ROOT', 'HOOD', 'AFRM', 'UPST', 'PENN', 'FVRR', 'ETSY', 'PINS',
+            'CRSR', 'CRWD', 'ZS', 'OKTA', 'DDOG', 'NET', 'FSLY', 'ESTC', 'TEAM', 'WORK',
+            'PTON', 'LMND', 'CVNA', 'OSTK', 'BYND', 'TDOC', 'MRTX', 'SAGE', 'FOLD', 'BLUE'
+        ]
+    
+    def get_biotech_universe(self):
+        """Get comprehensive biotech universe"""
+        return [
+            'MRNA', 'BNTX', 'NVAX', 'OCGN', 'INO', 'VXRT', 'SRNE', 'ATOS', 'CTXR', 'BNGO',
+            'SENS', 'OBSV', 'CTIC', 'CPRX', 'CYTH', 'SHIP', 'ADMP', 'PROG', 'RGBP', 'ENZC',
+            'VBIV', 'VERU', 'CRTX', 'SAVA', 'AVXL', 'BIIB', 'GILD', 'AMGN', 'VRTX', 'REGN',
+            'ILMN', 'TECH', 'TGTX', 'FOLD', 'BLUE', 'EDIT', 'CRSP', 'NTLA', 'BEAM', 'PACB',
+            'CDNA', 'NVTA', 'VCYT', 'FATE', 'BMRN', 'RARE', 'MYGN', 'HALO', 'KDNY', 'ZYME',
+            'ARQL', 'PTGX', 'AXSM', 'ACAD', 'HZNP', 'INCY', 'EXAS', 'VEEV', 'TDOC', 'DXCM'
+        ]
+    
+    def get_crypto_stocks(self):
+        """Get crypto-related stocks"""
+        return [
+            'COIN', 'MSTR', 'RIOT', 'MARA', 'CAN', 'BTBT', 'EBON', 'SOS', 'DGLY', 'HVBT',
+            'ARGO', 'HIVE', 'BITF', 'HUT', 'CLSK', 'EQOS', 'INSG', 'LFUS', 'ANY', 'NCTY',
+            'PYPL', 'SQ', 'HOOD', 'SOFI', 'AFRM', 'UPST', 'LC', 'ONDK', 'TREE', 'LMND'
+        ]
+    
+    def get_trending_stocks(self):
+        """Get trending and meme stocks"""
+        return [
+            'SPY', 'QQQ', 'IWM', 'DIA', 'VTI', 'VEA', 'VWO', 'BND', 'AGG', 'LQD',
+            'GLD', 'SLV', 'USO', 'XLE', 'XLF', 'XLK', 'XBI', 'ARKK', 'ARKG', 'ARKF',
+            'TQQQ', 'SQQQ', 'UVXY', 'SPXS', 'SPXL', 'TLT', 'HYG', 'EEM', 'FXI', 'BABA',
+            'NIO', 'XPEV', 'LI', 'PDD', 'JD', 'DIDI', 'TAL', 'EDU', 'BIDU', 'TME',
+            'RIVN', 'LCID', 'MULN', 'NKLA', 'WKHS', 'HYLN', 'SOLO', 'AYRO', 'IDEX', 'GEVO'
+        ]
+    
+    def get_extended_universe(self, limit=2000):
+        """Get extended universe for comprehensive scanning"""
+        extended = set()
+        
+        # Add penny stocks and micro caps
+        extended.update(self.get_penny_stocks())
+        
+        # Add international ADRs
+        extended.update(self.get_international_adrs())
+        
+        # Add sector-specific stocks
+        extended.update(self.get_sector_stocks())
+        
+        return list(extended)[:limit]
+    
+    def get_penny_stocks(self):
+        """Get penny stock universe for pump detection"""
+        return [
+            'GNUS', 'XSPA', 'DECN', 'UAVS', 'VISL', 'MARK', 'KTOV', 'BIOC', 'AYTU', 'IBIO',
+            'OPKO', 'TOPS', 'SHIP', 'DRYS', 'GLBS', 'CTRM', 'SNDL', 'NAKD', 'ZOMEDICA', 'ZOM',
+            'BNGO', 'SENS', 'OBSV', 'CTIC', 'CPRX', 'CYTH', 'ADMP', 'PROG', 'RGBP', 'ENZC',
+            'HMBL', 'OZSC', 'HCMC', 'ASTI', 'TSNP', 'ALPP', 'ABML', 'EEENF', 'RTON', 'RXMD'
+        ]
+    
+    def get_international_adrs(self):
+        """Get international ADR stocks"""
+        return [
+            'BABA', 'NIO', 'XPEV', 'LI', 'PDD', 'JD', 'BIDU', 'TME', 'NTES', 'WB',
+            'TSM', 'ASML', 'NVO', 'UL', 'SAP', 'TM', 'SONY', 'SHOP', 'TD', 'RY',
+            'CNI', 'ENB', 'SU', 'CCL', 'RCL', 'NCLH', 'CUK', 'TUI', 'AHAL', 'TCOM'
+        ]
+    
+    def get_sector_stocks(self):
+        """Get sector-specific stocks"""
+        return [
+            # Tech
+            'CRM', 'NOW', 'WDAY', 'VEEV', 'ZM', 'DOCU', 'CRWD', 'ZS', 'OKTA', 'DDOG',
+            # Energy
+            'XOM', 'CVX', 'COP', 'EOG', 'SLB', 'HAL', 'OXY', 'DVN', 'MPC', 'VLO',
+            # Healthcare
+            'UNH', 'JNJ', 'PFE', 'ABBV', 'MRK', 'TMO', 'DHR', 'ABT', 'BMY', 'AMGN',
+            # Financial
+            'JPM', 'BAC', 'WFC', 'C', 'GS', 'MS', 'USB', 'PNC', 'TFC', 'COF'
+        ]
     
     def get_pattern_evolution(self, symbol):
         """Get pattern evolution data for detailed analysis"""
