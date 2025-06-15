@@ -276,7 +276,7 @@ def forecast(symbol):
         scanner = StockScanner()
         stock_data = scanner.get_stock_data(symbol)
         
-        if not stock_data or stock_data.get('error'):
+        if stock_data is None or (hasattr(stock_data, 'empty') and stock_data.empty):
             # Create a user-friendly error page
             error_message = f"Unable to find data for ticker '{symbol}'"
             suggestions = [
@@ -345,7 +345,7 @@ def forecast_enhanced(symbol):
         if not stock:
             # Fetch fresh data
             data = stock_scanner.get_stock_data(symbol)
-            if not data:
+            if data is None or (hasattr(data, 'empty') and data.empty):
                 raise ValueError(f"No data available for {symbol}")
             
             confidence_score = confidence_scorer.calculate_score(data)
