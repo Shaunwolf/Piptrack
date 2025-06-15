@@ -2,19 +2,17 @@ from flask import render_template, request, jsonify, redirect, url_for, flash, s
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import app, db
-from models import Stock, TradeJournal, ForecastPath, AIAnalysis, PatternEvolution, User, OAuth, UserTradingProfile, StockRecommendation, RecommendationFeedback
-# Removed replit_auth import - using standard Flask-Login
+from models import (Stock, TradeJournal, ForecastPath, AIAnalysis, PatternEvolution, 
+                   User, UserTradingProfile, StockRecommendation, RecommendationFeedback)
 from auth_forms import RegistrationForm, LoginForm
-# Google OAuth removed - using standard email/password only
-import uuid
 from stock_scanner import StockScanner
 from forecasting_engine import ForecastingEngine
 from ai_coach import AICoach
 from confidence_scorer import ConfidenceScorer
-from google_sheets_integration import GoogleSheetsIntegration
-from pdf_generator import PDFGenerator
 from pattern_evolution_tracker import PatternEvolutionTracker
 from personalized_recommender import PersonalizedRecommender
+from google_sheets_integration import GoogleSheetsIntegration
+from pdf_generator import PDFGenerator
 import json
 import logging
 import pandas as pd
@@ -119,59 +117,36 @@ def logout():
 def make_session_permanent():
     session.permanent = True
 
-# Initialize performance optimizer
-try:
-    from performance_optimizer import optimize_route, perf_optimizer
-    PERFORMANCE_OPTIMIZED = True
-except ImportError:
-    PERFORMANCE_OPTIMIZED = False
-    def optimize_route(func):
-        return func
-
-# Initialize components
+# Initialize core components
 stock_scanner = StockScanner()
 forecasting_engine = ForecastingEngine()
 ai_coach = AICoach()
 confidence_scorer = ConfidenceScorer()
+pattern_tracker = PatternEvolutionTracker()
+personalizer = PersonalizedRecommender()
 sheets_integration = GoogleSheetsIntegration()
 pdf_generator = PDFGenerator()
-pattern_tracker = PatternEvolutionTracker()
 
-# Initialize enhanced components
+# Initialize optional enhanced components with fallbacks
 try:
-    from enhanced_journal import EnhancedTradingJournal
-    from multi_timeframe_analyzer import MultiTimeframeAnalyzer
     from scanner_widgets import ScannerWidgets
     from physics_market_engine import PhysicsMarketEngine
     from enhanced_stock_widgets import enhanced_widgets
-    enhanced_journal = EnhancedTradingJournal()
-    mtf_analyzer = MultiTimeframeAnalyzer()
+    from animated_sparklines import AnimatedSparklines
     scanner_widgets = ScannerWidgets()
     physics_engine = PhysicsMarketEngine()
     stock_widgets = enhanced_widgets
+    sparklines_engine = AnimatedSparklines()
 except ImportError as e:
     logging.warning(f"Enhanced components not available: {e}")
-    enhanced_journal = None
-    mtf_analyzer = None
     scanner_widgets = None
     physics_engine = None
     stock_widgets = None
+    sparklines_engine = None
 
-# Preload symbols for performance if components are available
-if PERFORMANCE_OPTIMIZED and stock_widgets:
-    common_symbols = ['AAPL', 'META', 'NVDA', 'TSLA', 'MSFT']
-    def preload_symbols():
-        try:
-            for symbol in common_symbols:
-                stock_widgets.generate_widget_data(symbol, 'rsi_momentum')
-        except Exception as e:
-            logging.warning(f"Failed to preload symbols: {e}")
-    
-    # Run preload in background
-    try:
-        perf_optimizer.background_task(preload_symbols)
-    except:
-        pass
+# Performance optimization decorator fallback
+def optimize_route(func):
+    return func
 
 @app.route('/')
 def index():

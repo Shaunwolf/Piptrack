@@ -23,10 +23,10 @@ class User(UserMixin, db.Model):
     # Beta access tracking
     beta_user_number = db.Column(db.Integer, nullable=True)  # 1-100 for first 100 users
     
-    created_at = db.Column(db.DateTime, default=datetime.now)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime,
-                           default=datetime.now,
-                           onupdate=datetime.now)
+                           default=datetime.utcnow,
+                           onupdate=datetime.utcnow)
 
 # (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
 class OAuth(OAuthConsumerMixin, db.Model):
