@@ -201,3 +201,16 @@ class AIAnalysis(db.Model):
     chart_story = db.Column(db.JSON)  # Store hover comments for chart levels
     confidence_score = db.Column(db.Float)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class ScanResult(db.Model):
+    __tablename__ = 'scan_results'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    symbol = db.Column(db.String(10), nullable=False, index=True)
+    price = db.Column(db.Float, nullable=False)
+    confidence_score = db.Column(db.Float, nullable=False)
+    rsi = db.Column(db.Float, nullable=True)
+    volume_spike = db.Column(db.Float, nullable=True)
+    pattern_type = db.Column(db.String(50), nullable=True)
+    scan_type = db.Column(db.String(20), nullable=False)  # 'quick', 'comprehensive', 'after_hours'
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)

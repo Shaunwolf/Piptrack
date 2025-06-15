@@ -1,0 +1,275 @@
+{% extends "base.html" %}
+
+{% block title %}Scanner Monitor - PipSqueak AI Trading{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Header with PipSqueak Avatar -->
+    <div class="text-center">
+        <div class="flex justify-center mb-4">
+            <div class="w-16 h-16 bg-gradient-to-br from-orange-400 via-red-400 to-yellow-400 rounded-2xl flex items-center justify-center shadow-2xl p-1">
+                <img src="{{ url_for('static', filename='pipsqueak_avatar.svg') }}" alt="PipSqueak AI Avatar" class="w-full h-full">
+            </div>
+        </div>
+        <h1 class="text-4xl font-bold mb-2">Scanner Monitoring Dashboard</h1>
+        <p class="text-gray-400">Real-time automated stock scanning system with intelligent alerts</p>
+    </div>
+
+    <!-- Monitor Status -->
+    <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-bold">Monitor Status</h2>
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center">
+                    <div class="w-3 h-3 rounded-full {{ 'bg-green-400' if monitor_status == 'Running' else 'bg-red-400' }} mr-2"></div>
+                    <span class="text-lg font-semibold">{{ monitor_status }}</span>
+                </div>
+                {% if monitor_status != 'Running' %}
+                <a href="{{ url_for('start_scanner_monitor') }}" class="btn btn-primary">
+                    <i class="fas fa-play mr-2"></i>Start Monitor
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="stat-card">
+                <div class="stat-icon bg-blue-500">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div>
+                    <p class="stat-label">Quick Scans</p>
+                    <p class="stat-value">{{ scan_stats.quick }}</p>
+                    <p class="text-xs text-gray-400">Every 5 minutes during market hours</p>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon bg-green-500">
+                    <i class="fas fa-search"></i>
+                </div>
+                <div>
+                    <p class="stat-label">Comprehensive Scans</p>
+                    <p class="stat-value">{{ scan_stats.comprehensive }}</p>
+                    <p class="text-xs text-gray-400">Every 30 minutes during market hours</p>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon bg-purple-500">
+                    <i class="fas fa-moon"></i>
+                </div>
+                <div>
+                    <p class="stat-label">After Hours Scans</p>
+                    <p class="stat-value">{{ scan_stats.after_hours }}</p>
+                    <p class="text-xs text-gray-400">Every hour when markets closed</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Performers -->
+    {% if top_performers %}
+    <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700">
+        <h2 class="text-2xl font-bold mb-6">🔥 High Confidence Alerts</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% for stock in top_performers %}
+            <div class="bg-gray-700 rounded-xl p-4 border border-gray-600">
+                <div class="flex justify-between items-start mb-2">
+                    <h3 class="text-xl font-bold text-white">{{ stock.symbol }}</h3>
+                    <div class="confidence-badge confidence-{{ 'high' if stock.confidence_score >= 80 else 'medium' if stock.confidence_score >= 60 else 'low' }}">
+                        {{ "%.0f"|format(stock.confidence_score) }}%
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                        <span class="text-gray-400">Price:</span>
+                        <span class="text-white font-semibold">${{ "%.2f"|format(stock.price) }}</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-400">RSI:</span>
+                        <span class="text-white">{{ "%.1f"|format(stock.rsi or 0) }}</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-400">Pattern:</span>
+                        <span class="text-white">{{ stock.pattern_type or 'Unknown' }}</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-400">Volume:</span>
+                        <span class="text-white">+{{ "%.0f"|format(stock.volume_spike or 0) }}%</span>
+                    </div>
+                </div>
+                <div class="mt-3 text-xs text-gray-400">
+                    Detected: {{ stock.created_at.strftime('%m/%d %H:%M') }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Recent Scan Results -->
+    <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700">
+        <h2 class="text-2xl font-bold mb-6">Recent Scan Results</h2>
+        {% if recent_scans %}
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="border-b border-gray-600">
+                        <th class="text-left py-3 px-4">Symbol</th>
+                        <th class="text-left py-3 px-4">Price</th>
+                        <th class="text-left py-3 px-4">Confidence</th>
+                        <th class="text-left py-3 px-4">RSI</th>
+                        <th class="text-left py-3 px-4">Pattern</th>
+                        <th class="text-left py-3 px-4">Scan Type</th>
+                        <th class="text-left py-3 px-4">Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for scan in recent_scans %}
+                    <tr class="border-b border-gray-700 hover:bg-gray-700 transition-colors">
+                        <td class="py-3 px-4 font-bold">{{ scan.symbol }}</td>
+                        <td class="py-3 px-4">${{ "%.2f"|format(scan.price) }}</td>
+                        <td class="py-3 px-4">
+                            <div class="confidence-badge confidence-{{ 'high' if scan.confidence_score >= 70 else 'medium' if scan.confidence_score >= 40 else 'low' }}">
+                                {{ "%.0f"|format(scan.confidence_score) }}%
+                            </div>
+                        </td>
+                        <td class="py-3 px-4">{{ "%.1f"|format(scan.rsi or 0) }}</td>
+                        <td class="py-3 px-4">{{ scan.pattern_type or '-' }}</td>
+                        <td class="py-3 px-4">
+                            <span class="px-2 py-1 text-xs rounded-full bg-gray-600">
+                                {{ scan.scan_type }}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-sm text-gray-400">
+                            {{ scan.created_at.strftime('%m/%d %H:%M') }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-8">
+            <i class="fas fa-search text-4xl text-gray-600 mb-4"></i>
+            <p class="text-gray-400">No scan results yet. Start the monitor to begin scanning.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Monitor Schedule -->
+    <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700">
+        <h2 class="text-2xl font-bold mb-6">Scanning Schedule</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <h3 class="text-lg font-semibold mb-3 text-green-400">Market Hours (9:30 AM - 4:00 PM EST)</h3>
+                <ul class="space-y-2 text-sm">
+                    <li class="flex items-center">
+                        <i class="fas fa-clock text-blue-400 mr-3"></i>
+                        <span>Quick scans every 5 minutes (10 stocks)</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-search text-green-400 mr-3"></i>
+                        <span>Comprehensive scans every 30 minutes (50 stocks)</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-bell text-yellow-400 mr-3"></i>
+                        <span>High confidence alerts (75%+ threshold)</span>
+                    </li>
+                </ul>
+            </div>
+            <div>
+                <h3 class="text-lg font-semibold mb-3 text-purple-400">After Hours</h3>
+                <ul class="space-y-2 text-sm">
+                    <li class="flex items-center">
+                        <i class="fas fa-moon text-purple-400 mr-3"></i>
+                        <span>Gap analysis scans every hour (20 stocks)</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-chart-line text-orange-400 mr-3"></i>
+                        <span>Daily summary at 4:05 PM EST</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-calendar text-red-400 mr-3"></i>
+                        <span>Weekly deep scan on Sundays at 8:00 AM</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.confidence-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+    text-align: center;
+    min-width: 50px;
+    display: inline-block;
+}
+
+.confidence-high {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+}
+
+.confidence-medium {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+}
+
+.confidence-low {
+    background: linear-gradient(135deg, #6b7280, #4b5563);
+    color: white;
+}
+
+.stat-card {
+    background: rgba(55, 65, 81, 0.5);
+    border: 1px solid rgba(75, 85, 99, 0.3);
+    border-radius: 16px;
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    space-between: 16px;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    background: rgba(55, 65, 81, 0.8);
+    border-color: rgba(99, 102, 241, 0.5);
+    transform: translateY(-2px);
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 16px;
+    flex-shrink: 0;
+}
+
+.stat-icon i {
+    font-size: 20px;
+    color: white;
+}
+
+.stat-label {
+    font-size: 14px;
+    color: #9ca3af;
+    margin-bottom: 4px;
+}
+
+.stat-value {
+    font-size: 24px;
+    font-weight: bold;
+    color: white;
+    line-height: 1;
+}
+</style>
+{% endblock %}

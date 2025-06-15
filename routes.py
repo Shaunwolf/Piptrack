@@ -3,7 +3,7 @@ from flask_login import LoginManager, login_user, logout_user, login_required, c
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import app, db
 from models import (Stock, TradeJournal, ForecastPath, AIAnalysis, PatternEvolution, 
-                   User, StockRecommendation)
+                   User, StockRecommendation, ScanResult)
 from auth_forms import RegistrationForm, LoginForm
 from stock_scanner import StockScanner
 from forecasting_engine import ForecastingEngine
@@ -17,6 +17,7 @@ import json
 import logging
 import pandas as pd
 from datetime import datetime
+from threading import Thread
 
 # Initialize Flask-Login
 login_manager = LoginManager()
@@ -1155,6 +1156,63 @@ def all_pattern_evolutions():
     except Exception as e:
         logging.error(f"Error getting all pattern evolutions: {e}")
         return jsonify({'error': str(e)}), 500
+
+# Scanner Monitoring Routes
+monitor_instance = None
+
+@app.route('/start_scanner_monitor')
+@login_required
+def start_scanner_monitor():
+    """Start the automated scanner monitoring system"""
+    global monitor_instance
+    
+    try:
+        if monitor_instance is None:
+            from scanner_monitor import start_monitor
+            monitor_instance = start_monitor()
+            flash("Scanner monitoring system started successfully", "success")
+        else:
+            flash("Scanner monitoring system is already running", "info")
+        
+        return redirect(url_for('scanner_dashboard'))
+        
+    except Exception as e:
+        logging.error(f"Error starting scanner monitor: {e}")
+        flash("Error starting scanner monitoring system", "error")
+        return redirect(url_for('scanner'))
+
+@app.route('/scanner_dashboard')
+@login_required
+def scanner_dashboard():
+    """Dashboard showing scanner monitoring status and recent results"""
+    try:
+        # Get recent scan results
+        recent_scans = ScanResult.query.order_by(ScanResult.created_at.desc()).limit(50).all()
+        
+        # Group by scan type
+        scan_stats = {
+            'quick': len([s for s in recent_scans if s.scan_type == 'quick']),
+            'comprehensive': len([s for s in recent_scans if s.scan_type == 'comprehensive']),
+            'after_hours': len([s for s in recent_scans if s.scan_type == 'after_hours'])
+        }
+        
+        # Get top performers from recent scans
+        top_performers = ScanResult.query.filter(
+            ScanResult.confidence_score >= 70
+        ).order_by(ScanResult.confidence_score.desc()).limit(10).all()
+        
+        monitor_status = "Running" if monitor_instance else "Stopped"
+        
+        return render_template('scanner_dashboard.html', 
+                             recent_scans=recent_scans[:20],
+                             scan_stats=scan_stats,
+                             top_performers=top_performers,
+                             monitor_status=monitor_status)
+        
+    except Exception as e:
+        logging.error(f"Error loading scanner dashboard: {e}")
+        flash("Error loading scanner dashboard", "error")
+        return redirect(url_for('dashboard'))
 
 @app.route('/api/sparkline/<symbol>')
 def get_sparkline_data(symbol):

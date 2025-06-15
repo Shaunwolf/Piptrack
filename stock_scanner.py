@@ -156,7 +156,10 @@ class StockScanner:
             
             # Volume analysis
             avg_volume_series = hist['Volume'].rolling(20).mean()
-            avg_volume = avg_volume_series.iloc[-2] if len(avg_volume_series) > 1 else hist['Volume'].mean()
+            if isinstance(avg_volume_series, pd.Series) and len(avg_volume_series) > 1:
+                avg_volume = avg_volume_series.iloc[-2]
+            else:
+                avg_volume = hist['Volume'].mean()
             current_volume = hist['Volume'].iloc[-1]
             volume_spike = ((current_volume - avg_volume) / avg_volume * 100) if avg_volume > 0 else 0
             
