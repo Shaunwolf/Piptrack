@@ -331,14 +331,15 @@ class StockScanner:
                 loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
                 rs = gain / loss
                 rsi = 100 - (100 / (1 + rs))
-                rsi = rsi.iloc[-1]
+                rsi = rsi.iloc[-1] if hasattr(rsi, 'iloc') and len(rsi) > 0 else 50
                 if pd.isna(rsi) or rsi < 0 or rsi > 100:
                     rsi = 50
             except:
                 rsi = 50
             
             # Volume analysis
-            avg_volume = hist['Volume'].rolling(20).mean().iloc[-2]  # Previous 20-day average
+            avg_volume_series = hist['Volume'].rolling(20).mean()
+            avg_volume = avg_volume_series.iloc[-2] if len(avg_volume_series) > 1 else hist['Volume'].mean()
             current_volume = hist['Volume'].iloc[-1]
             volume_spike = ((current_volume - avg_volume) / avg_volume * 100) if avg_volume > 0 else 0
             

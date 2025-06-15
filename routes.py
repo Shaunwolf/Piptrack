@@ -487,39 +487,62 @@ def generate_enhanced_technical_analysis(symbol):
         
         # Calculate technical indicators with error handling
         try:
-            rsi = ta.RSI(hist['Close']).iloc[-1]
+            # RSI calculation
+            delta = hist['Close'].diff()
+            gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+            loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+            rs = gain / loss
+            rsi_series = 100 - (100 / (1 + rs))
+            rsi = rsi_series.iloc[-1] if not rsi_series.empty else 50.0
         except:
             rsi = 50.0
         
         try:
-            macd_line = ta.MACD(hist['Close'])[0].iloc[-1]
+            # MACD calculation
+            exp1 = hist['Close'].ewm(span=12).mean()
+            exp2 = hist['Close'].ewm(span=26).mean()
+            macd_line = (exp1 - exp2).iloc[-1]
         except:
             macd_line = 0.0
         
         try:
-            stoch = ta.STOCH(hist['High'], hist['Low'], hist['Close'])[0].iloc[-1]
+            # Stochastic calculation
+            low_14 = hist['Low'].rolling(window=14).min()
+            high_14 = hist['High'].rolling(window=14).max()
+            stoch_k = 100 * ((hist['Close'] - low_14) / (high_14 - low_14))
+            stoch = stoch_k.iloc[-1] if not stoch_k.empty else 50.0
         except:
             stoch = 50.0
         
         try:
-            sma_20 = ta.SMA(hist['Close'], timeperiod=20).iloc[-1]
+            sma_20 = hist['Close'].rolling(window=20).mean().iloc[-1]
         except:
             sma_20 = hist['Close'].iloc[-1]
         
         try:
-            sma_50 = ta.SMA(hist['Close'], timeperiod=50).iloc[-1]
+            sma_50 = hist['Close'].rolling(window=50).mean().iloc[-1]
         except:
             sma_50 = hist['Close'].iloc[-1]
         
         try:
-            bb_upper, bb_middle, bb_lower = ta.BBANDS(hist['Close'])
+            # Bollinger Bands calculation
+            bb_middle = hist['Close'].rolling(window=20).mean()
+            bb_std = hist['Close'].rolling(window=20).std()
+            bb_upper = bb_middle + (bb_std * 2)
+            bb_lower = bb_middle - (bb_std * 2)
             bb_percent = ((hist['Close'].iloc[-1] - bb_lower.iloc[-1]) / 
                          (bb_upper.iloc[-1] - bb_lower.iloc[-1]))
         except:
             bb_percent = 0.5
         
         try:
-            atr = ta.ATR(hist['High'], hist['Low'], hist['Close']).iloc[-1]
+            # ATR calculation
+            high_low = hist['High'] - hist['Low']
+            high_close = abs(hist['High'] - hist['Close'].shift())
+            low_close = abs(hist['Low'] - hist['Close'].shift())
+            ranges = pd.concat([high_low, high_close, low_close], axis=1)
+            true_range = ranges.max(axis=1)
+            atr = true_range.rolling(window=14).mean().iloc[-1]
         except:
             atr = 1.0
         
