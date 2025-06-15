@@ -210,25 +210,32 @@ def dashboard():
 @login_required
 def scanner():
     """Stock scanner page"""
-    stocks = Stock.query.order_by(Stock.confidence_score.desc()).all()
-    # Convert stocks to dictionaries for JSON serialization
-    stocks_data = []
-    for stock in stocks:
-        stocks_data.append({
-            'id': stock.id,
-            'symbol': stock.symbol,
-            'name': stock.name,
-            'price': stock.price,
-            'rsi': stock.rsi,
-            'volume_spike': stock.volume_spike,
-            'pattern_type': stock.pattern_type,
-            'fibonacci_position': stock.fibonacci_position,
-            'confidence_score': stock.confidence_score,
-            'is_tracked': stock.is_tracked,
-            'created_at': stock.created_at.isoformat() if stock.created_at else None,
-            'updated_at': stock.updated_at.isoformat() if stock.updated_at else None
-        })
-    return render_template('scanner.html', stocks=stocks_data)
+    try:
+        stocks = Stock.query.order_by(Stock.confidence_score.desc()).all()
+        # Convert stocks to dictionaries for JSON serialization
+        stocks_data = []
+        for stock in stocks:
+            stocks_data.append({
+                'id': stock.id,
+                'symbol': stock.symbol,
+                'name': stock.name,
+                'price': stock.price,
+                'rsi': stock.rsi,
+                'volume_spike': stock.volume_spike,
+                'pattern_type': stock.pattern_type,
+                'fibonacci_position': stock.fibonacci_position,
+                'confidence_score': stock.confidence_score,
+                'is_tracked': stock.is_tracked,
+                'created_at': stock.created_at.isoformat() if stock.created_at else None,
+                'updated_at': stock.updated_at.isoformat() if stock.updated_at else None
+            })
+        return render_template('scanner.html', stocks=stocks_data)
+    except Exception as e:
+        logging.error(f"Scanner error: {str(e)}")
+        flash(f"Scanner loading error: {str(e)}", "error")
+        return render_template('scanner.html', stocks=[])
+
+
 
 @app.route('/scan_stocks', methods=['POST'])
 @login_required
