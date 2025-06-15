@@ -127,22 +127,9 @@ personalizer = PersonalizedRecommender()
 sheets_integration = GoogleSheetsIntegration()
 pdf_generator = PDFGenerator()
 
-# Initialize optional enhanced components with fallbacks
-try:
-    from scanner_widgets import ScannerWidgets
-    from physics_market_engine import PhysicsMarketEngine
-    from enhanced_stock_widgets import enhanced_widgets
-    from animated_sparklines import AnimatedSparklines
-    scanner_widgets = ScannerWidgets()
-    physics_engine = PhysicsMarketEngine()
-    stock_widgets = enhanced_widgets
-    sparklines_engine = AnimatedSparklines()
-except ImportError as e:
-    logging.warning(f"Enhanced components not available: {e}")
-    scanner_widgets = None
-    physics_engine = None
-    stock_widgets = None
-    sparklines_engine = None
+# Initialize core components
+from animated_sparklines import AnimatedSparklines
+sparklines_engine = AnimatedSparklines()
 
 # Performance optimization decorator fallback
 def optimize_route(func):
@@ -2371,22 +2358,10 @@ def submit_recommendation_feedback():
         if not recommendation:
             return jsonify({'success': False, 'error': 'Recommendation not found'})
         
-        # Create feedback record
-        feedback = RecommendationFeedback(
-            recommendation_id=recommendation_id,
-            user_id=current_user.id,
-            feedback_type=feedback_type,
-            rating=rating,
-            comment=comment,
-            action_taken=action_taken
-        )
-        
         # Update recommendation record
         recommendation.user_feedback = feedback_type
         recommendation.action_taken = action_taken
-        recommendation.feedback_notes = comment
         
-        db.session.add(feedback)
         db.session.commit()
         
         # Update recommendation engine with feedback
@@ -2411,33 +2386,17 @@ def update_trading_profile():
     try:
         data = request.get_json()
         
-        # Get or create user profile
-        profile = UserTradingProfile.query.filter_by(user_id=current_user.id).first()
-        if not profile:
-            profile = UserTradingProfile(user_id=current_user.id)
-        
-        # Update profile fields
-        if 'risk_tolerance' in data:
-            profile.risk_tolerance = data['risk_tolerance']
-        if 'trading_style' in data:
-            profile.trading_style = data['trading_style']
-        if 'preferred_sectors' in data:
-            profile.preferred_sectors = data['preferred_sectors']
-        if 'market_cap_preference' in data:
-            profile.market_cap_preference = data['market_cap_preference']
-        if 'price_range_min' in data:
-            profile.price_range_min = float(data['price_range_min'])
-        if 'price_range_max' in data:
-            profile.price_range_max = float(data['price_range_max'])
-        if 'avg_holding_period' in data:
-            profile.avg_holding_period = int(data['avg_holding_period'])
-        if 'technical_indicators' in data:
-            profile.technical_indicators = data['technical_indicators']
-        
-        profile.updated_at = datetime.utcnow()
-        
-        db.session.add(profile)
-        db.session.commit()
+        # Store user preferences in session for now
+        session['user_preferences'] = {
+            'risk_tolerance': data.get('risk_tolerance', 'moderate'),
+            'trading_style': data.get('trading_style', 'swing'),
+            'preferred_sectors': data.get('preferred_sectors', []),
+            'market_cap_preference': data.get('market_cap_preference', 'large'),
+            'price_range_min': float(data.get('price_range_min', 10.0)),
+            'price_range_max': float(data.get('price_range_max', 500.0)),
+            'avg_holding_period': int(data.get('avg_holding_period', 21)),
+            'technical_indicators': data.get('technical_indicators', [])
+        }
         
         return jsonify({'success': True, 'message': 'Trading profile updated successfully'})
         
@@ -2510,8 +2469,8 @@ def get_current_market_analysis():
 def recommendation_setup():
     """User preference setup for personalized recommendations"""
     try:
-        # Get existing profile if any
-        profile = UserTradingProfile.query.filter_by(user_id=current_user.id).first()
+        # Get user preferences from session
+        profile = session.get('user_preferences', {})
         
         return render_template('recommendation_setup.html', profile=profile)
         
