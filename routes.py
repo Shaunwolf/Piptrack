@@ -3,7 +3,7 @@ from flask_login import LoginManager, login_user, logout_user, login_required, c
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import app, db
 from models import (Stock, TradeJournal, ForecastPath, AIAnalysis, PatternEvolution, 
-                   User, UserTradingProfile, StockRecommendation, RecommendationFeedback)
+                   User, StockRecommendation)
 from auth_forms import RegistrationForm, LoginForm
 from stock_scanner import StockScanner
 from forecasting_engine import ForecastingEngine
@@ -2261,12 +2261,8 @@ def recommendations_dashboard():
             user_id=current_user.id
         ).order_by(StockRecommendation.created_at.desc()).limit(10).all()
         
-        # Get user's trading profile
-        user_profile = UserTradingProfile.query.filter_by(user_id=current_user.id).first()
-        
         return render_template('recommendations.html', 
-                             recommendations=recent_recommendations,
-                             user_profile=user_profile)
+                             recommendations=recent_recommendations)
         
     except Exception as e:
         logging.error(f"Error loading recommendations dashboard: {e}")

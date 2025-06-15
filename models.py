@@ -1,47 +1,48 @@
 from datetime import datetime
 from app import db
-from flask_dance.consumer.storage.sqla import OAuthConsumerMixin
 from flask_login import UserMixin
-from sqlalchemy import UniqueConstraint
+from werkzeug.security import generate_password_hash, check_password_hash
+import secrets
 
-
-# Enhanced User model supporting multiple authentication methods
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
+    
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(256), nullable=True)  # For email/password auth
+    password_hash = db.Column(db.String(256), nullable=True)
     first_name = db.Column(db.String(50), nullable=True)
     last_name = db.Column(db.String(50), nullable=True)
     profile_image_url = db.Column(db.String(200), nullable=True)
     
-    # Authentication method tracking
-    auth_method = db.Column(db.String(20), default='email')  # 'email', 'google', 'replit'
+    # Authentication and verification
+    auth_method = db.Column(db.String(20), default='email')
     is_verified = db.Column(db.Boolean, default=False)
     verification_token = db.Column(db.String(64), nullable=True)
     
-    # Beta access tracking
-    beta_user_number = db.Column(db.Integer, nullable=True)  # 1-100 for first 100 users
+    # Beta user tracking
+    beta_user_number = db.Column(db.Integer, nullable=True)
     
+    # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime,
-                           default=datetime.utcnow,
-                           onupdate=datetime.utcnow)
-
-# (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
-class OAuth(OAuthConsumerMixin, db.Model):
-    user_id = db.Column(db.Integer, db.ForeignKey(User.id))
-    browser_session_key = db.Column(db.String, nullable=False)
-    user = db.relationship(User)
-
-    __table_args__ = (UniqueConstraint(
-        'user_id',
-        'browser_session_key',
-        'provider',
-        name='uq_user_browser_session_key_provider',
-    ),)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    trades = db.relationship('TradeJournal', backref='user', lazy=True)
+    recommendations = db.relationship('StockRecommendation', backref='user', lazy=True)
+    
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+    
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+    
+    def generate_verification_token(self):
+        self.verification_token = secrets.token_urlsafe(32)
+        return self.verification_token
 
 class Stock(db.Model):
+    __tablename__ = 'stocks'
+    
     id = db.Column(db.Integer, primary_key=True)
     symbol = db.Column(db.String(10), nullable=False, unique=True)
     name = db.Column(db.String(200))
@@ -52,209 +53,151 @@ class Stock(db.Model):
     fibonacci_position = db.Column(db.Float)
     confidence_score = db.Column(db.Float, default=0.0)
     is_tracked = db.Column(db.Boolean, default=False)
+    
+    # Technical indicators
+    macd = db.Column(db.Float)
+    bollinger_position = db.Column(db.Float)
+    volume_ma_ratio = db.Column(db.Float)
+    
+    # Market data
+    market_cap = db.Column(db.BigInteger)
+    sector = db.Column(db.String(50))
+    
+    # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    def __init__(self, **kwargs):
-        super(Stock, self).__init__(**kwargs)
 
 class TradeJournal(db.Model):
+    __tablename__ = 'trade_journal'
+    
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     symbol = db.Column(db.String(10), nullable=False)
+    
+    # Trade details
     entry_price = db.Column(db.Float)
+    exit_price = db.Column(db.Float)
     stop_loss = db.Column(db.Float)
     take_profit = db.Column(db.Float)
+    quantity = db.Column(db.Integer)
+    
+    # Pattern and analysis
     pattern_confirmed = db.Column(db.Boolean, default=False)
     screenshot_taken = db.Column(db.Boolean, default=False)
-    reflection = db.Column(db.Text)
-    perfect_trade = db.Column(db.Boolean, default=False)
     confidence_at_entry = db.Column(db.Float)
+    
+    # Outcome tracking
     outcome = db.Column(db.String(20))  # 'win', 'loss', 'breakeven', 'active'
-    exit_price = db.Column(db.Float)
     pnl = db.Column(db.Float)
+    pnl_percentage = db.Column(db.Float)
+    
+    # Notes and reflection
+    reflection = db.Column(db.Text)
     lessons_learned = db.Column(db.Text)
+    perfect_trade = db.Column(db.Boolean, default=False)
+    
+    # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    # Relationship
-    user = db.relationship('User', backref='trades')
-    
-    def __init__(self, **kwargs):
-        super(TradeJournal, self).__init__(**kwargs)
-
-class ForecastPath(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    symbol = db.Column(db.String(10), nullable=False)
-    path_type = db.Column(db.String(50))  # 'momentum', 'retest', 'breakdown', 'sideways'
-    probability = db.Column(db.Float)
-    price_targets = db.Column(db.JSON)  # Store array of price points
-    timeframe_days = db.Column(db.Integer, default=5)
-    risk_zones = db.Column(db.JSON)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    def __init__(self, **kwargs):
-        super(ForecastPath, self).__init__(**kwargs)
-
-class AIAnalysis(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    symbol = db.Column(db.String(10), nullable=False)
-    analysis_text = db.Column(db.Text)
-    mood_tag = db.Column(db.String(20))  # 'breakout', 'reversal', 'risky', 'confirmed'
-    historical_comparison = db.Column(db.Text)
-    chart_story = db.Column(db.JSON)  # Store hover comments for chart levels
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-class PatternEvolution(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    symbol = db.Column(db.String(10), nullable=False)
-    pattern_type = db.Column(db.String(50))  # 'bull_flag', 'cup_and_handle', etc.
-    confidence_score = db.Column(db.Float)
-    stage = db.Column(db.String(30))  # 'forming', 'building', 'mature', 'apex_approaching'
-    completion_percentage = db.Column(db.Float)
-    time_in_pattern = db.Column(db.Integer)  # days
-    
-    # Evolution metrics
-    volatility_trend = db.Column(db.Float)
-    volume_trend = db.Column(db.Float)
-    momentum_change = db.Column(db.Float)
-    support_resistance_strength = db.Column(db.Float)
-    
-    # Timing predictions
-    estimated_days_to_breakout = db.Column(db.Integer)
-    breakout_probability_5_days = db.Column(db.Float)
-    breakout_probability_10_days = db.Column(db.Float)
-    direction_bias = db.Column(db.Float)  # 0-1 (bearish to bullish)
-    timing_confidence = db.Column(db.Float)
-    
-    # Key levels
-    resistance_level = db.Column(db.Float)
-    support_level = db.Column(db.Float)
-    breakout_confirmation_level = db.Column(db.Float)
-    breakdown_confirmation_level = db.Column(db.Float)
-    
-    # Pattern-specific data
-    pattern_data = db.Column(db.JSON)  # Store pattern-specific metrics
-    
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    def __init__(self, **kwargs):
-        super(PatternEvolution, self).__init__(**kwargs)
-
-# Personalized Recommendation System Models
-class UserTradingProfile(db.Model):
-    __tablename__ = 'user_trading_profiles'
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    
-    # Risk and style preferences
-    risk_tolerance = db.Column(db.String(20), default='moderate')  # conservative, moderate, aggressive
-    trading_style = db.Column(db.String(20), default='swing')     # day_trading, short_term, swing, position
-    avg_holding_period = db.Column(db.Integer, default=21)        # days
-    
-    # Sector and market preferences
-    preferred_sectors = db.Column(db.JSON)                        # Array of sector names
-    market_cap_preference = db.Column(db.String(10), default='large')  # small, mid, large
-    price_range_min = db.Column(db.Float, default=10.0)
-    price_range_max = db.Column(db.Float, default=500.0)
-    preferred_price = db.Column(db.Float, default=100.0)
-    
-    # Performance metrics
-    success_rate = db.Column(db.Float, default=0.6)
-    avg_winner_pct = db.Column(db.Float, default=8.0)
-    avg_loser_pct = db.Column(db.Float, default=-4.0)
-    total_return_pct = db.Column(db.Float, default=0.0)
-    sharpe_ratio = db.Column(db.Float, default=1.0)
-    max_drawdown_pct = db.Column(db.Float, default=0.0)
-    
-    # Technical preferences
-    volatility_preference = db.Column(db.Float, default=0.15)
-    technical_indicators = db.Column(db.JSON)  # Array of preferred indicators
-    
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    # Relationships
-    user = db.relationship('User', backref='trading_profile')
-    
-    def __init__(self, **kwargs):
-        super(UserTradingProfile, self).__init__(**kwargs)
 
 class StockRecommendation(db.Model):
     __tablename__ = 'stock_recommendations'
+    
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     symbol = db.Column(db.String(10), nullable=False)
     
-    # Scoring components
+    # Scoring system
     total_score = db.Column(db.Float, nullable=False)
     technical_score = db.Column(db.Float)
     fundamental_score = db.Column(db.Float)
     sentiment_score = db.Column(db.Float)
     fit_score = db.Column(db.Float)
     
-    # Stock data at recommendation time
+    # Market data
     current_price = db.Column(db.Float)
     target_price = db.Column(db.Float)
     sector = db.Column(db.String(50))
     market_cap = db.Column(db.BigInteger)
-    beta = db.Column(db.Float)
-    pe_ratio = db.Column(db.Float)
-    volume = db.Column(db.BigInteger)
     
-    # Recommendation details
+    # Risk assessment
     confidence_level = db.Column(db.String(10))  # High, Medium, Low
     risk_assessment = db.Column(db.String(10))   # High, Medium, Low
     time_horizon = db.Column(db.String(20))      # e.g., "2-8 weeks"
+    
+    # AI insights
     recommendation_reason = db.Column(db.Text)
     ai_insight = db.Column(db.Text)
     
-    # User interaction tracking
+    # User interaction
     viewed = db.Column(db.Boolean, default=False)
-    action_taken = db.Column(db.String(20))      # bought, watchlisted, ignored, rejected
+    action_taken = db.Column(db.String(20))      # bought, watchlisted, ignored
     user_feedback = db.Column(db.String(20))     # excellent, good, neutral, poor
-    feedback_notes = db.Column(db.Text)
     
     # Performance tracking
     performance_tracked = db.Column(db.Boolean, default=True)
-    price_at_follow_up = db.Column(db.Float)     # Price after time horizon
-    recommendation_return_pct = db.Column(db.Float)  # Theoretical return
+    recommendation_return_pct = db.Column(db.Float)
     
+    # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    expires_at = db.Column(db.DateTime)  # When recommendation expires
-    
-    # Relationships
-    user = db.relationship('User', backref='recommendations')
-    
-    def __init__(self, **kwargs):
-        super(StockRecommendation, self).__init__(**kwargs)
+    expires_at = db.Column(db.DateTime)
 
-class RecommendationFeedback(db.Model):
-    __tablename__ = 'recommendation_feedback'
+class PatternEvolution(db.Model):
+    __tablename__ = 'pattern_evolution'
+    
     id = db.Column(db.Integer, primary_key=True)
-    recommendation_id = db.Column(db.Integer, db.ForeignKey('stock_recommendations.id'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    symbol = db.Column(db.String(10), nullable=False)
+    pattern_type = db.Column(db.String(50))  # 'bull_flag', 'cup_and_handle', etc.
     
-    # Feedback details
-    feedback_type = db.Column(db.String(20))     # positive, negative, neutral
-    rating = db.Column(db.Integer)               # 1-5 stars
-    comment = db.Column(db.Text)
-    action_taken = db.Column(db.String(20))      # bought, sold, watchlisted, ignored
-    entry_price = db.Column(db.Float)            # If they acted on it
-    quantity = db.Column(db.Integer)
+    # Pattern metrics
+    confidence_score = db.Column(db.Float)
+    stage = db.Column(db.String(30))  # 'forming', 'building', 'mature', 'apex_approaching'
+    completion_percentage = db.Column(db.Float)
+    time_in_pattern = db.Column(db.Integer)  # days
     
-    # Performance if they acted
-    exit_price = db.Column(db.Float)
-    actual_return_pct = db.Column(db.Float)
-    holding_days = db.Column(db.Integer)
-    outcome = db.Column(db.String(20))           # win, loss, breakeven, active
+    # Market dynamics
+    volatility_trend = db.Column(db.Float)
+    volume_trend = db.Column(db.Float)
+    momentum_change = db.Column(db.Float)
     
+    # Prediction metrics
+    estimated_days_to_breakout = db.Column(db.Integer)
+    breakout_probability_5_days = db.Column(db.Float)
+    breakout_probability_10_days = db.Column(db.Float)
+    direction_bias = db.Column(db.Float)  # 0-1 (bearish to bullish)
+    
+    # Key levels
+    resistance_level = db.Column(db.Float)
+    support_level = db.Column(db.Float)
+    breakout_confirmation_level = db.Column(db.Float)
+    
+    # Pattern data (JSON field for additional metrics)
+    pattern_data = db.Column(db.JSON)
+    
+    # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class ForecastPath(db.Model):
+    __tablename__ = 'forecast_paths'
     
-    # Relationships
-    recommendation = db.relationship('StockRecommendation', backref='feedback')
-    user = db.relationship('User', backref='recommendation_feedback')
+    id = db.Column(db.Integer, primary_key=True)
+    symbol = db.Column(db.String(10), nullable=False)
+    path_type = db.Column(db.String(50))  # 'momentum', 'retest', 'breakdown', 'sideways'
+    probability = db.Column(db.Float)
+    price_targets = db.Column(db.JSON)  # Array of price points
+    timeframe_days = db.Column(db.Integer, default=5)
+    risk_zones = db.Column(db.JSON)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class AIAnalysis(db.Model):
+    __tablename__ = 'ai_analysis'
     
-    def __init__(self, **kwargs):
-        super(RecommendationFeedback, self).__init__(**kwargs)
+    id = db.Column(db.Integer, primary_key=True)
+    symbol = db.Column(db.String(10), nullable=False)
+    analysis_text = db.Column(db.Text)
+    mood_tag = db.Column(db.String(20))  # 'breakout', 'reversal', 'risky', 'confirmed'
+    historical_comparison = db.Column(db.Text)
+    chart_story = db.Column(db.JSON)  # Store hover comments for chart levels
+    confidence_score = db.Column(db.Float)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
