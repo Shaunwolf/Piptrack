@@ -487,39 +487,39 @@ def generate_enhanced_technical_analysis(symbol):
         
         # Calculate technical indicators with error handling
         try:
-            rsi = ta.rsi(hist['Close']).iloc[-1]
+            rsi = ta.RSI(hist['Close']).iloc[-1]
         except:
             rsi = 50.0
         
         try:
-            macd_line = ta.macd(hist['Close'])['MACD_12_26_9'].iloc[-1]
+            macd_line = ta.MACD(hist['Close'])[0].iloc[-1]
         except:
             macd_line = 0.0
         
         try:
-            stoch = ta.stoch(hist['High'], hist['Low'], hist['Close'])['STOCHk_14_3_3'].iloc[-1]
+            stoch = ta.STOCH(hist['High'], hist['Low'], hist['Close'])[0].iloc[-1]
         except:
             stoch = 50.0
         
         try:
-            sma_20 = ta.sma(hist['Close'], length=20).iloc[-1]
+            sma_20 = ta.SMA(hist['Close'], timeperiod=20).iloc[-1]
         except:
             sma_20 = hist['Close'].iloc[-1]
         
         try:
-            sma_50 = ta.sma(hist['Close'], length=50).iloc[-1]
+            sma_50 = ta.SMA(hist['Close'], timeperiod=50).iloc[-1]
         except:
             sma_50 = hist['Close'].iloc[-1]
         
         try:
-            bb = ta.bbands(hist['Close'])
-            bb_percent = ((hist['Close'].iloc[-1] - bb['BBL_20_2.0'].iloc[-1]) / 
-                         (bb['BBU_20_2.0'].iloc[-1] - bb['BBL_20_2.0'].iloc[-1]))
+            bb_upper, bb_middle, bb_lower = ta.BBANDS(hist['Close'])
+            bb_percent = ((hist['Close'].iloc[-1] - bb_lower.iloc[-1]) / 
+                         (bb_upper.iloc[-1] - bb_lower.iloc[-1]))
         except:
             bb_percent = 0.5
         
         try:
-            atr = ta.atr(hist['High'], hist['Low'], hist['Close']).iloc[-1]
+            atr = ta.ATR(hist['High'], hist['Low'], hist['Close']).iloc[-1]
         except:
             atr = 1.0
         
