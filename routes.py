@@ -208,9 +208,11 @@ def scan_stocks():
         tickers = request.json.get('tickers', [])
         
         if scan_type == 'gappers':
-            results = stock_scanner.scan_top_gappers(limit=50)
+            results = stock_scanner.scan_stocks(max_results=50)
         else:
-            results = stock_scanner.scan_selected_tickers(tickers)
+            # Parse tickers from comma-separated string
+            ticker_list = [t.strip().upper() for t in tickers.split(',') if t.strip()]
+            results = stock_scanner.scan_stocks(symbols=ticker_list)
         
         # Update database with scan results and calculate confidence scores
         for result in results:
@@ -219,7 +221,8 @@ def scan_stocks():
             
             stock = Stock.query.filter_by(symbol=result['symbol']).first()
             if not stock:
-                stock = Stock(symbol=result['symbol'])
+                stock = Stock()
+                stock.symbol = result['symbol']
                 db.session.add(stock)
             
             stock.name = result.get('name', '')

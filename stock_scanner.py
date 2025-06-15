@@ -163,7 +163,7 @@ class StockScanner:
             fibonacci_position = self.calculate_fibonacci_position(hist)
             
             # Confidence scoring
-            confidence_score = self.confidence_scorer.calculate_confidence({
+            confidence_score = self.confidence_scorer.calculate_score({
                 'rsi': rsi_value,
                 'volume_spike': volume_spike,
                 'pattern_type': pattern_type,
