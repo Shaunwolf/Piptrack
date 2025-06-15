@@ -1337,21 +1337,7 @@ def get_widget_presets():
         logging.error(f"Error getting widget presets: {e}")
         return jsonify({'success': False, 'error': str(e)})
 
-@app.route('/api/widgets/<widget_id>/scan')
-def run_widget_scan(widget_id):
-    """Run a specific widget scan"""
-    try:
-        if scanner_widgets is None:
-            return jsonify({'success': False, 'error': 'Widget system not available'})
-        
-        limit = request.args.get('limit', 10, type=int)
-        result = scanner_widgets.run_widget_scan(widget_id, limit)
-        
-        return jsonify(result)
-        
-    except Exception as e:
-        logging.error(f"Error running widget scan {widget_id}: {e}")
-        return jsonify({'success': False, 'error': str(e)})
+# Removed duplicate function - using the implementation at line 2392
 
 # Physics-Based Market Analysis Routes
 
@@ -2386,6 +2372,46 @@ def widget_dashboard():
     except Exception as e:
         logging.error(f"Error loading widget dashboard: {e}")
         return render_template('widget_dashboard.html', widgets=[], error=str(e))
+
+@app.route('/api/run_widget_scan/<widget_id>')
+@login_required
+def run_widget_scan(widget_id):
+    """Run a specific widget scan"""
+    try:
+        scanner = StockScanner()
+        
+        # Define widget-specific scanning logic
+        if widget_id == 'top_gainers':
+            scan_results = scanner.scan_stocks(max_results=20)
+            # Filter for top gainers (highest price change)
+            results = sorted([r for r in scan_results if r.get('price_change', 0) > 0], 
+                           key=lambda x: x.get('price_change', 0), reverse=True)[:10]
+        
+        elif widget_id == 'high_volume':
+            scan_results = scanner.scan_stocks(max_results=20)
+            # Filter for high volume stocks
+            results = sorted([r for r in scan_results if r.get('volume_spike', 0) > 1.5], 
+                           key=lambda x: x.get('volume_spike', 0), reverse=True)[:10]
+        
+        elif widget_id == 'momentum':
+            scan_results = scanner.scan_stocks(max_results=20)
+            # Filter for momentum stocks (RSI > 60 and positive trend)
+            results = [r for r in scan_results if r.get('rsi', 50) > 60 and r.get('confidence_score', 0) > 50][:10]
+        
+        elif widget_id == 'reversal':
+            scan_results = scanner.scan_stocks(max_results=20)
+            # Filter for reversal patterns (RSI < 40 or specific patterns)
+            results = [r for r in scan_results if r.get('rsi', 50) < 40 or 'reversal' in r.get('pattern_type', '').lower()][:10]
+        
+        else:
+            # Default scan for unknown widget types
+            results = scanner.scan_stocks(max_results=10)
+        
+        return jsonify(results)
+    
+    except Exception as e:
+        logging.error(f"Error running widget scan {widget_id}: {e}")
+        return jsonify({'error': str(e)}), 500
 
 # Removed duplicate function - using the one at line 2242
 
