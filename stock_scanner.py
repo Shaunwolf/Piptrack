@@ -144,8 +144,12 @@ class StockScanner:
                 loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
                 rs = gain / loss
                 rsi = 100 - (100 / (1 + rs))
-                rsi_value = rsi.iloc[-1] if hasattr(rsi, 'iloc') and len(rsi) > 0 else 50
-                if pd.isna(rsi_value) or rsi_value < 0 or rsi_value > 100:
+                
+                if isinstance(rsi, pd.Series) and len(rsi) > 0:
+                    rsi_value = rsi.iloc[-1]
+                    if pd.isna(rsi_value) or rsi_value < 0 or rsi_value > 100:
+                        rsi_value = 50
+                else:
                     rsi_value = 50
             except:
                 rsi_value = 50
@@ -240,16 +244,16 @@ class StockScanner:
             logging.error(f"Fibonacci calculation error: {e}")
             return 0.5
     
-    def scan_stocks(self, symbols=None, max_results=50):
+    def scan_stocks(self, symbols=None, max_results=20):
         """Main scanning function with performance optimization"""
         if symbols is None:
-            symbols = self.get_top_gainers_losers(100)  # Get more to filter down
+            symbols = self.top_gappers[:80]  # Use our curated list instead of API call
         
         results = []
         processed = 0
         
         for symbol in symbols:
-            if processed >= max_results:
+            if len(results) >= max_results:
                 break
                 
             try:
@@ -257,17 +261,34 @@ class StockScanner:
                 time.sleep(0.1)
                 
                 analysis = self.analyze_stock(symbol)
-                if analysis and analysis['confidence_score'] > 0:
+                if analysis and analysis.get('confidence_score', 0) > 30:  # Lower threshold to get more results
                     results.append(analysis)
-                    processed += 1
+                    logging.info(f"Scanner found: {symbol} - Confidence: {analysis.get('confidence_score')}")
+                    
+                processed += 1
                     
             except Exception as e:
                 logging.error(f"Error processing {symbol}: {e}")
                 continue
         
-        # Sort by confidence score
-        results.sort(key=lambda x: x['confidence_score'], reverse=True)
+        # If we still don't have enough results, lower the threshold
+        if len(results) < 5:
+            for symbol in symbols[processed:]:
+                if len(results) >= max_results:
+                    break
+                try:
+                    analysis = self.analyze_stock(symbol)
+                    if analysis and analysis.get('confidence_score', 0) > 15:
+                        results.append(analysis)
+                        logging.info(f"Scanner fallback: {symbol} - Confidence: {analysis.get('confidence_score')}")
+                        time.sleep(0.1)
+                except:
+                    continue
         
+        # Sort by confidence score
+        results.sort(key=lambda x: x.get('confidence_score', 0), reverse=True)
+        
+        logging.info(f"Stock scanner completed. Found {len(results)} stocks")
         return results[:max_results]
     
     def get_pattern_evolution(self, symbol):
