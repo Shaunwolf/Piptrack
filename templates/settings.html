@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - PipSqueak{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Header -->
+    <div class="text-center">
+        <h1 class="text-4xl font-bold mb-2">Account Settings</h1>
+        <p class="text-gray-400">Customize your PipSqueak trading experience</p>
+    </div>
+
+    <!-- Settings Form -->
+    <div class="max-w-4xl mx-auto">
+        <form action="{{ url_for('update_settings') }}" method="POST" class="space-y-8">
+            {{ csrf_token() }}
+            
+            <!-- Alert Preferences -->
+            <div class="bg-dark-surface rounded-2xl p-6 border border-dark-accent">
+                <div class="flex items-center mb-6">
+                    <div class="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center mr-4">
+                        <i class="fas fa-bell text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-white">Alert Preferences</h3>
+                        <p class="text-gray-400">Configure how you receive trading alerts</p>
+                    </div>
+                </div>
+                
+                <div class="space-y-6">
+                    <!-- Voice Alerts -->
+                    <div class="flex items-center justify-between p-4 bg-dark-accent rounded-lg">
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-volume-up text-blue-400"></i>
+                            <div>
+                                <p class="text-white font-semibold">Voice Alerts</p>
+                                <p class="text-gray-400 text-sm">Spoken alerts for high-confidence stocks</p>
+                            </div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="voice_alerts" class="sr-only peer" 
+                                   {{ 'checked' if session.get('voice_alerts', True) else '' }}>
+                            <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        </label>
+                    </div>
+                    
+                    <!-- Email Notifications -->
+                    <div class="flex items-center justify-between p-4 bg-dark-accent rounded-lg">
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-envelope text-green-400"></i>
+                            <div>
+                                <p class="text-white font-semibold">Email Notifications</p>
+                                <p class="text-gray-400 text-sm">Daily summaries and important alerts</p>
+                            </div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="email_notifications" class="sr-only peer"
+                                   {{ 'checked' if session.get('email_notifications', True) else '' }}>
+                            <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                        </label>
+                    </div>
+                    
+                    <!-- Push Notifications -->
+                    <div class="flex items-center justify-between p-4 bg-dark-accent rounded-lg">
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-mobile-alt text-purple-400"></i>
+                            <div>
+                                <p class="text-white font-semibold">Push Notifications</p>
+                                <p class="text-gray-400 text-sm">Real-time browser notifications</p>
+                            </div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="push_notifications" class="sr-only peer"
+                                   {{ 'checked' if session.get('push_notifications', True) else '' }}>
+                            <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trading Preferences -->
+            <div class="bg-dark-surface rounded-2xl p-6 border border-dark-accent">
+                <div class="flex items-center mb-6">
+                    <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-blue-500 rounded-xl flex items-center justify-center mr-4">
+                        <i class="fas fa-chart-line text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-white">Trading Preferences</h3>
+                        <p class="text-gray-400">Configure scanner and analysis settings</p>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Confidence Threshold -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Minimum Confidence Score</label>
+                        <select name="confidence_threshold" class="w-full bg-dark-accent border border-gray-600 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="30" {{ 'selected' if session.get('confidence_threshold', 30) == 30 else '' }}>30% - Show all opportunities</option>
+                            <option value="50" {{ 'selected' if session.get('confidence_threshold', 30) == 50 else '' }}>50% - Moderate confidence</option>
+                            <option value="70" {{ 'selected' if session.get('confidence_threshold', 30) == 70 else '' }}>70% - High confidence only</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Scan Frequency -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Auto-Scan Frequency</label>
+                        <select name="scan_frequency" class="w-full bg-dark-accent border border-gray-600 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="1" {{ 'selected' if session.get('scan_frequency', 5) == 1 else '' }}>Every minute</option>
+                            <option value="5" {{ 'selected' if session.get('scan_frequency', 5) == 5 else '' }}>Every 5 minutes</option>
+                            <option value="15" {{ 'selected' if session.get('scan_frequency', 5) == 15 else '' }}>Every 15 minutes</option>
+                            <option value="30" {{ 'selected' if session.get('scan_frequency', 5) == 30 else '' }}>Every 30 minutes</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Risk Level -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Risk Tolerance</label>
+                        <select name="risk_level" class="w-full bg-dark-accent border border-gray-600 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="conservative" {{ 'selected' if session.get('risk_level', 'moderate') == 'conservative' else '' }}>Conservative</option>
+                            <option value="moderate" {{ 'selected' if session.get('risk_level', 'moderate') == 'moderate' else '' }}>Moderate</option>
+                            <option value="aggressive" {{ 'selected' if session.get('risk_level', 'moderate') == 'aggressive' else '' }}>Aggressive</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Market Sectors -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Preferred Sectors</label>
+                        <select name="preferred_sectors" multiple class="w-full bg-dark-accent border border-gray-600 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" size="4">
+                            <option value="tech">Technology</option>
+                            <option value="biotech">Biotech</option>
+                            <option value="crypto">Crypto</option>
+                            <option value="energy">Energy</option>
+                            <option value="finance">Finance</option>
+                            <option value="small_cap">Small Cap</option>
+                        </select>
+                        <p class="text-gray-500 text-xs mt-1">Hold Ctrl/Cmd to select multiple</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Display Preferences -->
+            <div class="bg-dark-surface rounded-2xl p-6 border border-dark-accent">
+                <div class="flex items-center mb-6">
+                    <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center mr-4">
+                        <i class="fas fa-palette text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-white">Display Preferences</h3>
+                        <p class="text-gray-400">Customize the interface appearance</p>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Theme -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Theme</label>
+                        <select name="theme" class="w-full bg-dark-accent border border-gray-600 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="dark" {{ 'selected' if session.get('theme', 'dark') == 'dark' else '' }}>Dark (Default)</option>
+                            <option value="light" {{ 'selected' if session.get('theme', 'dark') == 'light' else '' }}>Light</option>
+                            <option value="auto" {{ 'selected' if session.get('theme', 'dark') == 'auto' else '' }}>Auto (System)</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Chart Style -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Chart Style</label>
+                        <select name="chart_style" class="w-full bg-dark-accent border border-gray-600 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="candlestick" {{ 'selected' if session.get('chart_style', 'candlestick') == 'candlestick' else '' }}>Candlestick</option>
+                            <option value="line" {{ 'selected' if session.get('chart_style', 'candlestick') == 'line' else '' }}>Line Chart</option>
+                            <option value="area" {{ 'selected' if session.get('chart_style', 'candlestick') == 'area' else '' }}>Area Chart</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Dashboard Layout -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Dashboard Layout</label>
+                        <select name="dashboard_layout" class="w-full bg-dark-accent border border-gray-600 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="compact" {{ 'selected' if session.get('dashboard_layout', 'standard') == 'compact' else '' }}>Compact</option>
+                            <option value="standard" {{ 'selected' if session.get('dashboard_layout', 'standard') == 'standard' else '' }}>Standard</option>
+                            <option value="expanded" {{ 'selected' if session.get('dashboard_layout', 'standard') == 'expanded' else '' }}>Expanded</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Currency -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Currency Display</label>
+                        <select name="currency" class="w-full bg-dark-accent border border-gray-600 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="USD" {{ 'selected' if session.get('currency', 'USD') == 'USD' else '' }}>USD ($)</option>
+                            <option value="EUR" {{ 'selected' if session.get('currency', 'USD') == 'EUR' else '' }}>EUR (€)</option>
+                            <option value="GBP" {{ 'selected' if session.get('currency', 'USD') == 'GBP' else '' }}>GBP (£)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Privacy & Security -->
+            <div class="bg-dark-surface rounded-2xl p-6 border border-dark-accent">
+                <div class="flex items-center mb-6">
+                    <div class="w-12 h-12 bg-gradient-to-br from-red-500 to-pink-500 rounded-xl flex items-center justify-center mr-4">
+                        <i class="fas fa-shield-alt text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-white">Privacy & Security</h3>
+                        <p class="text-gray-400">Manage your account security settings</p>
+                    </div>
+                </div>
+                
+                <div class="space-y-6">
+                    <!-- Data Sharing -->
+                    <div class="flex items-center justify-between p-4 bg-dark-accent rounded-lg">
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-share-alt text-blue-400"></i>
+                            <div>
+                                <p class="text-white font-semibold">Anonymous Analytics</p>
+                                <p class="text-gray-400 text-sm">Help improve PipSqueak with anonymous usage data</p>
+                            </div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="analytics" class="sr-only peer"
+                                   {{ 'checked' if session.get('analytics', True) else '' }}>
+                            <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        </label>
+                    </div>
+                    
+                    <!-- Two-Factor Auth (Future) -->
+                    <div class="flex items-center justify-between p-4 bg-dark-accent rounded-lg opacity-50">
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-mobile-alt text-green-400"></i>
+                            <div>
+                                <p class="text-white font-semibold">Two-Factor Authentication</p>
+                                <p class="text-gray-400 text-sm">Coming soon - Enhanced account security</p>
+                            </div>
+                        </div>
+                        <span class="text-gray-500 text-sm">Coming Soon</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Save Button -->
+            <div class="flex justify-center space-x-4">
+                <button type="submit" class="btn-gradient-primary px-8 py-3">
+                    <i class="fas fa-save mr-2"></i>Save Settings
+                </button>
+                <a href="{{ url_for('profile') }}" class="btn-gradient-secondary px-8 py-3">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to Profile
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block title %}User Profile - PipSqueak{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Header -->
+    <div class="text-center">
+        <div class="flex justify-center mb-4">
+            <div class="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-2xl">
+                {% if current_user.first_name %}
+                    <span class="text-2xl font-bold text-white">{{ current_user.first_name[0].upper() }}</span>
+                {% else %}
+                    <i class="fas fa-user text-2xl text-white"></i>
+                {% endif %}
+            </div>
+        </div>
+        <h1 class="text-4xl font-bold mb-2">{{ current_user.first_name or 'User' }} {{ current_user.last_name or '' }}</h1>
+        <p class="text-gray-400">{{ current_user.email }}</p>
+        <p class="text-sm text-gray-500 mt-2">Member since {{ current_user.created_at.strftime('%B %Y') if current_user.created_at else 'Recently' }}</p>
+    </div>
+
+    <!-- Profile Actions -->
+    <div class="flex justify-center space-x-4">
+        <a href="{{ url_for('edit_profile') }}" class="btn-gradient-primary">
+            <i class="fas fa-edit mr-2"></i>Edit Profile
+        </a>
+        <a href="{{ url_for('settings') }}" class="btn-gradient-secondary">
+            <i class="fas fa-cog mr-2"></i>Settings
+        </a>
+    </div>
+
+    <!-- Profile Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Trading Stats -->
+        <div class="bg-dark-surface rounded-2xl p-6 border border-dark-accent">
+            <div class="flex items-center mb-4">
+                <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-blue-500 rounded-xl flex items-center justify-center mr-3">
+                    <i class="fas fa-chart-line text-white text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-white">Trading Activity</h3>
+                    <p class="text-gray-400 text-sm">Your trading performance</p>
+                </div>
+            </div>
+            <div class="space-y-3">
+                <div class="flex justify-between">
+                    <span class="text-gray-300">Total Trades:</span>
+                    <span class="text-white font-semibold">{{ trade_count or 0 }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-300">Success Rate:</span>
+                    <span class="text-green-400 font-semibold">{{ success_rate or '0' }}%</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-300">Total P&L:</span>
+                    <span class="text-green-400 font-semibold">${{ total_pnl or '0.00' }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scanner Stats -->
+        <div class="bg-dark-surface rounded-2xl p-6 border border-dark-accent">
+            <div class="flex items-center mb-4">
+                <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center mr-3">
+                    <i class="fas fa-search text-white text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-white">Scanner Usage</h3>
+                    <p class="text-gray-400 text-sm">Market scanning activity</p>
+                </div>
+            </div>
+            <div class="space-y-3">
+                <div class="flex justify-between">
+                    <span class="text-gray-300">Scans Run:</span>
+                    <span class="text-white font-semibold">{{ scan_count or 0 }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-300">Stocks Tracked:</span>
+                    <span class="text-blue-400 font-semibold">{{ tracked_stocks or 0 }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-300">Alerts Received:</span>
+                    <span class="text-yellow-400 font-semibold">{{ alert_count or 0 }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Account Info -->
+        <div class="bg-dark-surface rounded-2xl p-6 border border-dark-accent">
+            <div class="flex items-center mb-4">
+                <div class="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center mr-3">
+                    <i class="fas fa-crown text-white text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-white">Account Status</h3>
+                    <p class="text-gray-400 text-sm">Subscription & features</p>
+                </div>
+            </div>
+            <div class="space-y-3">
+                <div class="flex justify-between">
+                    <span class="text-gray-300">Plan:</span>
+                    <span class="text-yellow-400 font-semibold">{{ subscription_plan or 'Beta' }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-300">Status:</span>
+                    <span class="text-green-400 font-semibold">{{ account_status or 'Active' }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-300">Features:</span>
+                    <span class="text-blue-400 font-semibold">{{ feature_access or 'Full Access' }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="bg-dark-surface rounded-2xl p-6 border border-dark-accent">
+        <h3 class="text-xl font-bold text-white mb-6">Recent Activity</h3>
+        
+        {% if recent_trades %}
+            <div class="space-y-4">
+                {% for trade in recent_trades %}
+                <div class="flex items-center justify-between p-4 bg-dark-accent rounded-lg">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-chart-line text-white"></i>
+                        </div>
+                        <div>
+                            <p class="text-white font-semibold">{{ trade.symbol }}</p>
+                            <p class="text-gray-400 text-sm">{{ trade.entry_price }} → {{ trade.exit_price or 'Open' }}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-white font-semibold">
+                            {% if trade.pnl %}
+                                <span class="{{ 'text-green-400' if trade.pnl > 0 else 'text-red-400' }}">
+                                    {{ '+' if trade.pnl > 0 else '' }}${{ trade.pnl }}
+                                </span>
+                            {% else %}
+                                <span class="text-gray-400">Open</span>
+                            {% endif %}
+                        </p>
+                        <p class="text-gray-400 text-sm">{{ trade.created_at.strftime('%m/%d/%Y') }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-8">
+                <i class="fas fa-chart-line text-4xl text-gray-600 mb-4"></i>
+                <p class="text-gray-400">No trading activity yet</p>
+                <p class="text-gray-500 text-sm mt-2">Start tracking your trades to see them here</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <a href="{{ url_for('journal') }}" class="bg-dark-surface hover:bg-dark-accent rounded-xl p-4 text-center transition-colors border border-dark-accent">
+            <i class="fas fa-book text-2xl text-blue-400 mb-2"></i>
+            <p class="text-white font-semibold">Trade Journal</p>
+        </a>
+        <a href="{{ url_for('recommendations_dashboard') }}" class="bg-dark-surface hover:bg-dark-accent rounded-xl p-4 text-center transition-colors border border-dark-accent">
+            <i class="fas fa-magic text-2xl text-purple-400 mb-2"></i>
+            <p class="text-white font-semibold">AI Picks</p>
+        </a>
+        <a href="{{ url_for('pump_analysis_dashboard') }}" class="bg-dark-surface hover:bg-dark-accent rounded-xl p-4 text-center transition-colors border border-dark-accent">
+            <i class="fas fa-rocket text-2xl text-green-400 mb-2"></i>
+            <p class="text-white font-semibold">Pump Analysis</p>
+        </a>
+        <a href="{{ url_for('settings') }}" class="bg-dark-surface hover:bg-dark-accent rounded-xl p-4 text-center transition-colors border border-dark-accent">
+            <i class="fas fa-cog text-2xl text-gray-400 mb-2"></i>
+            <p class="text-white font-semibold">Settings</p>
+        </a>
+    </div>
+</div>
+{% endblock %}

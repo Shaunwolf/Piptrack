@@ -89,6 +89,100 @@
                     <button onclick="exportWeeklyReport()" class="btn-primary">
                         <i class="fas fa-download mr-1"></i>Export
                     </button>
+                    
+                    <!-- User Profile Dropdown -->
+                    <div class="relative">
+                        <button id="userMenuButton" class="flex items-center space-x-2 bg-dark-accent hover:bg-gray-600 text-white px-3 py-2 rounded-lg transition-colors">
+                            <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                                {% if current_user.is_authenticated and current_user.first_name %}
+                                    <span class="text-sm font-semibold text-white">{{ current_user.first_name[0].upper() }}</span>
+                                {% else %}
+                                    <i class="fas fa-user text-sm text-white"></i>
+                                {% endif %}
+                            </div>
+                            <span class="text-sm">
+                                {% if current_user.is_authenticated and current_user.first_name %}
+                                    {{ current_user.first_name }}
+                                {% else %}
+                                    User
+                                {% endif %}
+                            </span>
+                            <i class="fas fa-chevron-down text-xs"></i>
+                        </button>
+                        
+                        <!-- Dropdown Menu -->
+                        <div id="userDropdown" class="absolute right-0 mt-2 w-56 bg-dark-surface border border-dark-accent rounded-lg shadow-xl z-50 hidden">
+                            <div class="py-2">
+                                <!-- User Info Header -->
+                                <div class="px-4 py-3 border-b border-dark-accent">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                                            {% if current_user.is_authenticated and current_user.first_name %}
+                                                <span class="text-lg font-semibold text-white">{{ current_user.first_name[0].upper() }}</span>
+                                            {% else %}
+                                                <i class="fas fa-user text-white"></i>
+                                            {% endif %}
+                                        </div>
+                                        <div>
+                                            <p class="text-white font-medium">
+                                                {% if current_user.is_authenticated %}
+                                                    {{ current_user.first_name or 'User' }} {{ current_user.last_name or '' }}
+                                                {% else %}
+                                                    Guest User
+                                                {% endif %}
+                                            </p>
+                                            <p class="text-gray-400 text-sm">
+                                                {% if current_user.is_authenticated and current_user.email %}
+                                                    {{ current_user.email }}
+                                                {% else %}
+                                                    Not logged in
+                                                {% endif %}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Menu Items -->
+                                {% if current_user.is_authenticated %}
+                                    <a href="{{ url_for('profile') }}" class="flex items-center px-4 py-3 text-gray-300 hover:bg-dark-accent hover:text-white transition-colors">
+                                        <i class="fas fa-user-edit mr-3 text-blue-400"></i>
+                                        <span>Edit Profile</span>
+                                    </a>
+                                    <a href="{{ url_for('settings') }}" class="flex items-center px-4 py-3 text-gray-300 hover:bg-dark-accent hover:text-white transition-colors">
+                                        <i class="fas fa-cog mr-3 text-gray-400"></i>
+                                        <span>Settings</span>
+                                    </a>
+                                    <a href="{{ url_for('account_preferences') }}" class="flex items-center px-4 py-3 text-gray-300 hover:bg-dark-accent hover:text-white transition-colors">
+                                        <i class="fas fa-bell mr-3 text-yellow-400"></i>
+                                        <span>Notifications</span>
+                                    </a>
+                                    <a href="{{ url_for('subscription') }}" class="flex items-center px-4 py-3 text-gray-300 hover:bg-dark-accent hover:text-white transition-colors">
+                                        <i class="fas fa-crown mr-3 text-yellow-500"></i>
+                                        <span>Subscription</span>
+                                    </a>
+                                    <div class="border-t border-dark-accent my-1"></div>
+                                    <a href="{{ url_for('help_support') }}" class="flex items-center px-4 py-3 text-gray-300 hover:bg-dark-accent hover:text-white transition-colors">
+                                        <i class="fas fa-question-circle mr-3 text-green-400"></i>
+                                        <span>Help & Support</span>
+                                    </a>
+                                    <div class="border-t border-dark-accent my-1"></div>
+                                    <a href="{{ url_for('logout') }}" class="flex items-center px-4 py-3 text-red-400 hover:bg-red-600 hover:text-white transition-colors">
+                                        <i class="fas fa-sign-out-alt mr-3"></i>
+                                        <span>Sign Out</span>
+                                    </a>
+                                {% else %}
+                                    <a href="{{ url_for('login') }}" class="flex items-center px-4 py-3 text-gray-300 hover:bg-dark-accent hover:text-white transition-colors">
+                                        <i class="fas fa-sign-in-alt mr-3 text-green-400"></i>
+                                        <span>Sign In</span>
+                                    </a>
+                                    <a href="{{ url_for('register') }}" class="flex items-center px-4 py-3 text-gray-300 hover:bg-dark-accent hover:text-white transition-colors">
+                                        <i class="fas fa-user-plus mr-3 text-blue-400"></i>
+                                        <span>Create Account</span>
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -133,6 +227,36 @@
     <script src="{{ url_for('static', filename='js/enhanced_widgets.js') }}"></script>
     <script src="{{ url_for('static', filename='js/trading_journey.js') }}"></script>
     <script src="{{ url_for('static', filename='js/mobile.js') }}"></script>
+    
+    <!-- User Profile Dropdown Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const userMenuButton = document.getElementById('userMenuButton');
+            const userDropdown = document.getElementById('userDropdown');
+            
+            if (userMenuButton && userDropdown) {
+                userMenuButton.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    userDropdown.classList.toggle('hidden');
+                });
+                
+                // Close dropdown when clicking outside
+                document.addEventListener('click', function(e) {
+                    if (!userMenuButton.contains(e.target) && !userDropdown.contains(e.target)) {
+                        userDropdown.classList.add('hidden');
+                    }
+                });
+                
+                // Close dropdown when pressing Escape
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape') {
+                        userDropdown.classList.add('hidden');
+                    }
+                });
+            }
+        });
+    </script>
+    
     {% block scripts %}{% endblock %}
 </body>
 </html>

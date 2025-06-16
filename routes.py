@@ -421,6 +421,89 @@ def api_clear_cache():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# User Profile and Settings Routes
+
+@app.route('/profile')
+@login_required
+def profile():
+    """User profile page"""
+    return render_template('profile.html')
+
+@app.route('/profile/edit', methods=['GET', 'POST'])
+@login_required
+def edit_profile():
+    """Edit user profile"""
+    if request.method == 'POST':
+        try:
+            current_user.first_name = request.form.get('first_name', '').strip()
+            current_user.last_name = request.form.get('last_name', '').strip()
+            current_user.email = request.form.get('email', '').strip()
+            
+            # Add any additional profile fields here
+            bio = request.form.get('bio', '').strip()
+            if hasattr(current_user, 'bio'):
+                current_user.bio = bio
+            
+            db.session.commit()
+            flash('Profile updated successfully!', 'success')
+            return redirect(url_for('profile'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating profile: {str(e)}', 'error')
+    
+    return render_template('edit_profile.html')
+
+@app.route('/settings')
+@login_required
+def settings():
+    """User settings page"""
+    return render_template('settings.html')
+
+@app.route('/settings/update', methods=['POST'])
+@login_required
+def update_settings():
+    """Update user settings"""
+    try:
+        # Voice alerts setting
+        voice_alerts = request.form.get('voice_alerts') == 'on'
+        
+        # Email notifications setting
+        email_notifications = request.form.get('email_notifications') == 'on'
+        
+        # Theme setting
+        theme = request.form.get('theme', 'dark')
+        
+        # Update user preferences (you may need to add these fields to User model)
+        # For now, store in session
+        session['voice_alerts'] = voice_alerts
+        session['email_notifications'] = email_notifications
+        session['theme'] = theme
+        
+        flash('Settings updated successfully!', 'success')
+        return redirect(url_for('settings'))
+        
+    except Exception as e:
+        flash(f'Error updating settings: {str(e)}', 'error')
+        return redirect(url_for('settings'))
+
+@app.route('/account/preferences')
+@login_required
+def account_preferences():
+    """Account preferences and notifications"""
+    return render_template('account_preferences.html')
+
+@app.route('/subscription')
+@login_required
+def subscription():
+    """User subscription management"""
+    return render_template('subscription.html')
+
+@app.route('/help')
+def help_support():
+    """Help and support page"""
+    return render_template('help_support.html')
+
 @app.route('/track_stock/<symbol>')
 def track_stock(symbol):
     """Add stock to tracked list (Top 5)"""
