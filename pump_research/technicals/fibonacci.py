@@ -50,3 +50,18 @@ def extension_multiple(price: float, fib: dict):
         return None
     rng = fib["swing_high"] - fib["swing_low"]
     return (price - fib["swing_low"]) / rng if rng > 0 else None
+
+
+def all_time_fibonacci(df: pd.DataFrame) -> dict:
+    """Retracement levels between the all-time high and low in the available history"""
+    if len(df) < 5:
+        return {}
+    high, low = float(df["high"].max()), float(df["low"].min())
+    rng = high - low
+    if rng <= 0:
+        return {}
+    close = float(df["close"].iloc[-1])
+    position = (close - low) / rng  # 0 = at the all-time low, 1 = at the all-time high
+    nearest = min(RETRACEMENTS, key=lambda lv: abs(lv - position))
+    return {"high": high, "low": low, "position": float(position), "nearest_level": nearest,
+            "levels": {f"{lv:g}": low + rng * lv for lv in RETRACEMENTS}}

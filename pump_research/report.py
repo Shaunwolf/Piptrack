@@ -56,12 +56,13 @@ def technical_summary(ta: Dict, pf: Dict, ev: Dict) -> str:
     lines.append(f"- Structure: {st.get('structure', '–')} ({st.get('higher_highs', 0)} higher highs, {st.get('higher_lows', 0)} higher lows); "
                  f"support {('$%.2f' % lv['support']['price']) if lv.get('support') else '–'}, "
                  f"resistance {('$%.2f' % lv['resistance']['price']) if lv.get('resistance') else '–'}")
-    groups = {"harmonic": [], "chart": [], "candle": []}
+    groups = {"harmonic": [], "chart": [], "candle": [], "signal": []}
     for p in ta.get("patterns", []):
         date_ = p.get("completed_date") or p.get("date")
         label = f"{p['name'].replace('_', ' ')} ({p['direction']}, {date_}" + (f", score {p['score']}" if "score" in p else "") + ")"
-        groups[p["type"]].append(label)
-    for kind, title in (("harmonic", "Harmonic patterns"), ("chart", "Chart patterns"), ("candle", "Candlesticks")):
+        groups.setdefault(p["type"], []).append(label)
+    for kind, title in (("harmonic", "Harmonic patterns"), ("chart", "Chart patterns"), ("candle", "Candlesticks"),
+                        ("signal", "Support/resistance signals")):
         lines.append(f"- {title}: {', '.join(groups[kind]) or 'none'}")
     return "\n".join(lines)
 

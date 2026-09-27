@@ -48,11 +48,16 @@ Everything runs on daily OHLCV data up to the bar being analyzed (never later; a
 | Volume / flow | OBV slope and accumulation divergence, MFI 14, Chaikin money flow, close vs rolling VWAP |
 | Fibonacci | Dominant swing, retracement or bounce level, nearest level, golden pocket, extension targets (1.272 → 4.236), and where each pump **peaked on the extension scale** |
 | Swings & structure | Volatility-scaled zigzag pivots, higher highs/lows, up/down/range structure, break of structure, clustered support/resistance with touch counts |
-| Harmonic patterns | Gartley, Bat, Alt Bat, Butterfly, Crab, Deep Crab, Shark, Cypher, AB=CD, with fit scores and bullish/bearish direction |
+| Harmonic patterns | Gartley, Bat, Alt Bat, Butterfly, Crab, Deep Crab, Shark, Cypher, 5-0, AB=CD, with fit scores and bullish/bearish direction |
 | Chart patterns | Double bottom/top (with neckline breakout), head & shoulders and inverse, ascending/descending/symmetrical triangles, rising/falling wedges, bull flag, cup & handle, consolidation, range breakout/breakdown on volume |
-| Candlesticks | Hammer, inverted hammer, shooting star, hanging man, doji (plain/dragonfly/gravestone), marubozu, engulfing, piercing line, dark cloud, morning/evening star, three white soldiers/black crows, inside/outside bars, gaps |
+| Fibonacci & Gann suite (`fib_tools.py`) | Every tool in a charting platform's Fibonacci/Gann menu, anchored automatically on the last swings (A → B, then C): retracement, trend-based extension, channel, time zones, speed resistance fan, trend-based time, circles, spiral, speed resistance arcs, wedge, pitchfan, Gann box, Gann square, Gann square (fixed scale) and Gann fan. Round tools and fans use swing units, so results don't depend on chart zoom. **Confluence** counts how many tools put a level at today's price (anchor points excluded, tolerance ≤ 0.2 ATR). On random-walk data, 4+ tools agree on only ~8% of bars, and a test keeps it that way. **Time confluence** counts Fibonacci time lines landing on today's bar. On the chart every tool is a toggleable legend entry. |
+| Adaptive Kalman filter | Two-state (level + slope) Kalman filter whose noise follows recent volatility: filtered trend line, trend strength −100..100, turns and crossovers |
+| All-time Fibonacci | Retracement levels between the all-time high and low in the history |
+| Support/resistance signals | Buy: breakout above resistance on 1.5× volume, or a bounce off support. Sell: breakdown on volume, or a rejection at resistance |
+| Fear & Greed (per stock) | 0–100 from momentum, 52-week strength, RSI, volatility vs its own norm, and up-day volume share |
+| Candlesticks | Hammer, inverted hammer, shooting star, hanging man, doji (plain/dragonfly/gravestone), spinning top, marubozu, belt hold, engulfing, harami, tweezer top/bottom, kicker, piercing line, dark cloud, morning/evening (doji) star, three white soldiers/black crows, three inside/outside up/down, rising/falling three methods, inside/outside bars, gaps |
 
-`technical_snapshot(prices, end_idx, window_days)` returns flat `ta_*` features (80+) for statistics, plus the detected patterns, Fibonacci levels, moving averages, levels and pivots for display.
+`technical_snapshot(prices, end_idx, window_days)` returns flat `ta_*` features (120+) for statistics, plus the detected patterns, Fibonacci levels, moving averages, levels and pivots for display.
 
 ## Similarity model (`model.py`)
 

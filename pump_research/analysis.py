@@ -44,6 +44,20 @@ SIGNALS = {
                                           lambda r: r["ta_candles_bullish"] > r["ta_candles_bearish"]),
     "break_of_structure": (["ta_break_of_structure"], lambda r: r["ta_break_of_structure"]),
     "trend_strong_adx_25": (["ta_adx"], lambda r: r["ta_adx"] >= 25),
+    # Fibonacci & Gann suite (4+ tools agreeing happens on ~8% of random-walk bars)
+    "fib_confluence_4plus": (["ta_fib_confluence"], lambda r: r["ta_fib_confluence"] >= 4),
+    "fib_time_line_today": (["ta_fib_time_confluence"], lambda r: r["ta_fib_time_confluence"] >= 1),
+    "near_trend_fib_extension": (["ta_fib_ext_near"], lambda r: r["ta_fib_ext_near"]),
+    "above_gann_1x1": (["ta_gann_above_1x1"], lambda r: r["ta_gann_above_1x1"]),
+    "above_pitchfan_median": (["ta_pitchfan_above_median"], lambda r: r["ta_pitchfan_above_median"]),
+    # Kalman, support/resistance signals, fear & greed
+    "kalman_uptrend": (["ta_kalman_uptrend"], lambda r: r["ta_kalman_uptrend"]),
+    "kalman_turned_up": (["ta_kalman_turned_up_in_window"], lambda r: r["ta_kalman_turned_up_in_window"]),
+    "sr_buy_signal": (["ta_sr_buy_signals"], lambda r: r["ta_sr_buy_signals"] >= 1),
+    "sr_sell_signal": (["ta_sr_sell_signals"], lambda r: r["ta_sr_sell_signals"] >= 1),
+    "extreme_fear": (["ta_fear_greed"], lambda r: r["ta_fear_greed"] < 25),
+    "extreme_greed": (["ta_fear_greed"], lambda r: r["ta_fear_greed"] > 75),
+    "near_all_time_low": (["ta_alltime_fib_position"], lambda r: r["ta_alltime_fib_position"] < 0.1),
 }
 
 

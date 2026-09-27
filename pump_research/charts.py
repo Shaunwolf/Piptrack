@@ -13,6 +13,7 @@ from typing import Dict, List, Optional
 import pandas as pd
 
 from .technicals import indicators as ind
+from .technicals.composites import adaptive_kalman
 
 # Tokens (keep in sync with static/css/pump.css)
 INK = "#e8e6df"          # primary text
@@ -23,6 +24,21 @@ AMBER = "#c98500"        # data accent: the pre-pump build-up
 BULL = "#3987e5"         # diverging pole: pre-pump side / bullish
 BEAR = "#e66767"         # diverging pole: ordinary side / bearish
 MA_STYLES = {"EMA 21": "#3987e5", "WMA 20": "#d95926", "HMA 20": "#199e70", "VWMA 20": "#c98500"}
+KALMAN_COLOR = "#d55181"
+# Fibonacci & Gann overlays: hidden until toggled in the legend (one or two at a time reads best)
+OVERLAY_STYLES = {
+    "Trend fib extension": {"color": AMBER, "dash": "dot"},
+    "Fib channel": {"color": "#199e70", "dash": "solid"},
+    "Fib speed fan": {"color": AMBER, "dash": "solid"},
+    "Pitchfan": {"color": "#3987e5", "dash": "solid"},
+    "Gann fan": {"color": "#9085e9", "dash": "solid"},
+    "Gann box": {"color": "#9085e9", "dash": "dot"},
+    "Fib circles": {"color": INK_2, "dash": "solid"},
+    "Fib speed arcs": {"color": INK_2, "dash": "dot"},
+    "Fib spiral": {"color": "#d95926", "dash": "solid"},
+    "Fib time zones": {"color": INK_3, "dash": "dot"},
+    "Trend fib time": {"color": "#199e70", "dash": "dot"},
+}
 DIRECTION = {"bullish": (BULL, "triangle-up"), "bearish": (BEAR, "triangle-down"), "neutral": (INK_3, "diamond")}
 FONT = "JetBrains Mono, ui-monospace, SFMono-Regular, Menlo, monospace"
 
@@ -61,6 +77,9 @@ def price_chart(rows: List[Dict], technicals: Optional[Dict] = None, window: Opt
         data.append({"type": "scatter", "mode": "lines", "x": dates, "yaxis": "y", "name": name,
                      "y": [None if pd.isna(v) else float(v) for v in series],
                      "line": {"width": 1.6, "color": MA_STYLES[name]}})
+    kal = adaptive_kalman(close)["kalman"]
+    data.append({"type": "scatter", "mode": "lines", "x": dates, "yaxis": "y", "name": "Kalman",
+                 "y": [None if pd.isna(v) else float(v) for v in kal], "line": {"width": 2, "color": KALMAN_COLOR, "dash": "dash"}})
     in_window = set(window or [])
     data.append({"type": "bar", "x": dates, "y": df["volume"].tolist(), "name": "Volume", "yaxis": "y2",
                  "showlegend": False, "hovertemplate": "%{y:,.0f} shares<extra>Volume</extra>",
@@ -121,6 +140,8 @@ def price_chart(rows: List[Dict], technicals: Optional[Dict] = None, window: Opt
 
     vol = df["volume"].astype(float)
     spiky_volume = vol.max() > 20 * max(vol.median(), 1)
+    if technicals and technicals.get("fib_gann"):
+        data.extend(fib_gann_traces(technicals["fib_gann"], float(df["low"].min()), float(df["high"].max())))
     layout = {**BASE_LAYOUT, "shapes": shapes, "annotations": annotations, "meta": {"title": title},
               "xaxis": _axis(type="category", nticks=10, rangeslider={"visible": False}, anchor="y2"),
               "yaxis": _axis(domain=[0.28, 1], title={"text": "Price (log)" if log_scale else "Price", "font": {"size": 10}},
@@ -133,6 +154,26 @@ def price_chart(rows: List[Dict], technicals: Optional[Dict] = None, window: Opt
             if a.get("yref") == "y" and a.get("y", 0) > 0:
                 a["y"] = math.log10(a["y"])
     return {"data": data, "layout": layout}
+
+
+def fib_gann_traces(fg: Dict, lo: float, hi: float) -> List[Dict]:
+    """One legend entry per tool (legendgroup); every line of that tool toggles together"""
+    traces, shown = [], set()
+
+    def trace(group, name, xs, ys):
+        style = OVERLAY_STYLES.get(group, {"color": INK_3, "dash": "dot"})
+        traces.append({"type": "scatter", "mode": "lines", "x": xs, "y": ys, "yaxis": "y", "name": group,
+                       "legendgroup": group, "showlegend": group not in shown, "visible": "legendonly",
+                       "hovertemplate": f"{group} {name}<extra></extra>",
+                       "line": {"color": style["color"], "dash": style["dash"], "width": 1.2}})
+        shown.add(group)
+
+    for ov in fg.get("overlays", []):
+        trace(ov["group"], ov["name"], [p[0] for p in ov["points"]], [max(lo * 0.5, min(hi * 2, p[1])) for p in ov["points"]])
+    for group, days in (fg.get("time_lines") or {}).items():
+        for d in days:
+            trace(group, d, [d, d], [lo, hi])
+    return traces
 
 
 def countdown_chart(countdown: List[Dict]) -> Dict:

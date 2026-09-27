@@ -75,6 +75,12 @@ def find_harmonics(pivots: List[Pivot]) -> List[dict]:
             if beyond_a and all(_in(r, rg) for r, rg in zip(cy.values(), cy_ranges)):
                 found.append(_pattern("cypher", (x, a, b, c, d), cy, cy_ranges))
 
+        # 5-0: B extends beyond X (1.13-1.618 of XA), C extends 1.618-2.24 of AB, D retraces 50% of BC
+        five0 = {"ab_xa": ab / xa, "bc_ab": bc / ab, "cd_bc": cd / bc}
+        five0_ranges = ((1.13, 1.618), (1.618, 2.24), (0.5, 0.5))
+        if all(_in(r, rg) for r, rg in zip(five0.values(), five0_ranges)):
+            found.append(_pattern("five_zero", (x, a, b, c, d), five0, five0_ranges))
+
     # AB=CD on four pivots
     for i in range(len(pivots) - 3):
         a, b, c, d = pivots[i:i + 4]

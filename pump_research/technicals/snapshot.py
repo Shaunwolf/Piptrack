@@ -12,7 +12,9 @@ import pandas as pd
 from . import indicators as ind
 from .candles import detect_candles
 from .chart_patterns import find_chart_patterns
-from .fibonacci import fibonacci_levels
+from .composites import adaptive_kalman, fear_greed, sr_signals
+from .fib_tools import fib_gann_suite, suite_features
+from .fibonacci import fibonacci_levels, all_time_fibonacci
 from .harmonics import find_harmonics
 from .pivots import zigzag, adaptive_pct, support_resistance, market_structure
 
@@ -150,10 +152,36 @@ def technical_snapshot(prices: pd.DataFrame, end_idx: int, window_days: int = 10
         f["ta_fib_nearest_level"] = fib["nearest_level"]
         f["ta_fib_golden_pocket"] = fib["in_golden_pocket"]
 
+    # Adaptive Kalman trend filter
+    kal = adaptive_kalman(df["close"])
+    f["ta_kalman_strength"] = _last(kal["kalman_strength"])
+    f["ta_close_vs_kalman"] = _rel(close, _last(kal["kalman"]))
+    f["ta_kalman_uptrend"] = bool(f["ta_kalman_strength"] is not None and f["ta_kalman_strength"] > 0)
+    f["ta_close_cross_up_kalman_in_window"] = _any_in(ind.crossed_above(df["close"], kal["kalman"]), w0)
+    f["ta_kalman_turned_up_in_window"] = _any_in((kal["kalman_slope"] > 0) & (kal["kalman_slope"].shift(1) <= 0), w0)
+
+    # All-time Fibonacci retracement
+    atf = all_time_fibonacci(df)
+    if atf:
+        f["ta_alltime_fib_position"] = atf["position"]
+        f["ta_alltime_fib_nearest"] = atf["nearest_level"]
+
+    # Fibonacci & Gann tool suite (retracement, extension, channel, time zones, fans, circles, spiral, arcs,
+    # wedge, pitchfan, Gann box, squares and fan), anchored on the last swings
+    suite = fib_gann_suite(df, pivots, atr)
+    f.update(suite_features(suite))
+
+    # Fear & Greed (per stock)
+    fg = fear_greed(df)
+    f["ta_fear_greed"] = fg.get("score")
+
     # Patterns: harmonic, chart and candlestick, keeping those completed inside the window
     harmonics = [p for p in find_harmonics(pivots) if p["completed_idx"] >= w0]
     charts = [p for p in find_chart_patterns(df, pivots, n - 1) if p["completed_idx"] >= w0]
     candles = detect_candles(df, w0, n - 1)
+    signals = sr_signals(df, levels["levels"], w0)
+    f["ta_sr_buy_signals"] = sum(s["direction"] == "bullish" for s in signals)
+    f["ta_sr_sell_signals"] = sum(s["direction"] == "bearish" for s in signals)
     f["ta_harmonic_bullish_in_window"] = sum(p["direction"] == "bullish" for p in harmonics)
     f["ta_harmonic_bearish_in_window"] = sum(p["direction"] == "bearish" for p in harmonics)
     f["ta_harmonic_best_score"] = max((p["score"] for p in harmonics), default=None)
@@ -168,7 +196,7 @@ def technical_snapshot(prices: pd.DataFrame, end_idx: int, window_days: int = 10
 
     dates = list(df.index)
     patterns = []
-    for p in harmonics + charts + candles:
+    for p in harmonics + charts + candles + signals:
         p = dict(p)
         for key in ("idx", "start_idx", "completed_idx"):
             if key in p:
@@ -180,6 +208,10 @@ def technical_snapshot(prices: pd.DataFrame, end_idx: int, window_days: int = 10
     if fib:
         fib = {**fib, "swing_high_date": _iso(fib["swing_high_date"]), "swing_low_date": _iso(fib["swing_low_date"])}
     return {
+        "fib_gann": _suite_for_display(suite, dates),
+        "alltime_fib": atf,
+        "fear_greed": fg,
+        "kalman": {"level": _last(kal["kalman"]), "strength": f["ta_kalman_strength"]},
         "features": {k: (bool(v) if isinstance(v, (bool, np.bool_)) else v) for k, v in f.items()},
         "patterns": patterns,
         "fibonacci": fib,
@@ -188,4 +220,46 @@ def technical_snapshot(prices: pd.DataFrame, end_idx: int, window_days: int = 10
         "structure": structure,
         "pivots": [{"date": _iso(dates[p.idx]), "price": p.price, "kind": p.kind, "confirmed": p.confirmed}
                    for p in pivots[-12:]],
+    }
+
+
+def _suite_for_display(suite, dates):
+    """Fib & Gann suite with bar positions turned into dates, and drawable overlays clipped to the data"""
+    if not suite:
+        return None
+    last = len(dates) - 1
+
+    def pt(idx, price):
+        i = int(round(idx))
+        return (_iso(dates[i]), float(price)) if 0 <= i <= last else None
+
+    overlays = []
+
+    def add(group, name, points):
+        pts = [p for p in (pt(i, v) for i, v in points) if p]
+        if len(pts) >= 2:
+            overlays.append({"group": group, "name": name, "points": pts})
+
+    t = suite["tools"]
+    for group, key in (("Fib speed fan", "speed_fan"), ("Pitchfan", "pitchfan"), ("Gann fan", "gann_fan"), ("Fib channel", "channel")):
+        for name, seg in (t.get(key, {}).get("lines") or {}).items():
+            add(group, name, seg)
+    for group, key, field in (("Fib circles", "circles", "circles"), ("Fib speed arcs", "speed_arcs", "arcs")):
+        for name, pts in (t.get(key, {}).get(field) or {}).items():
+            add(group, name, pts)
+    add("Fib spiral", "spiral", t.get("spiral", {}).get("path") or [])
+    a = suite["anchors"]["A"]["idx"]
+    for name, price in (t.get("trend_extension", {}).get("levels") or {}).items():
+        add("Trend fib extension", name, [(suite["anchors"]["C"]["idx"], price), (last, price)])
+    for name, price in (t.get("gann_box", {}).get("levels") or {}).items():
+        add("Gann box", name, [(a, price), (last, price)])
+    times = {"Fib time zones": t.get("time_zones", {}).get("zones") or [],
+             "Trend fib time": t.get("trend_time", {}).get("lines") or []}
+    return {
+        "anchors": {k: {**v, "date": _iso(dates[v["idx"]])} for k, v in suite["anchors"].items()},
+        "price_confluence": suite["price_confluence"], "time_confluence": suite["time_confluence"],
+        "summary": {name: {k: v for k, v in tool.items() if not isinstance(v, (list, dict))} for name, tool in t.items()},
+        "overlays": overlays,
+        "time_lines": {g: [_iso(dates[i]) for i in idxs if 0 <= i <= last] for g, idxs in times.items()},
+        "future_time_lines": {g: [i - last for i in idxs if i > last] for g, idxs in times.items()},
     }
