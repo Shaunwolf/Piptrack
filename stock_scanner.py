@@ -165,26 +165,27 @@ class StockScanner:
             
             # Pattern detection
             pattern_type = self.detect_pattern(hist)
-            
-            # Fibonacci analysis
-            fibonacci_position = self.calculate_fibonacci_position(hist)
-            
-            # Confidence scoring
+
+            # Fibonacci analysis: convert 0-1 range position to the 0-100
+            # percent scale that ConfidenceScorer and the templates expect
+            fibonacci_position = self.calculate_fibonacci_position(hist) * 100
+
+            # Confidence scoring (map raw pattern labels to scorer vocabulary)
             confidence_score = self.confidence_scorer.calculate_score({
                 'rsi': rsi_value,
                 'volume_spike': volume_spike,
-                'pattern_type': pattern_type,
+                'pattern_type': self.map_pattern_for_scorer(pattern_type),
                 'fibonacci_position': fibonacci_position,
                 'price': current_price
             })
-            
+
             return {
                 'symbol': symbol,
                 'price': round(current_price, 2),
                 'rsi': round(rsi_value, 2),
                 'volume_spike': round(volume_spike, 2),
                 'pattern_type': pattern_type,
-                'fibonacci_position': round(fibonacci_position, 3),
+                'fibonacci_position': round(fibonacci_position, 1),
                 'confidence_score': round(confidence_score, 2),
                 'volume': int(current_volume),
                 'avg_volume': int(avg_volume)
@@ -194,6 +195,22 @@ class StockScanner:
             logging.error(f"Error analyzing {symbol}: {e}")
             return None
     
+    # Maps detect_pattern() labels to the ConfidenceScorer vocabulary
+    # (scorer keys are Title-Case; detect_pattern returns lowercase)
+    PATTERN_SCORE_MAP = {
+        'uptrend': 'Bullish Trend',
+        'downtrend': 'Bearish Trend',
+        'sideways': 'Consolidation',
+        'mixed': 'Neutral',
+        'insufficient_data': 'Neutral',
+        'unknown': 'Neutral',
+    }
+
+    @classmethod
+    def map_pattern_for_scorer(cls, pattern_type):
+        """Translate a detect_pattern() label for ConfidenceScorer."""
+        return cls.PATTERN_SCORE_MAP.get(pattern_type, 'Neutral')
+
     def detect_pattern(self, hist):
         """Simplified pattern detection"""
         try:

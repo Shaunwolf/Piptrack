@@ -21,6 +21,15 @@ import logging
 import pandas as pd
 from datetime import datetime
 from threading import Thread
+from urllib.parse import urlparse, urljoin
+
+def is_safe_url(target):
+    """Only allow redirects to same-origin URLs (prevents open redirect)."""
+    if not target:
+        return False
+    ref = urlparse(request.host_url)
+    test = urlparse(urljoin(request.host_url, target))
+    return test.scheme in ('http', 'https') and ref.netloc == test.netloc
 
 # Initialize Flask-Login
 login_manager = LoginManager()
@@ -78,7 +87,8 @@ def register():
         form = RegistrationForm()
         
         if request.method == 'POST':
-            logging.info(f"Registration form submitted with data: {request.form}")
+            # Never log request.form here — it contains the plaintext password
+            logging.info(f"Registration attempt for email: {form.email.data}")
             
         if form.validate_on_submit():
             try:
@@ -127,7 +137,9 @@ def login():
             if user and user.password_hash and form.password.data and check_password_hash(user.password_hash, form.password.data):
                 login_user(user, remember=form.remember_me.data)
                 next_page = request.args.get('next')
-                return redirect(next_page) if next_page else redirect(url_for('dashboard'))
+                if next_page and is_safe_url(next_page):
+                    return redirect(next_page)
+                return redirect(url_for('dashboard'))
             else:
                 flash('Invalid email or password', 'error')
         else:
@@ -154,7 +166,12 @@ forecasting_engine = ForecastingEngine()
 ai_coach = AICoach()
 confidence_scorer = ConfidenceScorer()
 pattern_tracker = PatternEvolutionTracker()
-personalizer = PersonalizedRecommender()
+# PersonalizedRecommender requires OPENAI_API_KEY — don't crash boot without it
+try:
+    personalizer = PersonalizedRecommender()
+except Exception as e:
+    logging.error(f"Failed to initialize personalized recommender: {e}")
+    personalizer = None
 sheets_integration = GoogleSheetsIntegration()
 pdf_generator = PDFGenerator()
 
@@ -532,43 +549,39 @@ def forecast(symbol):
     """Forecast page for specific stock"""
     symbol = symbol.upper()
     
-    # Try to get stock data first to validate ticker
+    # Try to analyze the stock first to validate ticker
     try:
         scanner = StockScanner()
-        stock_data = scanner.get_stock_data(symbol)
-        
-        if stock_data is None or (hasattr(stock_data, 'empty') and stock_data.empty):
+        analysis = scanner.analyze_stock(symbol)
+
+        if analysis is None:
             # Create a user-friendly error page
             error_message = f"Unable to find data for ticker '{symbol}'"
             suggestions = [
                 "Check if the ticker symbol is correct",
-                "The stock may be delisted or suspended", 
+                "The stock may be delisted or suspended",
                 "OTC/Pink Sheet stocks have limited data",
                 "Try a different ticker symbol"
             ]
-            
-            return render_template('ticker_error.html', 
-                                 symbol=symbol, 
+
+            return render_template('ticker_error.html',
+                                 symbol=symbol,
                                  error_message=error_message,
                                  suggestions=suggestions)
-        
-        # Get or create stock entry
+
+        # Get or create stock entry (analysis already contains a correctly
+        # computed confidence score in the scorer's expected format)
         stock = Stock.query.filter_by(symbol=symbol).first()
         if not stock:
-            # Create new stock entry with the validated data
-            from confidence_scorer import ConfidenceScorer
-            confidence_scorer = ConfidenceScorer()
-            confidence_score = confidence_scorer.calculate_score(stock_data)
-            
             stock = Stock(
                 symbol=symbol,
-                name=stock_data.get('name', 'Unknown Company'),
-                price=stock_data.get('price', 0),
-                rsi=stock_data.get('rsi', 50),
-                volume_spike=stock_data.get('volume_spike', 0),
-                pattern_type=stock_data.get('pattern_type', 'Unknown'),
-                fibonacci_position=stock_data.get('fibonacci_position', 50),
-                confidence_score=confidence_score
+                name=symbol,
+                price=analysis['price'],
+                rsi=analysis['rsi'],
+                volume_spike=analysis['volume_spike'],
+                pattern_type=analysis['pattern_type'],
+                fibonacci_position=analysis['fibonacci_position'],
+                confidence_score=analysis['confidence_score']
             )
             db.session.add(stock)
             db.session.commit()
@@ -1159,13 +1172,15 @@ def journal():
     return render_template('journal_clean.html', trades=trades_data, tracked_stocks=tracked_stocks)
 
 @app.route('/journal/save', methods=['POST'])
+@login_required
 def save_journal_entry():
     """Save journal entry from clean journal interface"""
     try:
         data = request.json
-        
-        # Create new journal entry
+
+        # Create new journal entry (user_id is NOT NULL in the model)
         trade = TradeJournal(
+            user_id=current_user.id,
             symbol=data.get('symbol', 'JOURNAL'),
             entry_price=float(data.get('entry_price', 0)),
             stop_loss=float(data.get('stop_loss', 0)),
@@ -1190,15 +1205,17 @@ def save_journal_entry():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/add_trade', methods=['POST'])
+@login_required
 def add_trade():
     """Add new trade to journal with enhanced Lisa Frank journal data"""
     try:
         data = request.json
-        
+
         # Handle both old format (individual trades) and new format (journal entries)
         if 'mood' in data:
             # New Lisa Frank journal entry format
             trade = TradeJournal(
+                user_id=current_user.id,  # user_id is NOT NULL in the model
                 symbol=data.get('symbol', 'JOURNAL'),  # Use JOURNAL as default for mood entries
                 entry_price=float(data.get('entry_price', 0)),
                 stop_loss=float(data.get('stop_loss', 0)),
@@ -1231,6 +1248,7 @@ def add_trade():
         else:
             # Original trade format
             trade = TradeJournal(
+                user_id=current_user.id,  # user_id is NOT NULL in the model
                 symbol=data['symbol'],
                 entry_price=float(data['entry_price']),
                 stop_loss=float(data['stop_loss']),
@@ -1277,10 +1295,14 @@ def update_confidence_scores():
         updated_scores = []
         
         for stock in tracked_stocks:
-            # Get latest data
-            stock_data = stock_scanner.get_stock_data(stock.symbol)
-            new_score = confidence_scorer.calculate_score(stock_data)
-            
+            # Get latest analysis (a dict in the scorer's expected format;
+            # passing the raw yfinance DataFrame here scored every stock
+            # from defaults)
+            analysis = stock_scanner.analyze_stock(stock.symbol)
+            if not analysis:
+                continue
+            new_score = confidence_scorer.calculate_score(analysis)
+
             stock.confidence_score = new_score
             updated_scores.append({
                 'symbol': stock.symbol,
