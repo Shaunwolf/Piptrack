@@ -20,10 +20,10 @@ class StockScanner:
         self.top_gappers = [
             # Tech & Growth
             'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'META', 'NVDA', 'AMD', 'NFLX', 'CRM',
-            'ADBE', 'ORCL', 'INTC', 'CSCO', 'PYPL', 'UBER', 'LYFT', 'SNAP', 'TWTR', 'ZOOM',
+            'ADBE', 'ORCL', 'INTC', 'CSCO', 'PYPL', 'UBER', 'LYFT', 'SNAP', 'ZM',
             
             # Biotech & Healthcare
-            'BIIB', 'GILD', 'AMGN', 'CELG', 'VRTX', 'REGN', 'ILMN', 'MRNA', 'BNTX', 'PFE',
+            'BIIB', 'GILD', 'AMGN', 'VRTX', 'REGN', 'ILMN', 'MRNA', 'BNTX', 'PFE',
             'JNJ', 'MRK', 'ABT', 'BMY', 'LLY', 'ABBV', 'TMO', 'DHR', 'SYK', 'MDT',
             
             # Financial Services
@@ -40,7 +40,7 @@ class StockScanner:
             
             # Industrial & Transportation
             'BA', 'CAT', 'DE', 'GE', 'HON', 'MMM', 'LMT', 'RTX', 'UPS', 'FDX',
-            'UNP', 'CSX', 'NSC', 'KSU', 'CNI', 'CP', 'EXPD', 'CHRW', 'XPO', 'JBHT',
+            'UNP', 'CSX', 'NSC', 'CNI', 'CP', 'EXPD', 'CHRW', 'XPO', 'JBHT',
             
             # Real Estate & Utilities
             'PLD', 'AMT', 'CCI', 'EQIX', 'DLR', 'PSA', 'EXR', 'AVB', 'EQR', 'UDR',
@@ -332,7 +332,7 @@ class StockScanner:
     def get_sp500_universe(self):
         """Get expanded S&P 500 universe"""
         return [
-            'AAPL', 'MSFT', 'GOOGL', 'GOOG', 'AMZN', 'TSLA', 'META', 'NVDA', 'BRK.B', 'UNH',
+            'AAPL', 'MSFT', 'GOOGL', 'GOOG', 'AMZN', 'TSLA', 'META', 'NVDA', 'BRK-B', 'UNH',
             'JNJ', 'XOM', 'JPM', 'V', 'PG', 'HD', 'CVX', 'MA', 'PFE', 'ABBV',
             'BAC', 'KO', 'AVGO', 'PEP', 'TMO', 'COST', 'DHR', 'MRK', 'ABT', 'ACN',
             'VZ', 'ADBE', 'NKE', 'WMT', 'CRM', 'NFLX', 'T', 'NEE', 'CSCO', 'ORCL',
@@ -349,50 +349,46 @@ class StockScanner:
             'AAPL', 'MSFT', 'AMZN', 'TSLA', 'GOOGL', 'GOOG', 'META', 'NVDA', 'NFLX', 'ADBE',
             'PYPL', 'INTC', 'CSCO', 'CMCSA', 'PEP', 'COST', 'AVGO', 'TXN', 'QCOM', 'AMD',
             'INTU', 'TMUS', 'AMAT', 'SBUX', 'CHTR', 'ISRG', 'GILD', 'BKNG', 'REGN', 'MU',
-            'ADI', 'FISV', 'CSX', 'ATVI', 'MRNA', 'PANW', 'ADP', 'ILMN', 'LRCX', 'MDLZ',
+            'ADI', 'FISV', 'CSX', 'MRNA', 'PANW', 'ADP', 'ILMN', 'LRCX', 'MDLZ',
             'KLAC', 'KDP', 'SNPS', 'EXC', 'CDNS', 'MCHP', 'ORLY', 'CTAS', 'BIIB', 'LULU',
-            'PLTR', 'SNOW', 'COIN', 'RBLX', 'U', 'DKNG', 'ROKU', 'SQ', 'SHOP', 'PINS'
+            'PLTR', 'SNOW', 'COIN', 'RBLX', 'U', 'DKNG', 'ROKU', 'XYZ', 'SHOP', 'PINS'
         ]
     
     def get_nyse_universe(self):
         """Get NYSE universe including traditional stocks"""
         return [
-            'BRK.B', 'UNH', 'JNJ', 'XOM', 'JPM', 'V', 'PG', 'HD', 'CVX', 'MA',
+            'BRK-B', 'UNH', 'JNJ', 'XOM', 'JPM', 'V', 'PG', 'HD', 'CVX', 'MA',
             'BAC', 'KO', 'TMO', 'DHR', 'MRK', 'ABT', 'ACN', 'VZ', 'NKE', 'WMT',
             'CRM', 'T', 'NEE', 'WFC', 'MS', 'RTX', 'MDT', 'HON', 'UPS', 'IBM',
             'AMGN', 'LOW', 'CAT', 'DE', 'GS', 'BMY', 'BA', 'SPGI', 'AXP', 'BLK',
             'MMM', 'C', 'CVS', 'MO', 'USB', 'LMT', 'TJX', 'PNC', 'SYK', 'AMT',
             'CI', 'SO', 'FIS', 'CB', 'DUK', 'NSC', 'AON', 'BSX', 'CL', 'F',
-            'GM', 'DIS', 'UBER', 'LYFT', 'ABNB', 'DASH', 'TWTR', 'SNAP', 'ZM', 'DOCU'
+            'GM', 'DIS', 'UBER', 'LYFT', 'ABNB', 'DASH', 'SNAP', 'ZM', 'DOCU'
         ]
     
     def get_small_cap_universe(self):
         """Get small cap and Russell 2000 stocks"""
         return [
-            'AMC', 'GME', 'BBBY', 'KOSS', 'EXPR', 'NAKD', 'SNDL', 'NOK', 'BB', 'PLTR',
-            'WISH', 'CLOV', 'MVIS', 'TLRY', 'WKHS', 'SKLZ', 'RIDE', 'SPCE', 'RKT', 'SOFI',
+            'AMC', 'GME', 'BBBY', 'KOSS', 'SNDL', 'NOK', 'BB', 'PLTR', 'CLOV', 'MVIS', 'TLRY', 'WKHS', 'SPCE', 'RKT', 'SOFI',
             'UWMC', 'OPEN', 'ROOT', 'HOOD', 'AFRM', 'UPST', 'PENN', 'FVRR', 'ETSY', 'PINS',
-            'CRSR', 'CRWD', 'ZS', 'OKTA', 'DDOG', 'NET', 'FSLY', 'ESTC', 'TEAM', 'WORK',
-            'PTON', 'LMND', 'CVNA', 'OSTK', 'BYND', 'TDOC', 'MRTX', 'SAGE', 'FOLD', 'BLUE'
+            'CRSR', 'CRWD', 'ZS', 'OKTA', 'DDOG', 'NET', 'FSLY', 'ESTC', 'TEAM',
+            'PTON', 'LMND', 'CVNA', 'BYND', 'TDOC',
         ]
     
     def get_biotech_universe(self):
         """Get comprehensive biotech universe"""
         return [
             'MRNA', 'BNTX', 'NVAX', 'OCGN', 'INO', 'VXRT', 'SRNE', 'ATOS', 'CTXR', 'BNGO',
-            'SENS', 'OBSV', 'CTIC', 'CPRX', 'CYTH', 'SHIP', 'ADMP', 'PROG', 'RGBP', 'ENZC',
-            'VBIV', 'VERU', 'CRTX', 'SAVA', 'AVXL', 'BIIB', 'GILD', 'AMGN', 'VRTX', 'REGN',
-            'ILMN', 'TECH', 'TGTX', 'FOLD', 'BLUE', 'EDIT', 'CRSP', 'NTLA', 'BEAM', 'PACB',
-            'CDNA', 'NVTA', 'VCYT', 'FATE', 'BMRN', 'RARE', 'MYGN', 'HALO', 'KDNY', 'ZYME',
-            'ARQL', 'PTGX', 'AXSM', 'ACAD', 'HZNP', 'INCY', 'EXAS', 'VEEV', 'TDOC', 'DXCM'
+            'SENS', 'SHIP', 'RGBP', 'ENZC', 'VERU', 'AVXL', 'BIIB', 'GILD', 'AMGN', 'VRTX', 'REGN',
+            'ILMN', 'TECH', 'TGTX', 'EDIT', 'CRSP', 'NTLA', 'BEAM', 'PACB',
+            'CDNA', 'VCYT', 'FATE', 'BMRN', 'RARE', 'MYGN', 'HALO', 'ZYME', 'PTGX', 'AXSM', 'ACAD', 'INCY', 'VEEV', 'TDOC', 'DXCM'
         ]
     
     def get_crypto_stocks(self):
         """Get crypto-related stocks"""
         return [
-            'COIN', 'MSTR', 'RIOT', 'MARA', 'CAN', 'BTBT', 'EBON', 'SOS', 'DGLY', 'HVBT',
-            'ARGO', 'HIVE', 'BITF', 'HUT', 'CLSK', 'EQOS', 'INSG', 'LFUS', 'ANY', 'NCTY',
-            'PYPL', 'SQ', 'HOOD', 'SOFI', 'AFRM', 'UPST', 'LC', 'ONDK', 'TREE', 'LMND'
+            'COIN', 'MSTR', 'RIOT', 'MARA', 'CAN', 'BTBT', 'EBON', 'SOS', 'HIVE', 'HUT', 'CLSK', 'INSG', 'LFUS', 'ANY', 'NCTY',
+            'PYPL', 'XYZ', 'HOOD', 'SOFI', 'AFRM', 'UPST', 'TREE', 'LMND'
         ]
     
     def get_trending_stocks(self):
@@ -401,8 +397,8 @@ class StockScanner:
             'SPY', 'QQQ', 'IWM', 'DIA', 'VTI', 'VEA', 'VWO', 'BND', 'AGG', 'LQD',
             'GLD', 'SLV', 'USO', 'XLE', 'XLF', 'XLK', 'XBI', 'ARKK', 'ARKG', 'ARKF',
             'TQQQ', 'SQQQ', 'UVXY', 'SPXS', 'SPXL', 'TLT', 'HYG', 'EEM', 'FXI', 'BABA',
-            'NIO', 'XPEV', 'LI', 'PDD', 'JD', 'DIDI', 'TAL', 'EDU', 'BIDU', 'TME',
-            'RIVN', 'LCID', 'MULN', 'NKLA', 'WKHS', 'HYLN', 'SOLO', 'AYRO', 'IDEX', 'GEVO'
+            'NIO', 'XPEV', 'LI', 'PDD', 'JD', 'TAL', 'EDU', 'BIDU', 'TME',
+            'RIVN', 'LCID', 'WKHS', 'HYLN', 'GEVO'
         ]
     
     def get_extended_universe(self, limit=2000):
@@ -422,11 +418,8 @@ class StockScanner:
     
     def get_penny_stocks(self):
         """Get penny stock universe for pump detection"""
-        return [
-            'GNUS', 'XSPA', 'DECN', 'UAVS', 'VISL', 'MARK', 'KTOV', 'BIOC', 'AYTU', 'IBIO',
-            'OPKO', 'TOPS', 'SHIP', 'DRYS', 'GLBS', 'CTRM', 'SNDL', 'NAKD', 'ZOMEDICA', 'ZOM',
-            'BNGO', 'SENS', 'OBSV', 'CTIC', 'CPRX', 'CYTH', 'ADMP', 'PROG', 'RGBP', 'ENZC',
-            'HMBL', 'OZSC', 'HCMC', 'ASTI', 'TSNP', 'ALPP', 'ABML', 'EEENF', 'RTON', 'RXMD'
+        return [ 'DECN', 'UAVS', 'VISL', 'MARK', 'AYTU', 'IBIO', 'TOPS', 'SHIP', 'GLBS', 'CTRM', 'SNDL', 'ZOMEDICA',
+            'BNGO', 'SENS', 'RGBP', 'ENZC', 'OZSC', 'HCMC', 'ASTI', 'ALPP', 'EEENF', 'RTON',
         ]
     
     def get_international_adrs(self):
@@ -434,7 +427,7 @@ class StockScanner:
         return [
             'BABA', 'NIO', 'XPEV', 'LI', 'PDD', 'JD', 'BIDU', 'TME', 'NTES', 'WB',
             'TSM', 'ASML', 'NVO', 'UL', 'SAP', 'TM', 'SONY', 'SHOP', 'TD', 'RY',
-            'CNI', 'ENB', 'SU', 'CCL', 'RCL', 'NCLH', 'CUK', 'TUI', 'AHAL', 'TCOM'
+            'CNI', 'ENB', 'SU', 'CCL', 'RCL', 'NCLH', 'TCOM'
         ]
     
     def get_sector_stocks(self):

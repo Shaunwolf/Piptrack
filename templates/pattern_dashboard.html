@@ -188,7 +188,7 @@
                                 <span class="text-sm text-gray-400">Volatility</span>
                                 <div class="flex items-center">
                                     <div class="metric-bar {% if pattern_stock.evolution.volatility_trend > 0 %}bg-accent-red{% else %}bg-accent-green{% endif %}" 
-                                         style="width: {{ (pattern_stock.evolution.volatility_trend|abs * 50)|min(50) }}px;"></div>
+                                         style="width: {{ [pattern_stock.evolution.volatility_trend|abs * 50, 50]|min }}px;"></div>
                                     <span class="text-xs ml-2">{{ "%.2f"|format(pattern_stock.evolution.volatility_trend) }}</span>
                                 </div>
                             </div>
@@ -196,7 +196,7 @@
                                 <span class="text-sm text-gray-400">Volume</span>
                                 <div class="flex items-center">
                                     <div class="metric-bar {% if pattern_stock.evolution.volume_trend > 0 %}bg-accent-green{% else %}bg-accent-red{% endif %}" 
-                                         style="width: {{ (pattern_stock.evolution.volume_trend|abs * 50)|min(50) }}px;"></div>
+                                         style="width: {{ [pattern_stock.evolution.volume_trend|abs * 50, 50]|min }}px;"></div>
                                     <span class="text-xs ml-2">{{ "%.2f"|format(pattern_stock.evolution.volume_trend) }}</span>
                                 </div>
                             </div>
@@ -204,7 +204,7 @@
                                 <span class="text-sm text-gray-400">Momentum</span>
                                 <div class="flex items-center">
                                     <div class="metric-bar {% if pattern_stock.evolution.momentum_change > 0 %}bg-accent-green{% else %}bg-accent-red{% endif %}" 
-                                         style="width: {{ (pattern_stock.evolution.momentum_change|abs * 50)|min(50) }}px;"></div>
+                                         style="width: {{ [pattern_stock.evolution.momentum_change|abs * 50, 50]|min }}px;"></div>
                                     <span class="text-xs ml-2">{{ "%.2f"|format(pattern_stock.evolution.momentum_change) }}</span>
                                 </div>
                             </div>

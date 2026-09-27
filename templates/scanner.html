@@ -504,7 +504,7 @@ function renderResults() {
 // Track a stock (add to Top 5)
 async function trackStock(symbol) {
     try {
-        const response = await fetch(`/track_stock/${symbol}`);
+        const response = await fetch(`/track_stock/${symbol}`, {method: 'POST'});
         const data = await response.json();
         
         if (data.success) {

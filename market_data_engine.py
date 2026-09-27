@@ -63,7 +63,7 @@ class MarketDataEngine:
     def _get_sp500_symbols(self) -> List[str]:
         """Get S&P 500 symbols"""
         return [
-            'AAPL', 'MSFT', 'GOOGL', 'GOOG', 'AMZN', 'TSLA', 'META', 'NVDA', 'BRK.B', 'UNH',
+            'AAPL', 'MSFT', 'GOOGL', 'GOOG', 'AMZN', 'TSLA', 'META', 'NVDA', 'BRK-B', 'UNH',
             'JNJ', 'XOM', 'JPM', 'V', 'PG', 'HD', 'CVX', 'MA', 'PFE', 'ABBV',
             'BAC', 'KO', 'AVGO', 'PEP', 'TMO', 'COST', 'DHR', 'MRK', 'ABT', 'ACN',
             'VZ', 'ADBE', 'NKE', 'WMT', 'CRM', 'NFLX', 'T', 'NEE', 'CSCO', 'ORCL',
@@ -80,18 +80,17 @@ class MarketDataEngine:
             'AAPL', 'MSFT', 'AMZN', 'TSLA', 'GOOGL', 'GOOG', 'META', 'NVDA', 'NFLX', 'ADBE',
             'PYPL', 'INTC', 'CSCO', 'CMCSA', 'PEP', 'COST', 'AVGO', 'TXN', 'QCOM', 'AMD',
             'INTU', 'TMUS', 'AMAT', 'SBUX', 'CHTR', 'ISRG', 'GILD', 'BKNG', 'REGN', 'MU',
-            'ADI', 'FISV', 'CSX', 'ATVI', 'MRNA', 'PANW', 'ADP', 'ILMN', 'LRCX', 'MDLZ',
+            'ADI', 'FISV', 'CSX', 'MRNA', 'PANW', 'ADP', 'ILMN', 'LRCX', 'MDLZ',
             'KLAC', 'KDP', 'SNPS', 'EXC', 'CDNS', 'MCHP', 'ORLY', 'CTAS', 'BIIB', 'LULU',
-            'PLTR', 'SNOW', 'COIN', 'RBLX', 'U', 'DKNG', 'ROKU', 'SQ', 'SHOP', 'PINS'
+            'PLTR', 'SNOW', 'COIN', 'RBLX', 'U', 'DKNG', 'ROKU', 'XYZ', 'SHOP', 'PINS'
         ]
     
     def _get_russell2000_symbols(self) -> List[str]:
         """Get Russell 2000 small cap symbols"""
         return [
-            'AMC', 'GME', 'BBBY', 'KOSS', 'EXPR', 'NAKD', 'SNDL', 'NOK', 'BB', 'PLTR',
-            'WISH', 'CLOV', 'MVIS', 'TLRY', 'WKHS', 'SKLZ', 'RIDE', 'SPCE', 'RKT', 'SOFI',
+            'AMC', 'GME', 'BBBY', 'KOSS', 'SNDL', 'NOK', 'BB', 'PLTR', 'CLOV', 'MVIS', 'TLRY', 'WKHS', 'SPCE', 'RKT', 'SOFI',
             'UWMC', 'OPEN', 'ROOT', 'HOOD', 'AFRM', 'UPST', 'PENN', 'FVRR', 'ETSY', 'PINS',
-            'CRSR', 'CRWD', 'ZS', 'OKTA', 'DDOG', 'NET', 'FSLY', 'ESTC', 'TEAM', 'WORK'
+            'CRSR', 'CRWD', 'ZS', 'OKTA', 'DDOG', 'NET', 'FSLY', 'ESTC', 'TEAM',
         ]
     
     def _get_popular_etfs(self) -> List[str]:
@@ -113,15 +112,13 @@ class MarketDataEngine:
         """Get biotech and pharmaceutical symbols"""
         return [
             'MRNA', 'BNTX', 'NVAX', 'OCGN', 'INO', 'VXRT', 'SRNE', 'ATOS', 'CTXR', 'BNGO',
-            'SENS', 'OBSV', 'CTIC', 'CPRX', 'CYTH', 'SHIP', 'ADMP', 'PROG', 'RGBP', 'ENZC',
-            'VBIV', 'VERU', 'CRTX', 'SAVA', 'AVXL', 'BIIB', 'GILD', 'AMGN', 'VRTX', 'REGN'
+            'SENS', 'SHIP', 'RGBP', 'ENZC', 'VERU', 'AVXL', 'BIIB', 'GILD', 'AMGN', 'VRTX', 'REGN'
         ]
     
     def _get_crypto_symbols(self) -> List[str]:
         """Get crypto-related symbols"""
         return [
-            'COIN', 'MSTR', 'RIOT', 'MARA', 'CAN', 'BTBT', 'EBON', 'SOS', 'DGLY', 'HVBT',
-            'ARGO', 'HIVE', 'BITF', 'HUT', 'CLSK', 'EQOS', 'INSG', 'LFUS', 'ANY', 'NCTY'
+            'COIN', 'MSTR', 'RIOT', 'MARA', 'CAN', 'BTBT', 'EBON', 'SOS', 'HIVE', 'HUT', 'CLSK', 'INSG', 'LFUS', 'ANY', 'NCTY'
         ]
     
     def get_cached_data(self, symbol: str) -> Optional[Dict]:
