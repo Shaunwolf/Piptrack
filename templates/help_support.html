@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Help & Support - PipSqueak{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Header -->
+    <div class="text-center">
+        <div class="flex justify-center mb-4">
+            <div class="w-16 h-16 bg-gradient-to-br from-orange-400 via-red-400 to-yellow-400 rounded-2xl flex items-center justify-center shadow-2xl p-1">
+                <img src="{{ url_for('static', filename='pipsqueak_avatar.svg') }}" alt="PipSqueak AI Avatar" class="w-full h-full">
+            </div>
+        </div>
+        <h1 class="text-4xl font-bold mb-2">Help &amp; Support</h1>
+        <p class="text-gray-400">Everything you need to get the most out of PipSqueak</p>
+    </div>
+
+    <div class="max-w-4xl mx-auto space-y-6">
+        <!-- Quick Start -->
+        <div class="bg-dark-surface rounded-2xl p-6 border border-dark-accent">
+            <h2 class="text-2xl font-bold mb-6"><i class="fas fa-play-circle text-green-400 mr-2"></i>Quick Start</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <a href="{{ url_for('scanner') }}" class="bg-dark-accent hover:bg-gray-600 rounded-xl p-4 transition-colors">
+                    <i class="fas fa-search text-2xl text-blue-400 mb-2"></i>
+                    <p class="text-white font-semibold">1. Run a scan</p>
+                    <p class="text-gray-400 text-sm">Find high-confidence setups across the market</p>
+                </a>
+                <a href="{{ url_for('recommendations_dashboard') }}" class="bg-dark-accent hover:bg-gray-600 rounded-xl p-4 transition-colors">
+                    <i class="fas fa-magic text-2xl text-purple-400 mb-2"></i>
+                    <p class="text-white font-semibold">2. Check AI Picks</p>
+                    <p class="text-gray-400 text-sm">See what scores 75+ right now</p>
+                </a>
+                <a href="{{ url_for('journal') }}" class="bg-dark-accent hover:bg-gray-600 rounded-xl p-4 transition-colors">
+                    <i class="fas fa-book text-2xl text-yellow-400 mb-2"></i>
+                    <p class="text-white font-semibold">3. Journal trades</p>
+                    <p class="text-gray-400 text-sm">Track decisions and level up your journey</p>
+                </a>
+            </div>
+        </div>
+
+        <!-- FAQ -->
+        <div class="bg-dark-surface rounded-2xl p-6 border border-dark-accent">
+            <h2 class="text-2xl font-bold mb-6"><i class="fas fa-question-circle text-blue-400 mr-2"></i>Frequently Asked Questions</h2>
+            <div class="space-y-3">
+                <details class="bg-dark-accent rounded-lg">
+                    <summary class="p-4 cursor-pointer text-white font-semibold hover:text-blue-400 transition-colors">
+                        What does the confidence score mean?
+                    </summary>
+                    <p class="px-4 pb-4 text-gray-400 text-sm">
+                        It's a 0–100 weighted blend of RSI momentum, volume surge, chart pattern strength,
+                        Fibonacci price position, trend alignment, and volatility. Scores above 75 are rare
+                        and worth a closer look — but always do your own research before trading.
+                    </p>
+                </details>
+                <details class="bg-dark-accent rounded-lg">
+                    <summary class="p-4 cursor-pointer text-white font-semibold hover:text-blue-400 transition-colors">
+                        How does the forecast "spaghetti model" work?
+                    </summary>
+                    <p class="px-4 pb-4 text-gray-400 text-sm">
+                        For any ticker, PipSqueak generates four probable 5-day price paths — momentum,
+                        retest, breakdown, and sideways — weighted by current volatility and trend. It's a
+                        scenario map, not a guarantee.
+                    </p>
+                </details>
+                <details class="bg-dark-accent rounded-lg">
+                    <summary class="p-4 cursor-pointer text-white font-semibold hover:text-blue-400 transition-colors">
+                        Why can I only track 5 stocks?
+                    </summary>
+                    <p class="px-4 pb-4 text-gray-400 text-sm">
+                        The tracked list powers voice alerts and focused pattern monitoring. Keeping it small
+                        keeps the signal-to-noise ratio high. Per-user watchlists with higher limits are on
+                        the post-beta roadmap.
+                    </p>
+                </details>
+                <details class="bg-dark-accent rounded-lg">
+                    <summary class="p-4 cursor-pointer text-white font-semibold hover:text-blue-400 transition-colors">
+                        Where does the market data come from?
+                    </summary>
+                    <p class="px-4 pb-4 text-gray-400 text-sm">
+                        Prices and volume come from free public feeds (Yahoo Finance via yfinance), so data
+                        can be delayed a few minutes. PipSqueak is an analysis tool, not a brokerage —
+                        never trade on delayed data alone.
+                    </p>
+                </details>
+                <details class="bg-dark-accent rounded-lg">
+                    <summary class="p-4 cursor-pointer text-white font-semibold hover:text-blue-400 transition-colors">
+                        Is PipSqueak financial advice?
+                    </summary>
+                    <p class="px-4 pb-4 text-gray-400 text-sm">
+                        No. PipSqueak surfaces technical setups and probabilities for educational purposes.
+                        Trading involves substantial risk of loss. Always do your own research and consider
+                        consulting a licensed financial advisor.
+                    </p>
+                </details>
+            </div>
+        </div>
+
+        <!-- Contact -->
+        <div class="bg-dark-surface rounded-2xl p-6 border border-dark-accent">
+            <h2 class="text-2xl font-bold mb-4"><i class="fas fa-envelope text-yellow-400 mr-2"></i>Report a Bug or Request a Feature</h2>
+            <p class="text-gray-400 text-sm mb-6">
+                Beta feedback shapes the roadmap. Found something broken, or have an idea that would make
+                PipSqueak better? Open an issue on GitHub — screenshots welcome.
+            </p>
+            <div class="flex flex-wrap gap-4">
+                <a href="https://github.com/Shaunwolf/Piptrack/issues" target="_blank" rel="noopener" class="btn-gradient-primary px-6 py-3">
+                    <i class="fab fa-github mr-2"></i>Open a GitHub Issue
+                </a>
+                <a href="{{ url_for('profile') }}" class="btn-gradient-secondary px-6 py-3">
+                    <i class="fas fa-user mr-2"></i>Back to Profile
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
