@@ -13,8 +13,6 @@
     <!-- Edit Profile Form -->
     <div class="max-w-2xl mx-auto">
         <form action="{{ url_for('edit_profile') }}" method="POST" class="space-y-6">
-            {{ csrf_token() }}
-            
             <div class="bg-dark-surface rounded-2xl p-6 border border-dark-accent">
                 <!-- Profile Picture Section -->
                 <div class="text-center mb-6">
@@ -62,7 +60,7 @@
                         <label for="bio" class="block text-sm font-medium text-gray-300 mb-2">Bio (Optional)</label>
                         <textarea id="bio" name="bio" rows="3"
                                   class="w-full bg-dark-accent border border-gray-600 text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                  placeholder="Tell us about yourself...">{{ current_user.bio if hasattr(current_user, 'bio') else '' }}</textarea>
+                                  placeholder="Tell us about yourself...">{{ current_user.bio or '' }}</textarea>
                     </div>
 
                     <!-- Trading Preferences -->
@@ -115,21 +113,13 @@
         <div class="bg-red-900/20 border border-red-700 rounded-2xl p-6 mt-8">
             <h3 class="text-lg font-semibold text-red-400 mb-4">Danger Zone</h3>
             <p class="text-gray-300 mb-4">Permanently delete your account and all associated data.</p>
-            <button onclick="confirmDeleteAccount()" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition-colors">
-                <i class="fas fa-trash mr-2"></i>Delete Account
-            </button>
+            <form action="{{ url_for('delete_account') }}" method="POST"
+                  onsubmit="return confirm('Are you sure you want to delete your account? This action cannot be undone.') && confirm('This will permanently delete all your data, trades, and settings. Are you absolutely sure?');">
+                <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition-colors">
+                    <i class="fas fa-trash mr-2"></i>Delete Account
+                </button>
+            </form>
         </div>
     </div>
 </div>
-
-<script>
-function confirmDeleteAccount() {
-    if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
-        if (confirm('This will permanently delete all your data, trades, and settings. Are you absolutely sure?')) {
-            // Redirect to delete account endpoint
-            window.location.href = '{{ url_for("delete_account") }}';
-        }
-    }
-}
-</script>
 {% endblock %}
