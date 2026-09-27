@@ -202,3 +202,14 @@ def test_minute_bars_aggregate_to_regular_session_days(tmp_path, monkeypatch):
     row = daily.iloc[0]
     assert row["high"] == 10.5 and row["close"] == 10.2 and row["volume"] == 390  # 09:30-15:59 only
     assert ohlcv_minute.months_between(date(2020, 11, 5), date(2021, 2, 1)) == ["2020-11", "2020-12", "2021-01", "2021-02"]
+
+
+def test_run_integration_passes_ticker_to_yolo_wrappers(monkeypatch):
+    fake = FakeYolo({0: "Doji"}, FakeBoxes(np.zeros((0, 4)), [], []))
+    monkeypatch.setattr(ycandles, "load_yolo", lambda repo, weights: fake)
+    monkeypatch.setattr(ycharts, "load_yolo", lambda repo, weights: fake)
+    prices = make_prices("2021-01-01", 150, seed=6)
+    for key in ("yolo_candlesticks", "yolo_chart_patterns"):
+        monkeypatch.setattr(integ.REGISTRY[key], "requires", [])
+    for key in ("yolo_candlesticks", "yolo_chart_patterns"):
+        assert "error" not in integ.run_integration(key, prices, ticker="SPY")

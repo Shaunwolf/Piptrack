@@ -12,6 +12,7 @@ Read its outputs carefully:
   (close vs open, ±0.5%), so the classification describes today, not tomorrow.
 """
 
+import os
 from typing import Dict
 
 import pandas as pd
@@ -39,6 +40,23 @@ def format_candle_to_text(c: Dict) -> str:
             f"Body size: {body:.2f}, Upper shadow: {upper:.2f}, Lower shadow: {lower:.2f}")
 
 
+def _backbone(cls, base: str, prefix: str, state: dict):
+    """Build a BERT/ViT backbone from the checkpoint's weights under `prefix`, via from_pretrained"""
+    import tempfile
+
+    from safetensors.torch import save_file
+    config = cls.config_class.from_pretrained(base)
+    weights = {k[len(prefix):]: v.contiguous() for k, v in state.items() if k.startswith(prefix)}
+    with tempfile.TemporaryDirectory() as tmp:
+        config.save_pretrained(tmp)
+        save_file(weights, os.path.join(tmp, "model.safetensors"), metadata={"format": "pt"})
+        model, info = cls.from_pretrained(tmp, output_loading_info=True)
+    missing = [k for k in info.get("missing_keys", []) if "pooler" not in k]  # the pooler is never used
+    if missing:
+        raise IntegrationUnavailable(f"{base} weights in the CandleFusion checkpoint did not load: {missing[:3]}")
+    return model
+
+
 def _load():
     if "model" in _LOADED:
         return _LOADED["model"], _LOADED["tok"], _LOADED["proc"]
@@ -50,10 +68,9 @@ def _load():
         raise IntegrationUnavailable("needs torch and transformers (pip install torch transformers)")
 
     class CrossAttentionModel(nn.Module):
-        def __init__(self, hidden_dim=768, num_classes=3):
+        def __init__(self, bert, vit, hidden_dim=768, num_classes=3):
             super().__init__()
-            self.bert = BertModel.from_pretrained("bert-base-uncased")
-            self.vit = ViTModel.from_pretrained("google/vit-base-patch16-224")
+            self.bert, self.vit = bert, vit
             self.cross_attention = nn.MultiheadAttention(embed_dim=hidden_dim, num_heads=8, batch_first=True)
             self.classifier = nn.Sequential(nn.Linear(hidden_dim, hidden_dim), nn.ReLU(), nn.Dropout(0.3), nn.Linear(hidden_dim, num_classes))
             self.regressor = nn.Sequential(nn.Linear(hidden_dim, hidden_dim), nn.ReLU(), nn.Dropout(0.3), nn.Linear(hidden_dim, 1))
@@ -65,9 +82,18 @@ def _load():
             fused = fused.squeeze(1)
             return {"logits": self.classifier(fused), "forecast": self.regressor(fused)}
 
-    model = CrossAttentionModel()
     state = torch.load(hf_download(REPO, "pytorch_model.bin"), map_location="cpu")
-    model.load_state_dict(state)
+    # The checkpoint stores BERT and ViT under transformers-4 layer names. Loading each backbone through
+    # from_pretrained lets transformers translate them for whichever version is installed.
+    bert = _backbone(BertModel, "bert-base-uncased", "bert.", state)
+    vit = _backbone(ViTModel, "google/vit-base-patch16-224", "vit.", state)
+    model = CrossAttentionModel(bert, vit)
+    head = {k: v for k, v in state.items() if not k.startswith(("bert.", "vit."))}
+    result = model.load_state_dict(head, strict=False)
+    missing = [k for k in result.missing_keys if not k.startswith(("bert.", "vit."))]
+    if missing or result.unexpected_keys:
+        raise IntegrationUnavailable(f"CandleFusion checkpoint does not match the model: missing {missing[:3]}, "
+                                     f"unexpected {result.unexpected_keys[:3]}")
     model.eval()
     _LOADED.update(model=model, tok=BertTokenizer.from_pretrained("bert-base-uncased"),
                    proc=ViTImageProcessor.from_pretrained("google/vit-base-patch16-224"))

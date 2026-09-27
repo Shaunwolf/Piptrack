@@ -44,6 +44,7 @@ def wsb_corpus_mentions(ticker: str, examples: int = 5) -> Dict:
 
 def _money_rows() -> List[Dict]:
     if "money" not in _CACHE:
+        csv.field_size_limit(2**31 - 1)  # some comment threads exceed the 128 KB default
         rows = []
         for name in MONEY_FILES:
             try:
