@@ -126,7 +126,9 @@ def collect_event(seed: Seed, settings, price_sources, context_sources) -> Dict:
             result = source.fetch(seed.ticker, start, end, cik=seed.cik)
             record["sources"][result.source] = {"status": result.status, "detail": result.detail, "records": len(result.records)}
             record["context"][result.source] = result.records
-        answered = [name for name, info in record["sources"].items() if info["status"] in (OK, NO_DATA, PARTIAL)]
+        # A capped result with nothing in it is a lower bound of zero: that tells us nothing, so it stays unknown
+        answered = [name for name, info in record["sources"].items()
+                    if info["status"] in (OK, NO_DATA) or (info["status"] == PARTIAL and info["records"] > 0)]
         partial = [name for name, info in record["sources"].items() if info["status"] == PARTIAL]
         # Every Reddit archive feeds one combined "reddit" context (duplicates removed)
         reddit_sources = [n for n in record["context"] if n.startswith("reddit")]

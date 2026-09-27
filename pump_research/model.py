@@ -31,7 +31,8 @@ EXCLUDED = {"id", "category", "qualifies", "window_end", "window_days", "baselin
 
 
 def _training_frames(records):
-    events = event_frame(records)
+    # Only windows with price data: the model's features are price and technical measures
+    events = event_frame([r for r in records if r.get("price_features")])
     controls = control_frame(records)
     if events.empty or controls.empty:
         return None, None, []

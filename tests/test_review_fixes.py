@@ -210,3 +210,22 @@ def test_rate_limited_requests_are_retried(monkeypatch):
     waits = []
     assert base.http_get_json("https://example.com/x", sleep=waits.append) == {"ok": True}
     assert waits == [3.0, 4]
+
+
+def test_empty_partial_is_unknown_and_model_ignores_windows_without_prices(settings):
+    from test_pump_research import FakeReddit
+    from pump_research.model import train
+    from pump_research.sources.base import Partial
+
+    class EmptyPartial(FakeReddit):
+        name = "reddit_arctic_shift"
+
+        def _fetch(self, *a, **k):
+            return Partial([], "3 of 10 subreddits failed")
+
+    frames = {f"P{i}": make_prices("2020-01-01", 400, pump_at=350, seed=40 + i) for i in range(3)}
+    seeds = [Seed(t, df.index[350], "extreme") for t, df in frames.items()] + [Seed("GONE", date(2019, 5, 1), "extreme")]
+    records = collect_all(seeds, settings, [FakePrices(settings, frames)], [EmptyPartial(settings)])
+    gone = next(r for r in records if r["id"].startswith("GONE"))
+    assert gone["context_features"]["reddit_mentions"] is None
+    assert train(records, settings)["n_events"] == 3
