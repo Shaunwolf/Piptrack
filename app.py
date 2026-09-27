@@ -3,6 +3,7 @@ import logging
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
+from flask_wtf.csrf import generate_csrf
 from sqlalchemy.orm import DeclarativeBase
 from werkzeug.middleware.proxy_fix import ProxyFix
 
@@ -32,6 +33,10 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 db.init_app(app)
 login_manager.init_app(app)
 login_manager.login_view = 'login'
+login_manager.login_message = "Please log in to access this page."
+
+# Make csrf_token() available in templates that don't use a FlaskForm
+app.jinja_env.globals['csrf_token'] = generate_csrf
 
 @login_manager.user_loader
 def load_user(user_id):

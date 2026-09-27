@@ -1,5 +1,5 @@
 from flask import render_template, request, jsonify, redirect, url_for, flash, session
-from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import app, db
 from models import (Stock, TradeJournal, ForecastPath, AIAnalysis, PatternEvolution, 
@@ -21,16 +21,6 @@ import logging
 import pandas as pd
 from datetime import datetime
 from threading import Thread
-
-# Initialize Flask-Login
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = 'login'
-login_manager.login_message = "Please log in to access this page."
-
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(user_id)
 
 # Initialize components
 try:
@@ -491,18 +481,20 @@ def update_settings():
 @login_required
 def account_preferences():
     """Account preferences and notifications"""
-    return render_template('account_preferences.html')
+    return redirect(url_for('settings'))
 
 @app.route('/subscription')
 @login_required
 def subscription():
     """User subscription management"""
-    return render_template('subscription.html')
+    return render_template('coming_soon.html', page_title='Subscription',
+                           message='PipSqueak is free during the beta. Paid plans are not available yet.')
 
 @app.route('/help')
 def help_support():
     """Help and support page"""
-    return render_template('help_support.html')
+    return render_template('coming_soon.html', page_title='Help & Support',
+                           message='Help docs are on the way. In the meantime, reach out to the PipSqueak team directly.')
 
 @app.route('/track_stock/<symbol>')
 def track_stock(symbol):
@@ -1116,15 +1108,8 @@ def generate_forecast():
 @app.route('/ai-picks')
 @login_required
 def ai_picks():
-    """AI stock picks page"""
-    try:
-        # Get top confidence stocks from AI analysis
-        ai_picks = Stock.query.filter(Stock.confidence_score >= 75).order_by(Stock.confidence_score.desc()).limit(10).all()
-        return render_template('ai_picks.html', picks=ai_picks)
-    except Exception as e:
-        logging.error(f"AI picks error: {str(e)}")
-        flash(f"Error loading AI picks: {str(e)}", "error")
-        return render_template('ai_picks.html', picks=[])
+    """Legacy AI picks URL - the personalized recommendations page replaced it"""
+    return redirect(url_for('recommendations_dashboard'))
 
 @app.route('/journal')
 @login_required
@@ -1159,6 +1144,7 @@ def journal():
     return render_template('journal_clean.html', trades=trades_data, tracked_stocks=tracked_stocks)
 
 @app.route('/journal/save', methods=['POST'])
+@login_required
 def save_journal_entry():
     """Save journal entry from clean journal interface"""
     try:
@@ -1166,6 +1152,7 @@ def save_journal_entry():
         
         # Create new journal entry
         trade = TradeJournal(
+            user_id=current_user.id,
             symbol=data.get('symbol', 'JOURNAL'),
             entry_price=float(data.get('entry_price', 0)),
             stop_loss=float(data.get('stop_loss', 0)),
@@ -1190,6 +1177,7 @@ def save_journal_entry():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/add_trade', methods=['POST'])
+@login_required
 def add_trade():
     """Add new trade to journal with enhanced Lisa Frank journal data"""
     try:
@@ -1199,6 +1187,7 @@ def add_trade():
         if 'mood' in data:
             # New Lisa Frank journal entry format
             trade = TradeJournal(
+                user_id=current_user.id,
                 symbol=data.get('symbol', 'JOURNAL'),  # Use JOURNAL as default for mood entries
                 entry_price=float(data.get('entry_price', 0)),
                 stop_loss=float(data.get('stop_loss', 0)),
@@ -1231,6 +1220,7 @@ def add_trade():
         else:
             # Original trade format
             trade = TradeJournal(
+                user_id=current_user.id,
                 symbol=data['symbol'],
                 entry_price=float(data['entry_price']),
                 stop_loss=float(data['stop_loss']),
@@ -1504,7 +1494,7 @@ def get_sparkline_data(symbol):
             period = request.args.get('period', '1d')
             interval = request.args.get('interval', '5m')
             
-            sparkline_data = sparklines_engine.generate_sparkline(symbol)
+            sparkline_data = sparklines_engine.generate_sparkline_data(symbol, period, interval)
             
             if 'error' in sparkline_data:
                 return jsonify({
