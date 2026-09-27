@@ -103,3 +103,13 @@ def test_pages_require_login():
     from app import app
     anon = app.test_client()
     assert anon.get("/pump-research").status_code == 302
+
+
+def test_tools_api(client):
+    names = [t["name"] for t in client.get("/api/pump-research/tools").get_json()]
+    assert "gann_fan" in names and "fib_spiral" in names
+    r = client.get("/api/pump-research/tools/LIVE?tool=gann_fan&tool=fear_greed_index")
+    body = r.get_json()
+    assert r.status_code == 200 and set(body) >= {"gann_fan", "fear_greed_index", "as_of"}
+    assert client.get("/api/pump-research/tools/LIVE?tool=nope").status_code == 400
+    assert client.get("/api/pump-research/tools/UNKNOWN").status_code == 502

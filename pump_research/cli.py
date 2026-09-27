@@ -127,6 +127,24 @@ def cmd_score(args):
         print(f"  patterns: {', '.join(pats) or 'none'}")
 
 
+def cmd_tools(args):
+    """List every tool, or run them on a ticker's latest prices"""
+    from .toolkit import list_tools, run_all_tools
+    if not args.ticker:
+        for t in list_tools():
+            print(f"{t['name']:32} {t['category']:13} {t['description']}")
+        return
+    s = _settings(args)
+    end = date.today()
+    for source in default_price_sources(s):
+        result = source.fetch(args.ticker.upper(), end - timedelta(days=500), end)
+        if result.status == OK:
+            out = run_all_tools(records_to_frame(result.records), args.tool or None)
+            print(json.dumps(out, indent=2, default=str))
+            return
+    print(f"No price data for {args.ticker} ({result.status}: {result.detail})")
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="pump_research", description="Research what happened before extreme stock pumps")
     parser.add_argument("-v", "--verbose", action="store_true")
@@ -153,6 +171,10 @@ def main(argv=None):
     p.set_defaults(func=cmd_train)
     p = sub.add_parser("score", help="technical picture + pre-pump score for tickers today"); common(p)
     p.add_argument("tickers", nargs="+"); p.set_defaults(func=cmd_score)
+
+    p = sub.add_parser("tools", help="list every technical tool, or run them on a ticker"); common(p)
+    p.add_argument("ticker", nargs="?"); p.add_argument("--tool", action="append", help="run only this tool (repeatable)")
+    p.set_defaults(func=cmd_tools)
 
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO if args.verbose else logging.WARNING)

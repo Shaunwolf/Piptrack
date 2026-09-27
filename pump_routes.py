@@ -98,6 +98,36 @@ def scan():
     return render_template("pump_research/scan.html", res=res, ticker=ticker, fig=fig, dial=gauge(score))
 
 
+@pump_bp.route("/api/pump-research/tools")
+@login_required
+def api_tools_list():
+    from pump_research.toolkit import list_tools
+    return jsonify(list_tools())
+
+
+@pump_bp.route("/api/pump-research/tools/<ticker>")
+@login_required
+def api_tools(ticker):
+    """Every tool (or ?tool=name, repeatable) on the ticker's latest prices"""
+    from datetime import date, timedelta
+    from pump_research.sources.prices import records_to_frame
+    from pump_research.toolkit import run_all_tools, TOOLS, ALIASES
+    ticker = ticker.upper()
+    if not TICKER_RE.match(ticker):
+        return jsonify({"error": "invalid ticker"}), 400
+    wanted = request.args.getlist("tool") or None
+    if wanted and any(ALIASES.get(t, t) not in TOOLS for t in wanted):
+        return jsonify({"error": "unknown tool", "tools": sorted(TOOLS)}), 400
+    settings = _settings()
+    statuses = []
+    for source in default_price_sources(settings):
+        result = source.fetch(ticker, date.today() - timedelta(days=500), date.today())
+        statuses.append({"source": result.source, "status": result.status, "detail": result.detail})
+        if result.status == "ok":
+            return jsonify({"ticker": ticker, **run_all_tools(records_to_frame(result.records), wanted)})
+    return jsonify({"ticker": ticker, "error": "no price data", "sources": statuses}), 502
+
+
 @pump_bp.route("/api/pump-research/scan/<ticker>")
 @login_required
 def api_scan(ticker):

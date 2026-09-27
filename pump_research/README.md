@@ -68,6 +68,17 @@ The model is trained on pre-pump windows (label 1) versus ordinary windows from 
 
 The score is a research aid built on a small, hand-picked sample. It is not a prediction or a trading signal.
 
+## Every tool as one function
+
+```python
+from pump_research import run_all_tools, run_tool, list_tools
+
+results = run_all_tools(prices)            # every tool on a daily OHLCV DataFrame, JSON-ready
+fan = run_tool("gann_fan", prices)         # one tool (charting-platform names and aliases work)
+```
+
+From the command line, `python -m pump_research tools` lists the 30 tools, and `python -m pump_research tools GME --tool gann_fan` runs them on a ticker. In the app, `GET /api/pump-research/tools/<TICKER>` (optionally `?tool=...`) returns the same results as JSON.
+
 ## What it produces (in `pump_data/`)
 
 | File | Contents |
