@@ -2,8 +2,8 @@ from flask import render_template, request, jsonify, redirect, url_for, flash, s
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import app, db
-from models import (Stock, TradeJournal, ForecastPath, AIAnalysis, PatternEvolution, 
-                   User, StockRecommendation, ScanResult)
+from models import (Stock, TradeJournal, ForecastPath, AIAnalysis, PatternEvolution,
+                   User, StockRecommendation, ScanResult, Signal)
 from auth_forms import RegistrationForm, LoginForm
 from stock_scanner import StockScanner
 from forecasting_engine import ForecastingEngine
@@ -268,8 +268,16 @@ def scan_stocks():
             result['confidence_score'] = confidence_score
         
         db.session.commit()
+
+        # Log signals for the track record (logging must never break the scan)
+        try:
+            from track_record import log_signals_from_scan
+            log_signals_from_scan(results, source='scanner')
+        except Exception as log_error:
+            logging.warning(f"Track record logging failed: {log_error}")
+
         return jsonify({'success': True, 'results': results})
-    
+
     except Exception as e:
         logging.error(f"Error scanning stocks: {e}")
         return jsonify({'error': str(e)}), 500
@@ -2634,8 +2642,15 @@ def recommendations_dashboard():
             'success_rate': 80,
             'avg_return': 12.5
         }
-        
-        return render_template('recommendations.html', 
+
+        # Log AI picks for the track record (logging must never break the page)
+        try:
+            from track_record import log_signals_from_scan
+            log_signals_from_scan(scan_results[:5], source='ai_pick')
+        except Exception as log_error:
+            logging.warning(f"Track record logging failed: {log_error}")
+
+        return render_template('recommendations.html',
                              recommendations=recommendations,
                              performance=performance_data)
         
@@ -2955,3 +2970,37 @@ def recommendation_setup():
         logging.error(f"Error loading recommendation setup: {e}")
         flash("Error loading setup page. Please try again.", "error")
         return redirect(url_for('dashboard'))
+
+# Track Record Routes
+
+@app.route('/track_record')
+@login_required
+def track_record():
+    """Track record page — how good are PipSqueak's own calls?"""
+    try:
+        from track_record import get_track_record_stats, update_outcomes
+        # Light inline pricing pass (bounded) so the page is reasonably fresh
+        update_outcomes(batch_limit=5)
+        stats = get_track_record_stats()
+        return render_template('track_record.html', stats=stats)
+
+    except Exception as e:
+        logging.error(f"Error loading track record: {e}")
+        flash("Error loading track record. Please try again.", "error")
+        return redirect(url_for('dashboard'))
+
+@app.route('/api/track_record/update', methods=['POST'])
+@login_required
+def api_track_record_update():
+    """Manually trigger outcome pricing for due signals"""
+    try:
+        from track_record import update_outcomes
+        batch = 25
+        if request.is_json and request.json:
+            batch = int(request.json.get('batch_limit', 25))
+        summary = update_outcomes(batch_limit=max(1, min(batch, 50)))
+        return jsonify({'success': True, **summary})
+
+    except Exception as e:
+        logging.error(f"Error updating track record: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
