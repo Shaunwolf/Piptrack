@@ -25,6 +25,7 @@ class Seed:
     notes: str = ""
     ipo_price: Optional[float] = None
     cik: Optional[int] = None        # SEC company id, needed for delisted/renamed tickers
+    price_ticker: str = ""           # symbol the price source uses today, if renamed (e.g. DWAC -> DJT)
 
 
 @dataclass

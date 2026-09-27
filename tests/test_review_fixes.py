@@ -110,3 +110,23 @@ def test_discover_respects_start_date(tmp_path, monkeypatch):
     assert list(csv.DictReader(open(out))) == []
     cli.main(["discover", "--tickers-file", str(tickers), "--start", "2021-01-01", "--out", str(out)])
     assert [r["approx_date"] for r in csv.DictReader(open(out))] == [prices.index[5].isoformat()]
+
+
+def test_window_ends_before_the_surge_starts(settings):
+    # +200% the day before a +300% spike (like KODK in July 2020): the window must end before both
+    prices = make_prices("2021-01-01", 300)
+    prices.iloc[250:, prices.columns.get_loc("close")] *= 3
+    prices.iloc[251:, prices.columns.get_loc("close")] *= 4
+    for i in (250, 251):
+        prices.iloc[i, prices.columns.get_loc("high")] = prices["close"].iloc[i] * 1.05
+    ev = locate_pump(prices, prices.index[251], settings)
+    assert ev.spike_date == prices.index[251]
+    assert ev.pump_date == prices.index[250] and ev.event_type == "multi_day_run"
+    assert ev.window_end == prices.index[249]
+
+
+def test_price_ticker_alias_is_used_for_prices(settings):
+    frames = {"DJT": make_prices("2020-01-01", 400, pump_at=350)}
+    seed = Seed("DWAC", frames["DJT"].index[350], "famous_squeeze", price_ticker="DJT")
+    rec = collect_all([seed], settings, [FakePrices(settings, frames)], [])[0]
+    assert rec["event"] is not None and rec["event"]["ticker"] == "DWAC"

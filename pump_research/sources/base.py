@@ -9,10 +9,14 @@ class SourceBlocked(Exception):
     pass
 
 
+DEFAULT_HEADERS = {"User-Agent": "PipSqueak-pump-research/1.0 (+https://github.com/Shaunwolf/Piptrack)",
+                   "Accept": "application/json"}
+
+
 def http_get_json(url, params=None, headers=None, timeout=20):
     """GET a JSON endpoint, raising SourceBlocked when the host can't be reached"""
     try:
-        resp = requests.get(url, params=params, headers=headers, timeout=timeout)
+        resp = requests.get(url, params=params, headers={**DEFAULT_HEADERS, **(headers or {})}, timeout=timeout)
     except (requests.exceptions.ProxyError, requests.exceptions.ConnectionError,
             requests.exceptions.SSLError, requests.exceptions.Timeout) as e:
         raise SourceBlocked(f"{url.split('/')[2]} unreachable: {type(e).__name__}")

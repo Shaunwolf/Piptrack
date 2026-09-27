@@ -40,6 +40,7 @@ def load_seeds(path) -> List[Seed]:
                 notes=row.get("notes", ""),
                 ipo_price=float(row["ipo_price"]) if row.get("ipo_price") else None,
                 cik=int(row["cik"]) if row.get("cik") else None,
+                price_ticker=(row.get("price_ticker") or "").strip().upper(),
             ))
     return seeds
 
@@ -54,7 +55,7 @@ def fetch_prices(seed: Seed, price_sources):
     end = seed.approx_date + timedelta(days=HISTORY_AFTER_DAYS)
     tried = []
     for source in price_sources:
-        result = source.fetch(seed.ticker, start, end)
+        result = source.fetch(seed.price_ticker or seed.ticker, start, end)
         tried.append(result)
         if result.status == OK:
             return records_to_frame(result.records), tried

@@ -32,7 +32,8 @@ jobs:
     timeout-minutes: 60
     env:
       DISABLE_BACKGROUND_SCANNER: "1"
-      SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT || format('PipSqueak research github.com/{0}', github.repository) }}
+      # SEC requires a name and contact email; set the SEC_USER_AGENT repository variable to use your own
+      SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT || format('PipSqueak research {0}@users.noreply.github.com', github.repository_owner) }}
       POLYGON_API_KEY: ${{ secrets.POLYGON_API_KEY }}
       TICKERS: ${{ github.event.inputs.tickers }}
       CRITERION: ${{ github.event.inputs.criterion || 'broad' }}

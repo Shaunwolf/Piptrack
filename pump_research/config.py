@@ -12,6 +12,8 @@ class Settings:
     # 'broad':  prev close -> same-day high, or a run of up to max_run_days, may reach it
     criterion: str = "broad"
     max_run_days: int = 5
+    # Consecutive daily gains of at least this much before the spike count as part of the surge
+    surge_day_gain: float = 0.20
 
     # Pre-pump window: trading days immediately before the pump day
     pre_window_days: int = 10

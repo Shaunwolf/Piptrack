@@ -75,8 +75,17 @@ def locate_pump(prices: pd.DataFrame, approx_date: date, settings, ipo_price: Op
     meets_strict = close_mult >= settings.min_multiple
     meets_broad = spike_mult >= settings.min_multiple or run_mult >= settings.min_multiple
 
-    if is_ipo and spike == 0:
+    # The surge starts at the first of the consecutive big up days leading into the spike,
+    # so the pre-pump window never contains the start of the move itself (e.g. KODK +203% the day before)
+    surge_start = spike
+    while surge_start - 1 >= lo and prev_closes[surge_start - 1] \
+            and closes[surge_start - 1] / prev_closes[surge_start - 1] - 1 >= settings.surge_day_gain:
+        surge_start -= 1
+
+    if is_ipo and surge_start == 0:
         event_type, pump_idx = "ipo_debut", 0
+    elif surge_start < spike:
+        event_type, pump_idx = "multi_day_run", surge_start
     elif spike_mult >= settings.min_multiple or run_days <= 1 or run_mult <= close_mult:
         event_type, pump_idx = "single_day", spike
     else:

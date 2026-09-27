@@ -54,7 +54,8 @@ def _missing(v):
 def event_frame(records: List[Dict], qualifying_only=False) -> pd.DataFrame:
     rows = []
     for rec in records:
-        known_context = any(v is not None for v in (rec.get("context_features") or {}).values())
+        known_context = any(v is not None for k, v in (rec.get("context_features") or {}).items()
+                            if not k.endswith("_partial"))
         if not rec.get("price_features") and not known_context:
             continue
         if qualifying_only and not rec.get("qualifies"):
