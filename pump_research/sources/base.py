@@ -1,5 +1,7 @@
 """Shared HTTP handling so every source reports network problems the same way"""
 
+import time
+
 import requests
 
 from ..models import SourceResult, OK, NO_DATA, BLOCKED, ERROR, PARTIAL
@@ -13,13 +15,22 @@ DEFAULT_HEADERS = {"User-Agent": "PipSqueak-pump-research/1.0 (+https://github.c
                    "Accept": "application/json"}
 
 
-def http_get_json(url, params=None, headers=None, timeout=20):
-    """GET a JSON endpoint, raising SourceBlocked when the host can't be reached"""
-    try:
-        resp = requests.get(url, params=params, headers={**DEFAULT_HEADERS, **(headers or {})}, timeout=timeout)
-    except (requests.exceptions.ProxyError, requests.exceptions.ConnectionError,
-            requests.exceptions.SSLError, requests.exceptions.Timeout) as e:
-        raise SourceBlocked(f"{url.split('/')[2]} unreachable: {type(e).__name__}")
+RETRY_STATUSES = (429, 502, 503, 504)
+MAX_RETRIES = 4
+
+
+def http_get_json(url, params=None, headers=None, timeout=20, sleep=time.sleep):
+    """GET a JSON endpoint, retrying rate limits, and raising SourceBlocked when the host can't be reached"""
+    for attempt in range(MAX_RETRIES + 1):
+        try:
+            resp = requests.get(url, params=params, headers={**DEFAULT_HEADERS, **(headers or {})}, timeout=timeout)
+        except (requests.exceptions.ProxyError, requests.exceptions.ConnectionError,
+                requests.exceptions.SSLError, requests.exceptions.Timeout) as e:
+            raise SourceBlocked(f"{url.split('/')[2]} unreachable: {type(e).__name__}")
+        if resp.status_code not in RETRY_STATUSES or attempt == MAX_RETRIES:
+            break
+        retry_after = resp.headers.get("Retry-After", "")
+        sleep(min(60, float(retry_after)) if retry_after.replace(".", "", 1).isdigit() else 2 ** (attempt + 1))
     if resp.status_code in (401, 403) and "proxy" in resp.text.lower():
         raise SourceBlocked(f"{url.split('/')[2]} blocked by network policy")
     if resp.status_code >= 400:

@@ -162,7 +162,28 @@ def test_reddit_keeps_posts_when_comment_search_fails(settings, monkeypatch):
         return {"data": [{"created_utc": 1610400000, "title": "$GME squeeze", "subreddit": "wallstreetbets",
                           "author": "a", "permalink": "/r/wallstreetbets/1"}]}
     monkeypatch.setattr(social_mod, "http_get_json", fake)
-    src = social_mod.ArcticShiftReddit(settings)
-    src.subreddits = ("wallstreetbets",)
+    src = social_mod.PullpushReddit(settings)
     res = src.fetch("GME", date(2021, 1, 11), date(2021, 1, 22))
     assert res.status == PARTIAL and len(res.records) == 1 and "comment search failed" in res.detail
+
+    arctic = social_mod.ArcticShiftReddit(settings)
+    arctic.subreddits, arctic.request_interval = ("wallstreetbets",), 0
+    res = arctic.fetch("GME", date(2021, 1, 11), date(2021, 1, 22))
+    assert res.status == PARTIAL and len(res.records) == 1 and "posts only" in res.detail
+
+
+def test_rate_limited_requests_are_retried(monkeypatch):
+    from pump_research.sources import base
+
+    class Resp:
+        def __init__(self, status, body, headers=None):
+            self.status_code, self._body, self.headers, self.text = status, body, headers or {}, str(body)
+
+        def json(self):
+            return self._body
+
+    replies = [Resp(429, {}, {"Retry-After": "3"}), Resp(503, {}), Resp(200, {"ok": True})]
+    monkeypatch.setattr(base.requests, "get", lambda *a, **k: replies.pop(0))
+    waits = []
+    assert base.http_get_json("https://example.com/x", sleep=waits.append) == {"ok": True}
+    assert waits == [3.0, 4]

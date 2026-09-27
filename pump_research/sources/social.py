@@ -1,6 +1,7 @@
 """Reddit posts and comments mentioning the ticker, via the Pullpush archive"""
 
 import re
+import time as clock  # `time` is taken by datetime.time below
 
 import requests
 from datetime import datetime, time, timezone
@@ -86,24 +87,40 @@ class PullpushReddit(DataSource):
 
 class ArcticShiftReddit(PullpushReddit):
     """
-    Reddit posts and comments via the Arctic Shift archive. Its search needs a
-    subreddit, so this queries the main trading subreddits one by one.
+    Reddit posts via the Arctic Shift archive. Its search needs a subreddit, so this
+    queries the main trading subreddits one by one, at most one request per second.
+    Comment search is skipped (the archive errors on it), so results are marked partial.
     """
     name = "reddit_arctic_shift"
     base_url = "https://arctic-shift.photon-reddit.com/api"
     subreddits = ("wallstreetbets", "pennystocks", "stocks", "Shortsqueeze", "smallstreetbets", "Superstonk",
                   "StockMarket", "investing", "Daytrading", "RobinHoodPennyStocks")
     max_pages = 5
+    request_interval = 1.0
+    _last_request = 0.0
+
+    def _throttle(self):
+        wait = self.request_interval - (clock.monotonic() - ArcticShiftReddit._last_request)
+        if wait > 0:
+            clock.sleep(wait)
+        ArcticShiftReddit._last_request = clock.monotonic()
+
+    def _fetch(self, ticker, start, end, **kwargs):
+        result = super()._fetch(ticker, start, end, **kwargs)
+        if isinstance(result, Partial):
+            return result
+        return Partial(result, "posts only (comment search is unavailable on this archive): counts are lower bounds")
 
     def _search(self, kind, query, after, before):
-        endpoint = "posts" if kind == "submission" else "comments"
-        text_param = "query" if kind == "submission" else "body"
+        if kind != "submission":
+            return [], False
         items, capped = [], False
         for sub in self.subreddits:
             cursor_before = before
             for page in range(self.max_pages):
-                data = http_get_json(f"{self.base_url}/{endpoint}/search", params={
-                    "subreddit": sub, text_param: query, "after": after, "before": cursor_before,
+                self._throttle()
+                data = http_get_json(f"{self.base_url}/posts/search", params={
+                    "subreddit": sub, "query": query, "after": after, "before": cursor_before,
                     "limit": 100, "sort": "desc",
                 }, timeout=self.settings.request_timeout)
                 batch = data.get("data") or []
