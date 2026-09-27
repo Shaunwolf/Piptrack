@@ -169,7 +169,30 @@ def test_reddit_keeps_posts_when_comment_search_fails(settings, monkeypatch):
     arctic = social_mod.ArcticShiftReddit(settings)
     arctic.subreddits, arctic.request_interval = ("wallstreetbets",), 0
     res = arctic.fetch("GME", date(2021, 1, 11), date(2021, 1, 22))
-    assert res.status == PARTIAL and len(res.records) == 1 and "posts only" in res.detail
+    assert res.status == PARTIAL and len(res.records) == 1 and "post titles only" in res.detail
+
+
+def test_reddit_that_answered_nothing_is_an_error_not_zero(settings, monkeypatch):
+    import requests
+
+    def always_fail(url, params=None, **kw):
+        raise requests.HTTPError("500 from archive")
+    monkeypatch.setattr(social_mod, "http_get_json", always_fail)
+    arctic = social_mod.ArcticShiftReddit(settings)
+    arctic.subreddits, arctic.request_interval = ("wallstreetbets", "stocks"), 0
+    assert arctic.fetch("GME", date(2021, 1, 11), date(2021, 1, 22)).status == "error"
+
+    calls = []
+
+    def one_sub_fails(url, params=None, **kw):
+        calls.append(params["subreddit"])
+        if params["subreddit"] == "stocks":
+            raise requests.HTTPError("500 from archive")
+        return {"data": [{"created_utc": 1610400000, "title": "GME to the moon", "subreddit": "wallstreetbets",
+                          "author": "a", "permalink": "/r/wallstreetbets/1"}]}
+    monkeypatch.setattr(social_mod, "http_get_json", one_sub_fails)
+    res = arctic.fetch("GME", date(2021, 1, 11), date(2021, 1, 22))
+    assert res.status == PARTIAL and len(res.records) == 1 and "1 of 2 subreddits failed" in res.detail
 
 
 def test_rate_limited_requests_are_retried(monkeypatch):
