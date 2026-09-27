@@ -1,0 +1,342 @@
+{% extends "base.html" %}
+
+{% block title %}Track Record - PipSqueak AI Trading{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Header -->
+    <div class="text-center">
+        <div class="flex justify-center mb-4">
+            <div class="w-16 h-16 bg-gradient-to-br from-orange-400 via-red-400 to-yellow-400 rounded-2xl flex items-center justify-center shadow-2xl p-1">
+                <img src="{{ url_for('static', filename='pipsqueak_avatar.svg') }}" alt="PipSqueak AI Avatar" class="w-full h-full">
+            </div>
+        </div>
+        <h1 class="text-4xl font-bold mb-2">Track Record</h1>
+        <p class="text-gray-400">Every signal we log, priced against reality 5, 10 and 20 days later.</p>
+    </div>
+
+    {% if stats.total_signals == 0 %}
+    <!-- Empty state -->
+    <div class="bg-gray-800 rounded-2xl p-12 border border-gray-700 text-center">
+        <i class="fas fa-trophy text-5xl text-gray-600 mb-4"></i>
+        <h2 class="text-2xl font-bold mb-2">No signals logged yet</h2>
+        <p class="text-gray-400 mb-6">Run a scan or load AI Picks — every signal is automatically logged here and priced against the market as the days pass.</p>
+        <a href="{{ url_for('scanner') }}" class="btn-primary">
+            <i class="fas fa-search mr-2"></i>Go to Scanner
+        </a>
+    </div>
+    {% else %}
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div class="stat-card">
+            <div class="stat-icon bg-blue-500"><i class="fas fa-flag"></i></div>
+            <div>
+                <p class="stat-label">Signals Logged</p>
+                <p class="stat-value">{{ stats.total_signals }}</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon bg-green-500"><i class="fas fa-check-circle"></i></div>
+            <div>
+                <p class="stat-label">Priced</p>
+                <p class="stat-value">{{ stats.priced_signals }}</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon bg-yellow-500"><i class="fas fa-hourglass-half"></i></div>
+            <div>
+                <p class="stat-label">Pending</p>
+                <p class="stat-value">{{ stats.pending_signals }}</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon bg-purple-500"><i class="fas fa-bullseye"></i></div>
+            <div>
+                <p class="stat-label">10d Hit Rate</p>
+                <p class="stat-value">
+                    {% if stats.horizons[10].hit_rate is not none %}{{ stats.horizons[10].hit_rate }}%{% else %}—{% endif %}
+                </p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon bg-pink-500"><i class="fas fa-chart-line"></i></div>
+            <div>
+                <p class="stat-label">10d Avg Return</p>
+                <p class="stat-value {{ 'text-green-400' if (stats.horizons[10].avg_return or 0) > 0 else 'text-red-400' }}">
+                    {% if stats.horizons[10].avg_return is not none %}{{ '%+.2f'|format(stats.horizons[10].avg_return) }}%{% else %}—{% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Horizon Breakdown -->
+    <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold">Performance by Horizon</h2>
+            <button id="refreshOutcomesBtn" class="btn-primary">
+                <i class="fas fa-sync-alt mr-2"></i>Price Due Signals
+            </button>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {% for h in [5, 10, 20] %}
+            {% set hz = stats.horizons[h] %}
+            <div class="bg-gray-700 rounded-xl p-5 border border-gray-600">
+                <h3 class="text-lg font-bold mb-3">{{ h }}-Day Outcomes</h3>
+                {% if hz.count > 0 %}
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">Signals priced</span>
+                        <span class="font-semibold">{{ hz.count }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">Hit rate</span>
+                        <span class="font-semibold {{ 'text-green-400' if hz.hit_rate >= 50 else 'text-red-400' }}">{{ hz.hit_rate }}%</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">Avg return</span>
+                        <span class="font-semibold {{ 'text-green-400' if hz.avg_return > 0 else 'text-red-400' }}">{{ '%+.2f'|format(hz.avg_return) }}%</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">Best / Worst</span>
+                        <span>
+                            <span class="text-green-400">{{ '%+.1f'|format(hz.best) }}%</span> /
+                            <span class="text-red-400">{{ '%+.1f'|format(hz.worst) }}%</span>
+                        </span>
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-gray-500 text-sm">No {{ h }}-day outcomes priced yet — check back as signals mature.</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Calibration -->
+    <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700">
+        <h2 class="text-2xl font-bold mb-2">Score Calibration</h2>
+        <p class="text-gray-400 text-sm mb-6">Does a higher confidence score actually mean a better outcome? If the bars don't rise left to right, the scoring weights need work.</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div id="calibrationChart" style="height: 300px;"></div>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b border-gray-600">
+                            <th class="text-left py-2 px-3">Score Bucket</th>
+                            <th class="text-left py-2 px-3">Signals</th>
+                            <th class="text-left py-2 px-3">Hit Rate</th>
+                            <th class="text-left py-2 px-3">Avg Return</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for bucket in stats.calibration %}
+                        <tr class="border-b border-gray-700">
+                            <td class="py-2 px-3 font-semibold">{{ bucket.label }}</td>
+                            <td class="py-2 px-3">{{ bucket.count }}</td>
+                            <td class="py-2 px-3">
+                                {% if bucket.hit_rate is not none %}
+                                <span class="{{ 'text-green-400' if bucket.hit_rate >= 50 else 'text-red-400' }}">{{ bucket.hit_rate }}%</span>
+                                {% else %}—{% endif %}
+                            </td>
+                            <td class="py-2 px-3">
+                                {% if bucket.avg_return is not none %}
+                                <span class="{{ 'text-green-400' if bucket.avg_return > 0 else 'text-red-400' }}">{{ '%+.2f'|format(bucket.avg_return) }}%</span>
+                                {% else %}—{% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Best & Worst Calls -->
+    {% if stats.best_calls %}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700">
+            <h2 class="text-xl font-bold mb-4 text-green-400"><i class="fas fa-medal mr-2"></i>Best Calls</h2>
+            <div class="space-y-3">
+                {% for signal, ret in stats.best_calls %}
+                <div class="flex justify-between items-center bg-gray-700 rounded-lg p-3">
+                    <div>
+                        <span class="font-bold">{{ signal.symbol }}</span>
+                        <span class="text-xs text-gray-400 ml-2">{{ signal.created_at.strftime('%b %d') }} · score {{ '%.0f'|format(signal.confidence_score or 0) }}</span>
+                    </div>
+                    <span class="text-green-400 font-bold">{{ '%+.1f'|format(ret) }}%</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700">
+            <h2 class="text-xl font-bold mb-4 text-red-400"><i class="fas fa-thumbs-down mr-2"></i>Worst Calls</h2>
+            <div class="space-y-3">
+                {% for signal, ret in stats.worst_calls %}
+                <div class="flex justify-between items-center bg-gray-700 rounded-lg p-3">
+                    <div>
+                        <span class="font-bold">{{ signal.symbol }}</span>
+                        <span class="text-xs text-gray-400 ml-2">{{ signal.created_at.strftime('%b %d') }} · score {{ '%.0f'|format(signal.confidence_score or 0) }}</span>
+                    </div>
+                    <span class="text-red-400 font-bold">{{ '%+.1f'|format(ret) }}%</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Recent Signals -->
+    <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700">
+        <h2 class="text-2xl font-bold mb-6">Recent Signals</h2>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="border-b border-gray-600">
+                        <th class="text-left py-3 px-4">Symbol</th>
+                        <th class="text-left py-3 px-4">Source</th>
+                        <th class="text-left py-3 px-4">Entry</th>
+                        <th class="text-left py-3 px-4">Score</th>
+                        <th class="text-left py-3 px-4">Pattern</th>
+                        <th class="text-left py-3 px-4">5d</th>
+                        <th class="text-left py-3 px-4">10d</th>
+                        <th class="text-left py-3 px-4">20d</th>
+                        <th class="text-left py-3 px-4">Logged</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in stats.recent_signals %}
+                    <tr class="border-b border-gray-700 hover:bg-gray-700 transition-colors">
+                        <td class="py-3 px-4 font-bold">{{ s.symbol }}</td>
+                        <td class="py-3 px-4">
+                            <span class="px-2 py-1 text-xs rounded-full {{ 'bg-purple-600' if s.source == 'ai_pick' else 'bg-gray-600' }}">
+                                {{ 'AI Pick' if s.source == 'ai_pick' else s.source }}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4">${{ '%.2f'|format(s.entry_price) }}</td>
+                        <td class="py-3 px-4">
+                            <div class="confidence-badge confidence-{{ 'high' if (s.confidence_score or 0) >= 70 else 'medium' if (s.confidence_score or 0) >= 40 else 'low' }}">
+                                {{ '%.0f'|format(s.confidence_score or 0) }}%
+                            </div>
+                        </td>
+                        <td class="py-3 px-4">{{ s.pattern_type or '-' }}</td>
+                        {% for r in [s.return_5d, s.return_10d, s.return_20d] %}
+                        <td class="py-3 px-4">
+                            {% if r is not none %}
+                            <span class="{{ 'text-green-400' if r > 0 else 'text-red-400' }}">{{ '%+.1f'|format(r) }}%</span>
+                            {% elif s.unpriceable %}
+                            <span class="text-gray-500" title="No market data (delisted?)">n/a</span>
+                            {% else %}
+                            <span class="text-gray-500">pending</span>
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                        <td class="py-3 px-4 text-sm text-gray-400">{{ s.created_at.strftime('%m/%d %H:%M') }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.confidence-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+    text-align: center;
+    min-width: 50px;
+    display: inline-block;
+}
+.confidence-high { background: linear-gradient(135deg, #10b981, #059669); color: white; }
+.confidence-medium { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
+.confidence-low { background: linear-gradient(135deg, #6b7280, #4b5563); color: white; }
+.stat-card {
+    background: rgba(55, 65, 81, 0.5);
+    border: 1px solid rgba(75, 85, 99, 0.3);
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+.stat-card:hover {
+    background: rgba(55, 65, 81, 0.8);
+    border-color: rgba(99, 102, 241, 0.5);
+    transform: translateY(-2px);
+}
+.stat-icon {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    margin-right: 14px; flex-shrink: 0;
+}
+.stat-icon i { font-size: 18px; color: white; }
+.stat-label { font-size: 13px; color: #9ca3af; margin-bottom: 4px; }
+.stat-value { font-size: 22px; font-weight: bold; color: white; line-height: 1; }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+{% if stats.total_signals > 0 %}
+// Calibration chart
+(function() {
+    const buckets = {{ stats.calibration | tojson }};
+    const withData = buckets.filter(b => b.count > 0);
+    if (withData.length === 0) {
+        document.getElementById('calibrationChart').innerHTML =
+            '<div class="flex items-center justify-center h-full text-gray-500">No priced signals yet — calibration appears as outcomes accumulate.</div>';
+        return;
+    }
+    Plotly.newPlot('calibrationChart', [{
+        x: withData.map(b => b.label),
+        y: withData.map(b => b.hit_rate),
+        type: 'bar',
+        marker: {
+            color: withData.map(b => b.hit_rate >= 50 ? '#10b981' : '#ef4444')
+        },
+        text: withData.map(b => b.hit_rate + '%'),
+        textposition: 'outside'
+    }], {
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        font: { color: '#9ca3af' },
+        margin: { t: 20, b: 40, l: 50, r: 20 },
+        yaxis: { title: 'Hit rate (%)', range: [0, 100], gridcolor: '#374151' },
+        xaxis: { title: 'Confidence score bucket' }
+    }, { responsive: true, displayModeBar: false });
+})();
+{% endif %}
+
+// Manual pricing refresh
+document.getElementById('refreshOutcomesBtn')?.addEventListener('click', async function() {
+    const btn = this;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Pricing...';
+    try {
+        const resp = await fetch("{{ url_for('api_track_record_update') }}", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ batch_limit: 25 })
+        });
+        const data = await resp.json();
+        if (data.success && (data.signals_updated > 0 || data.marked_unpriceable > 0)) {
+            location.reload();
+        } else {
+            btn.innerHTML = '<i class="fas fa-check mr-2"></i>All up to date';
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-sync-alt mr-2"></i>Price Due Signals';
+            }, 2500);
+        }
+    } catch (e) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-sync-alt mr-2"></i>Price Due Signals';
+    }
+});
+</script>
+{% endblock %}

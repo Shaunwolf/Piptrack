@@ -204,7 +204,7 @@ class AIAnalysis(db.Model):
 
 class ScanResult(db.Model):
     __tablename__ = 'scan_results'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     symbol = db.Column(db.String(10), nullable=False, index=True)
     price = db.Column(db.Float, nullable=False)
@@ -213,4 +213,32 @@ class ScanResult(db.Model):
     volume_spike = db.Column(db.Float, nullable=True)
     pattern_type = db.Column(db.String(50), nullable=True)
     scan_type = db.Column(db.String(20), nullable=False)  # 'quick', 'comprehensive', 'after_hours'
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+class Signal(db.Model):
+    """A logged stock signal whose real-world outcome is priced later,
+    so the app can measure how good its own calls actually are."""
+    __tablename__ = 'signals'
+
+    id = db.Column(db.Integer, primary_key=True)
+    symbol = db.Column(db.String(10), nullable=False, index=True)
+    source = db.Column(db.String(30), nullable=False, default='scanner')  # 'scanner', 'ai_pick'
+
+    # Signal state at entry
+    entry_price = db.Column(db.Float, nullable=False)
+    confidence_score = db.Column(db.Float)
+    rsi = db.Column(db.Float)
+    volume_spike = db.Column(db.Float)
+    pattern_type = db.Column(db.String(50))
+
+    # Outcome pricing (filled in by track_record.update_outcomes)
+    price_5d = db.Column(db.Float)
+    price_10d = db.Column(db.Float)
+    price_20d = db.Column(db.Float)
+    return_5d = db.Column(db.Float)   # percent return vs entry_price
+    return_10d = db.Column(db.Float)
+    return_20d = db.Column(db.Float)
+    priced_at = db.Column(db.DateTime)
+    unpriceable = db.Column(db.Boolean, default=False)  # delisted / no data
+
     created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
