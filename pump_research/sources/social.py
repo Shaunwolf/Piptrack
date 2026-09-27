@@ -72,3 +72,34 @@ class PullpushReddit(DataSource):
         if capped_kinds:
             return Partial(records, f"stopped after {self.max_pages * 100} {'/'.join(capped_kinds)}s: counts are lower bounds")
         return records
+
+
+class ArcticShiftReddit(PullpushReddit):
+    """
+    Reddit posts and comments via the Arctic Shift archive. Its search needs a
+    subreddit, so this queries the main trading subreddits one by one.
+    """
+    name = "reddit_arctic_shift"
+    base_url = "https://arctic-shift.photon-reddit.com/api"
+    subreddits = ("wallstreetbets", "pennystocks", "stocks", "Shortsqueeze", "smallstreetbets", "Superstonk",
+                  "StockMarket", "investing", "Daytrading", "RobinHoodPennyStocks")
+    max_pages = 5
+
+    def _search(self, kind, query, after, before):
+        endpoint = "posts" if kind == "submission" else "comments"
+        text_param = "query" if kind == "submission" else "body"
+        items, capped = [], False
+        for sub in self.subreddits:
+            cursor_before = before
+            for page in range(self.max_pages):
+                data = http_get_json(f"{self.base_url}/{endpoint}/search", params={
+                    "subreddit": sub, text_param: query, "after": after, "before": cursor_before,
+                    "limit": 100, "sort": "desc",
+                }, timeout=self.settings.request_timeout)
+                batch = data.get("data") or []
+                items.extend(batch)
+                if len(batch) < 100:
+                    break
+                cursor_before = min(int(i["created_utc"]) for i in batch)
+                capped = capped or page == self.max_pages - 1
+        return items, capped

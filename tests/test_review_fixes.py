@@ -130,3 +130,24 @@ def test_price_ticker_alias_is_used_for_prices(settings):
     seed = Seed("DWAC", frames["DJT"].index[350], "famous_squeeze", price_ticker="DJT")
     rec = collect_all([seed], settings, [FakePrices(settings, frames)], [])[0]
     assert rec["event"] is not None and rec["event"]["ticker"] == "DWAC"
+
+
+def test_reddit_archives_are_merged_without_duplicates(settings):
+    from test_pump_research import FakeReddit
+    from pump_research.models import SourceResult, BLOCKED
+
+    class Blocked(FakeReddit):
+        name = "reddit"
+
+        def _fetch(self, *a, **k):
+            return SourceResult(self.name, BLOCKED, detail="403")
+
+    class Arctic(FakeReddit):
+        name = "reddit_arctic_shift"
+
+    frames = {"P": make_prices("2020-01-01", 400, pump_at=350)}
+    rec = collect_all([Seed("P", frames["P"].index[350], "extreme")], settings, [FakePrices(settings, frames)],
+                      [Blocked(settings), Arctic(settings), Arctic(settings)])[0]
+    assert rec["sources"]["reddit"]["status"] == BLOCKED
+    assert rec["context_features"]["reddit_mentions"] == rec["sources"]["reddit_arctic_shift"]["records"]
+    assert "reddit_arctic_shift" not in rec["context"]

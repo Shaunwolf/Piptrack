@@ -22,7 +22,10 @@ def http_get_json(url, params=None, headers=None, timeout=20):
         raise SourceBlocked(f"{url.split('/')[2]} unreachable: {type(e).__name__}")
     if resp.status_code in (401, 403) and "proxy" in resp.text.lower():
         raise SourceBlocked(f"{url.split('/')[2]} blocked by network policy")
-    resp.raise_for_status()
+    if resp.status_code >= 400:
+        # Include the start of the body: APIs usually explain refusals there
+        snippet = " ".join(resp.text.split())[:200]
+        raise requests.HTTPError(f"{resp.status_code} from {url.split('?')[0]}: {snippet}", response=resp)
     return resp.json()
 
 

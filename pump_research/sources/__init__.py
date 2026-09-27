@@ -3,7 +3,7 @@
 from .prices import YahooPrices, PolygonPrices
 from .filings import SecEdgarFilings
 from .news import PolygonNews, GdeltNews
-from .social import PullpushReddit
+from .social import PullpushReddit, ArcticShiftReddit
 
 
 def default_price_sources(settings):
@@ -22,4 +22,5 @@ def default_context_sources(settings):
         PolygonNews(settings),
         GdeltNews(settings),
         PullpushReddit(settings),
+        ArcticShiftReddit(settings),
     ]

@@ -128,6 +128,21 @@ def collect_event(seed: Seed, settings, price_sources, context_sources) -> Dict:
             record["context"][result.source] = result.records
         answered = [name for name, info in record["sources"].items() if info["status"] in (OK, NO_DATA, PARTIAL)]
         partial = [name for name, info in record["sources"].items() if info["status"] == PARTIAL]
+        # Every Reddit archive feeds one combined "reddit" context (duplicates removed)
+        reddit_sources = [n for n in record["context"] if n.startswith("reddit")]
+        merged, seen = [], set()
+        for name in reddit_sources:
+            for post in record["context"].pop(name):
+                key = post.get("url") or (post.get("date"), post.get("author"), post.get("text", "")[:80])
+                if key not in seen:
+                    seen.add(key)
+                    merged.append(post)
+        if reddit_sources:
+            record["context"]["reddit"] = sorted(merged, key=lambda p: p["date"])
+            if any(n in answered for n in reddit_sources):
+                answered.append("reddit")
+            if any(n in partial for n in reddit_sources):
+                partial.append("reddit")
         record["context_features"] = context_features(record["context"], window_dates, answered, partial)
         record["window_dates"] = [d.isoformat() for d in window_dates]
     else:
