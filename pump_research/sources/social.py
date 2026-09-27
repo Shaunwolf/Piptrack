@@ -1,6 +1,8 @@
 """Reddit posts and comments mentioning the ticker, via the Pullpush archive"""
 
 import re
+
+import requests
 from datetime import datetime, time, timezone
 
 from .base import DataSource, Partial, http_get_json
@@ -50,9 +52,14 @@ class PullpushReddit(DataSource):
         pattern = mention_pattern(ticker)
         query = f"${ticker}" if ticker.upper() in AMBIGUOUS_TICKERS else ticker
         after, before = _epoch(start), _epoch(end, end_of_day=True)
-        records, capped_kinds = [], []
+        records, capped_kinds, failed = [], [], []
         for kind in ("submission", "comment"):
-            items, capped = self._search(kind, query, after, before)
+            try:
+                items, capped = self._search(kind, query, after, before)
+            except requests.HTTPError as e:
+                # One endpoint failing (e.g. comment search) shouldn't discard the other's results
+                failed.append(f"{kind} search failed ({str(e)[:80]})")
+                continue
             if capped:
                 capped_kinds.append(kind)
             for item in items:
@@ -69,8 +76,11 @@ class PullpushReddit(DataSource):
                     "url": f"https://www.reddit.com{item['permalink']}" if item.get("permalink") else "",
                 })
         records.sort(key=lambda r: r["date"])
-        if capped_kinds:
-            return Partial(records, f"stopped after {self.max_pages * 100} {'/'.join(capped_kinds)}s: counts are lower bounds")
+        if len(failed) == 2:
+            raise requests.HTTPError("; ".join(failed))
+        notes = failed + ([f"stopped after {self.max_pages * 100} {'/'.join(capped_kinds)}s"] if capped_kinds else [])
+        if notes:
+            return Partial(records, "; ".join(notes) + ": counts are lower bounds")
         return records
 
 

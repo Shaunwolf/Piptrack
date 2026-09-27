@@ -8,12 +8,16 @@ from flask import Blueprint, abort, jsonify, render_template, request
 from flask_login import login_required
 
 from pump_research.analysis import analyze
-from pump_research.charts import price_chart, countdown_chart
+from pump_research.charts import (price_chart, countdown_chart, tremor_scale, tremor_strip, gauge, seismograph, tells,
+                                  pump_volume_ratio)
+from pump_research.labels import feature_label, signal_label
 from pump_research.config import Settings
 from pump_research.model import analyze_ticker, load_model
 from pump_research.sources import default_price_sources
 
 pump_bp = Blueprint("pump_research", __name__)
+pump_bp.add_app_template_global(feature_label)
+pump_bp.add_app_template_global(signal_label)
 TICKER_RE = re.compile(r"^[A-Z0-9.\-]{1,10}$")
 
 
@@ -46,9 +50,18 @@ def dashboard():
     if records is None:
         return render_template("pump_research/dashboard.html", records=None, settings=settings)
     result = analyze(records)
-    return render_template("pump_research/dashboard.html", records=records, result=result, settings=settings,
-                           model=_load_model(settings),
+    scale = tremor_scale(records)
+    # Strongest pumps first; events without price data last
+    ordered = sorted(records, key=lambda r: (r.get("event") is None, not r.get("qualifies"),
+                                             -((r.get("event") or {}).get("high_multiple") or 0)))
+    strips = {r["id"]: tremor_strip(r, scale) for r in records}
+    pump_ratios = sorted(v for v in (pump_volume_ratio(r) for r in records) if v)
+    return render_template("pump_research/dashboard.html", records=ordered, result=result, settings=settings,
+                           model=_load_model(settings), strips=strips, tells=tells(result["feature_comparison"]),
+                           bool_tells=[{**b, "label": feature_label(b["feature"])} for b in result.get("boolean_comparison", [])[:12]],
+                           seismo=seismograph(result["countdown"], pump_ratios[len(pump_ratios) // 2] if pump_ratios else None),
                            countdown_fig=countdown_chart(result["countdown"]) if result["countdown"] else None)
+
 
 
 @pump_bp.route("/pump-research/event/<event_id>")
@@ -61,7 +74,8 @@ def event(event_id):
     ev = rec.get("event") or {}
     fig = price_chart(rec.get("price_history", []), rec.get("technicals"), rec.get("window_dates"),
                       ev.get("pump_date"), f"{rec['seed']['ticker']} around the pump")
-    return render_template("pump_research/event.html", rec=rec, ev=ev, fig=fig)
+    strip = tremor_strip(rec, tremor_scale([rec]), width=520, height=90)
+    return render_template("pump_research/event.html", rec=rec, ev=ev, fig=fig, strip=strip)
 
 
 def _scan(ticker):
@@ -74,12 +88,14 @@ def _scan(ticker):
 def scan():
     ticker = (request.args.get("ticker") or "").strip().upper()
     if not ticker:
-        return render_template("pump_research/scan.html", res=None, ticker="")
+        return render_template("pump_research/scan.html", res=None, ticker="", dial=gauge(None))
     if not TICKER_RE.match(ticker):
-        return render_template("pump_research/scan.html", res={"ticker": ticker, "error": "invalid ticker", "sources": []}, ticker=ticker)
+        return render_template("pump_research/scan.html", res={"ticker": ticker, "error": "invalid ticker", "sources": []},
+                               ticker=ticker, dial=gauge(None))
     res = _scan(ticker)
-    fig = None if "error" in res else price_chart(res["prices"], res["technicals"], title=f"{ticker} — last 180 sessions")
-    return render_template("pump_research/scan.html", res=res, ticker=ticker, fig=fig)
+    fig = None if "error" in res else price_chart(res["prices"], res["technicals"], title=f"{ticker} · last 180 sessions")
+    score = (res.get("score") or {}).get("score")
+    return render_template("pump_research/scan.html", res=res, ticker=ticker, fig=fig, dial=gauge(score))
 
 
 @pump_bp.route("/api/pump-research/scan/<ticker>")

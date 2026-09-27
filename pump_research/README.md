@@ -25,11 +25,12 @@ uv run python -m pump_research score GME    # full technical picture + similarit
 
 Useful options: `--criterion strict|broad`, `--min-multiple 5`, `--window 10` (trading days before the pump), `--tickers GME,PHUN`, `--qualifying-only`.
 
-### In the web app
+### In the web app (the Pump Observatory)
 
 The **Pump Research** item in the main nav (`/pump-research`) reads the same `pump_data/` folder (override it with `PUMP_DATA_DIR`):
 
-- **Dashboard**: event table, countdown chart, which numeric and yes/no technical features separate pre-pump windows from ordinary ones, and source coverage.
+- **Design**: a seismograph theme (pumps are eruptions, the pre-pump window is the tremor). Styles live in the self-contained `static/css/pump.css`, which doesn't depend on Tailwind. Chart colors come from a validated colorblind-safe dark palette, each panel has one axis, and direction is never shown by color alone.
+- **Dashboard**: a masthead seismograph drawn from the real median countdown, and a "tremor strip" for every pump (volume vs normal for each day before it, on one shared log scale). Below that, what gives a pump away, event table, which numeric and yes/no technical features separate pre-pump windows from ordinary ones, and source coverage.
 - **Event dossier** (`/pump-research/event/<id>`): candlestick chart with EMA 21, WMA 20, Hull 20 and VWMA 20, Fibonacci levels, support/resistance, harmonic XABCD outlines, pattern markers and the shaded pre-pump window. Also the full technical panel, the day-by-day countdown, and the filings, news and Reddit posts from the window.
 - **Live scan** (`/pump-research/scan?ticker=XYZ`, JSON at `/api/pump-research/scan/XYZ`): the same technical picture for the latest sessions, plus warning signs and the similarity score with the features driving it.
 

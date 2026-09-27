@@ -151,3 +151,18 @@ def test_reddit_archives_are_merged_without_duplicates(settings):
     assert rec["sources"]["reddit"]["status"] == BLOCKED
     assert rec["context_features"]["reddit_mentions"] == rec["sources"]["reddit_arctic_shift"]["records"]
     assert "reddit_arctic_shift" not in rec["context"]
+
+
+def test_reddit_keeps_posts_when_comment_search_fails(settings, monkeypatch):
+    import requests
+
+    def fake(url, params=None, **kw):
+        if "/comments/" in url or url.endswith("/comment/"):
+            raise requests.HTTPError("500 from comments: Internal server error")
+        return {"data": [{"created_utc": 1610400000, "title": "$GME squeeze", "subreddit": "wallstreetbets",
+                          "author": "a", "permalink": "/r/wallstreetbets/1"}]}
+    monkeypatch.setattr(social_mod, "http_get_json", fake)
+    src = social_mod.ArcticShiftReddit(settings)
+    src.subreddits = ("wallstreetbets",)
+    res = src.fetch("GME", date(2021, 1, 11), date(2021, 1, 22))
+    assert res.status == PARTIAL and len(res.records) == 1 and "comment search failed" in res.detail

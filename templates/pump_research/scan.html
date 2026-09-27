@@ -1,52 +1,84 @@
 {% extends "base.html" %}
-{% from "pump_research/_macros.html" import pct, rate, mult, num, status_badge, card, plot, technical_panel, signal_list %}
+{% import "pump_research/_macros.html" as m %}
 
-{% block title %}{{ ticker or 'Scan' }} Technical Scan - PipSqueak{% endblock %}
+{% block title %}{{ ticker or 'Scan' }} · Pump Observatory{% endblock %}
+{% block head %}{{ m.head() }}{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
-    <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-        <div>
-            <a href="{{ url_for('pump_research.dashboard') }}" class="text-blue-400 text-sm"><i class="fas fa-arrow-left mr-1"></i>Pump research</a>
-            <h1 class="text-4xl font-bold mt-2">Technical Scan{% if ticker %}: {{ ticker }}{% endif %}</h1>
-            <p class="text-gray-400">Every tool on the latest 10 sessions: moving averages, oscillators, Fibonacci, harmonics, chart patterns, candlesticks, and the pre-pump similarity score.</p>
-        </div>
-        <form method="get" class="flex gap-2">
-            <input name="ticker" value="{{ ticker }}" placeholder="Ticker" required maxlength="10"
-                   class="bg-dark-accent border border-gray-600 rounded-lg px-3 py-2 text-white uppercase w-40">
-            <button class="btn-gradient-primary"><i class="fas fa-search mr-1"></i>Scan</button>
-        </form>
+<div class="obs">
+  <header class="obs-mast">
+    <a class="obs-back" href="{{ url_for('pump_research.dashboard') }}">← Observatory</a>
+    <div class="obs-kicker"><span class="dot" aria-hidden="true"></span>Live scan{% if res and res.as_of %}<span class="muted">· as of {{ res.as_of }}</span>{% endif %}</div>
+    <div class="obs-mast-row">
+      <h1 class="obs-title">{% if ticker %}Technical Scan: <em>{{ ticker }}</em>{% else %}Read the <em>pressure</em>{% endif %}</h1>
+      <form method="get" class="obs-search" role="search">
+        <label for="obs-ticker" style="position:absolute;left:-9999px">Ticker</label>
+        <input id="obs-ticker" name="ticker" value="{{ ticker }}" placeholder="Ticker" required maxlength="10" autocomplete="off">
+        <button type="submit">Scan</button>
+      </form>
     </div>
+    <p class="obs-lede">Every tool on the latest 10 sessions: moving averages, momentum, volatility, money flow, Fibonacci, harmonics,
+      chart patterns and candlesticks, plus how closely the setup matches the build-ups before past pumps.</p>
+  </header>
 
-    {% if res and res.error %}
-    <div class="bg-dark-surface rounded-xl p-4 border border-red-800">
-        <p class="text-red-300 mb-2">Couldn't analyze {{ res.ticker }}: {{ res.error }}.</p>
-        {% for s in res.sources %}<div class="flex items-center gap-2 text-sm">{{ status_badge(s.status) }}<span>{{ s.source }}</span><span class="text-gray-500">{{ s.detail }}</span></div>{% endfor %}
+  {% if res and res.error %}
+  <div class="obs-panel">
+    <p style="margin:0 0 10px">Couldn't analyze <b class="mono">{{ res.ticker }}</b>: {{ res.error }}.</p>
+    <div class="obs-table-wrap"><table class="obs-table"><tbody>
+      {% for s in res.sources %}<tr><td class="mono">{{ s.source }}</td><td>{{ m.status(s.status) }}</td><td class="muted" style="white-space:normal">{{ s.detail }}</td></tr>{% endfor %}
+    </tbody></table></div>
+  </div>
+  {% elif res %}
+  {% set sc = res.score or {} %}{% set f = res.features %}
+  <div class="obs-hero">
+    <div class="obs-gauge-wrap">
+      {{ dial|safe }}
+      <span class="obs-kicker" style="color:var(--ink-2)">Pre-pump similarity</span>
+      {% if not sc %}<span class="obs-note">Train the model (collect, then train) to score tickers.</span>
+      {% elif sc.cv_auc %}<span class="obs-note">Model cross-validated AUC {{ sc.cv_auc }}</span>{% endif %}
     </div>
-    {% elif res %}
-    {% set sc = res.score or {} %}
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div class="bg-dark-surface rounded-xl p-4 border border-dark-accent"><p class="text-gray-400 text-xs">As of</p><p class="text-lg font-semibold">{{ res.as_of }}</p></div>
-        <div class="bg-dark-surface rounded-xl p-4 border border-dark-accent"><p class="text-gray-400 text-xs">Close</p><p class="text-lg font-semibold">${{ '%.2f' % res.close }}</p></div>
-        <div class="bg-dark-surface rounded-xl p-4 border border-dark-accent"><p class="text-gray-400 text-xs">Pre-pump similarity</p>
-            <p class="text-lg font-semibold">{% if sc and sc.score is not none %}{{ '%.0f' % sc.score }}/100{% else %}<span class="text-gray-500 text-sm">no model yet</span>{% endif %}</p></div>
-        <div class="bg-dark-surface rounded-xl p-4 border border-dark-accent"><p class="text-gray-400 text-xs">10-day volume vs baseline</p><p class="text-lg font-semibold">{{ mult(res.features.avg_volume_ratio) }}</p></div>
+    <div class="obs-readouts">
+      <div class="obs-readout"><span class="v">${{ '%.2f' % res.close }}</span><span class="k">Close</span></div>
+      <div class="obs-readout"><span class="v">{{ m.mult(f.avg_volume_ratio) }}</span><span class="k">10-day volume vs normal</span></div>
+      <div class="obs-readout"><span class="v">{{ m.pct(f.window_return) }}</span><span class="k">10-day move</span></div>
+      <div class="obs-readout"><span class="v">{{ m.num(f.ta_rsi14, '%.0f') }}</span><span class="k">RSI 14</span></div>
     </div>
-    <p class="text-xs text-gray-500">The similarity score compares this stock's last 10 sessions with the windows before past pumps in the research dataset. It is a research aid built on a small sample, not a prediction or trading advice.</p>
+  </div>
+  <p class="obs-disclaimer">A research aid built on a small, hand-picked sample of past pumps. It is not a prediction or trading advice.</p>
 
-    {% call card('Chart', 'chart-line') %}{{ plot('chart', fig, 540) }}{% endcall %}
-    {% call card('Warning signs', 'exclamation-triangle') %}{{ signal_list(res.signals) }}{% endcall %}
-    {% call card('Technical picture', 'drafting-compass') %}{{ technical_panel(res.technicals, res.features) }}{% endcall %}
+  <section class="obs-section">
+    <h2 class="obs-h2"><span class="idx">01</span>Chart</h2>
+    <div class="obs-panel">{{ m.plot('chart', fig, 560) }}</div>
+  </section>
 
-    {% if sc.contributions %}
-    {% call card('What drives the score', 'sliders-h') %}
-    <table class="w-full text-sm"><thead class="text-gray-400 text-left"><tr><th class="py-1">Feature</th><th>Value</th><th>Percentile vs ordinary windows</th><th>Leans pre-pump</th></tr></thead><tbody>
-    {% for c in sc.contributions %}
-    <tr class="border-t border-dark-accent"><td class="py-1">{{ c.feature.replace('ta_', 'TA ').replace('_', ' ') }}</td><td>{{ '%.3g' % c.value }}</td>
-        <td>{{ rate(c.percentile_vs_ordinary) }}</td><td>{{ 'yes' if c.leans_pre_pump else 'no' }}</td></tr>
-    {% endfor %}</tbody></table>
-    {% endcall %}
-    {% endif %}
-    {% endif %}
+  <section class="obs-section">
+    <h2 class="obs-h2"><span class="idx">02</span>Warning lights</h2>
+    {{ m.lamps(res.signals) }}
+  </section>
+
+  <section class="obs-section">
+    <h2 class="obs-h2"><span class="idx">03</span>Instruments</h2>
+    {{ m.instruments(res.technicals, f) }}
+  </section>
+
+  {% if sc.contributions %}
+  <section class="obs-section">
+    <h2 class="obs-h2"><span class="idx">04</span>What drives the score</h2>
+    <div class="obs-table-wrap">
+      <table class="obs-table">
+        <thead><tr><th>Measure</th><th class="num">Value</th><th class="num">Percentile vs ordinary</th><th>Leans</th></tr></thead>
+        <tbody>{% for c in sc.contributions %}
+          <tr><td>{{ feature_label(c.feature) }}</td><td class="num">{{ '%.3g' % c.value }}</td><td class="num">{{ m.rate(c.percentile_vs_ordinary) }}</td>
+            <td>{% if c.leans_pre_pump %}<span class="obs-tag bull">▲ pre-pump</span>{% else %}<span class="obs-tag">ordinary</span>{% endif %}</td></tr>
+        {% endfor %}</tbody>
+      </table>
+    </div>
+  </section>
+  {% endif %}
+  {% else %}
+  <div class="obs-hero">
+    <div class="obs-gauge-wrap">{{ dial|safe }}<span class="obs-kicker" style="color:var(--ink-2)">Enter a ticker to read it</span></div>
+  </div>
+  {% endif %}
 </div>
 {% endblock %}

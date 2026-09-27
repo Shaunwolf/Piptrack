@@ -26,6 +26,7 @@ def client(tmp_path_factory):
     settings = Settings(data_dir=os.environ["PUMP_DATA_DIR"])
     frames = {f"P{i}": make_prices("2020-01-01", 400, pump_at=350, seed=20 + i) for i in range(9)}
     seeds = [Seed(t, df.index[350], "extreme", reported_move="+500%", source_url="https://example.com") for t, df in frames.items()]
+    seeds.append(Seed("GONE", date(2019, 5, 1), "famous_squeeze"))  # no price data: pages must still render
     records = collect_all(seeds, settings, [FakePrices(settings, frames)], [FakeFilings(settings), FakeReddit(settings)])
     train(records, settings)
 
@@ -54,16 +55,22 @@ def test_dashboard_lists_events_and_analysis(client):
     r = client.get("/pump-research")
     html = r.get_data(as_text=True)
     assert r.status_code == 200
-    assert "P0" in html and "What separates pre-pump windows" in html and "Cross-validated AUC" in html
+    assert "P0" in html and "What gives it away" in html and "Model AUC" in html
+    assert html.count('class="tremor"') == 9  # one tremor strip per event with price data
+    assert "No price data (delisted or renamed)" in html
+    assert 'class="seismo"' in html and "pump.css" in html
     assert "Pump Research" in html  # nav link
 
 
 def test_event_dossier_renders_chart_and_technicals(client):
     rid = client.records[0]["id"]
     html = client.get(f"/pump-research/event/{rid}").get_data(as_text=True)
-    assert "Plotly.newPlot" in html and "Technical picture" in html and "Fibonacci" in html
+    assert "Plotly.newPlot" in html and "Instruments at the end of the window" in html and "Fibonacci" in html
+    assert 'class="tremor"' in html
     assert "424B4" in html  # filing from the fake source
     assert client.get("/pump-research/event/NOPE").status_code == 404
+    gone = client.get("/pump-research/event/GONE_2019-05-01")
+    assert gone.status_code == 200 and "no price data" in gone.get_data(as_text=True).lower()
 
 
 def test_untrusted_links_are_not_rendered_as_javascript(client):
@@ -72,13 +79,14 @@ def test_untrusted_links_are_not_rendered_as_javascript(client):
     rec = dict(client.records[0])
     rec["context"] = {**rec["context"], "polygon_news": [{"date": "2021-01-01", "publisher": "x", "title": "bad", "url": "javascript:alert(1)"}]}
     with app.test_request_context():
-        html = render_template("pump_research/event.html", rec=rec, ev=rec["event"], fig={"data": [], "layout": {}})
+        html = render_template("pump_research/event.html", rec=rec, ev=rec["event"], fig={"data": [], "layout": {}}, strip="")
     assert "javascript:alert" not in html and "bad" in html
 
 
 def test_live_scan_page_and_api(client):
     html = client.get("/pump-research/scan?ticker=live").get_data(as_text=True)
-    assert "Technical Scan: LIVE" in html and "/100" in html and "Warning signs" in html
+    assert "Technical Scan: <em>LIVE</em>" in html and 'class="gauge"' in html and "Warning lights" in html
+    assert "out of 100" in html and "What drives the score" in html
     r = client.get("/api/pump-research/scan/LIVE")
     assert r.status_code == 200 and r.get_json()["score"]["score"] is not None
     assert client.get("/api/pump-research/scan/UNKNOWN").status_code == 502

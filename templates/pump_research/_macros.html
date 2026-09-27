@@ -1,86 +1,100 @@
-{% macro pct(v) %}{% if v is none %}–{% else %}{{ '%+.0f' % (v * 100) }}%{% endif %}{% endmacro %}
-{% macro rate(v) %}{% if v is none %}–{% else %}{{ '%.0f' % (v * 100) }}%{% endif %}{% endmacro %}
-{% macro mult(v) %}{% if v is none %}–{% else %}{{ '%.1f' % v }}x{% endif %}{% endmacro %}
-{% macro num(v, fmt='%.2f') %}{% if v is none %}–{% else %}{{ fmt % v }}{% endif %}{% endmacro %}
-{% macro known(v) %}{% if v is none %}<span class="text-gray-500" title="source unavailable">?</span>{% else %}{{ v }}{% endif %}{% endmacro %}
+{% macro pct(v) %}{% if v is none or v is undefined %}–{% else %}{{ '%+.0f' % (v * 100) }}%{% endif %}{% endmacro %}
+{% macro rate(v) %}{% if v is none or v is undefined %}–{% else %}{{ '%.0f' % (v * 100) }}%{% endif %}{% endmacro %}
+{% macro mult(v) %}{% if v is none or v is undefined %}–{% else %}{{ '%.1f' % v }}×{% endif %}{% endmacro %}
+{% macro num(v, fmt='%.2f') %}{% if v is none or v is undefined %}–{% else %}{{ fmt % v }}{% endif %}{% endmacro %}
+{% macro known(v, partial=false) %}{% if v is none or v is undefined %}<span class="muted" title="source unavailable">?</span>{% else %}{{ '≥' if partial }}{{ v }}{% endif %}{% endmacro %}
+{% macro yesno(v) %}{% if v is none or v is undefined %}–{% elif v %}yes{% else %}no{% endif %}{% endmacro %}
 
-{% macro status_badge(status) -%}
-{%- set colors = {'ok': 'bg-green-900 text-green-300', 'no_data': 'bg-gray-700 text-gray-300', 'blocked': 'bg-red-900 text-red-300',
-                  'needs_key': 'bg-yellow-900 text-yellow-300', 'partial': 'bg-yellow-900 text-yellow-300', 'error': 'bg-red-900 text-red-300', 'skipped': 'bg-gray-800 text-gray-400'} -%}
-<span class="px-2 py-0.5 rounded text-xs {{ colors.get(status, 'bg-gray-700') }}">{{ status.replace('_', ' ') }}</span>
+{% macro head() %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pump.css') }}">
+{% endmacro %}
+
+{% macro status(s) -%}
+<span class="obs-status {{ s }}">{{ s.replace('_', ' ') }}</span>
 {%- endmacro %}
 
-{% macro card(title, icon) %}
-<div class="bg-dark-surface rounded-2xl p-6 border border-dark-accent">
-    <h2 class="text-xl font-semibold mb-4"><i class="fas fa-{{ icon }} mr-2 text-blue-400"></i>{{ title }}</h2>
-    {{ caller() }}
-</div>
-{% endmacro %}
-
 {% macro plot(id, fig, height=460) %}
-<div id="{{ id }}" style="height: {{ height }}px"></div>
-<script>Plotly.newPlot({{ id|tojson }}, {{ fig.data|tojson }}, {{ fig.layout|tojson }}, {responsive: true, displaylogo: false});</script>
+<div id="{{ id }}" class="obs-chart" style="height: {{ height }}px"></div>
+<script>
+  (function () {
+    var el = document.getElementById({{ id|tojson }});
+    if (window.Plotly) { Plotly.newPlot(el, {{ fig.data|tojson }}, {{ fig.layout|tojson }}, {responsive: true, displaylogo: false}); }
+    else { el.innerHTML = '<p class="obs-empty">Charts need Plotly, which could not load.</p>'; el.style.height = 'auto'; }
+  })();
+</script>
 {% endmacro %}
 
-{% macro signal_list(signals) %}
-<div class="flex flex-wrap gap-2">
+{% macro lamps(signals) %}
+<div class="obs-lamps">
 {% for name, fired in signals.items() %}
-    <span class="px-2 py-1 rounded-lg text-xs {{ 'bg-green-900 text-green-200' if fired else 'bg-gray-800 text-gray-500' }}">
-        {{ name.replace('_', ' ') }}</span>
+  <div class="obs-lamp {{ 'on' if fired }}"><span class="bulb" aria-hidden="true"></span>{{ signal_label(name) }}
+    <span class="state">{{ 'ON' if fired else 'OFF' }}</span></div>
 {% endfor %}
 </div>
 {% endmacro %}
 
-{% macro technical_panel(ta, pf) %}
-<div class="grid md:grid-cols-2 gap-4 text-sm">
-    <div class="space-y-1">
-        <p class="text-gray-400 uppercase text-xs tracking-wide">Moving averages (close vs)</p>
-        {% for key, label in [('ema8','EMA 8'),('ema21','EMA 21'),('ema50','EMA 50'),('ema200','EMA 200'),('wma10','WMA 10'),('wma20','WMA 20'),('wma50','WMA 50'),('hma20','Hull 20'),('vwma20','VWMA 20'),('sma50','SMA 50'),('sma200','SMA 200')] %}
-        <div class="flex justify-between"><span>{{ label }}</span><span>{{ pct(pf.get('ta_close_vs_' ~ key)) }}</span></div>
-        {% endfor %}
-        <div class="flex justify-between"><span>EMA 8/21/50 stack</span><span>{{ 'bullish' if pf.get('ta_ema_bull_stack') else 'bearish' if pf.get('ta_ema_bear_stack') else 'mixed' }}</span></div>
-    </div>
-    <div class="space-y-1">
-        <p class="text-gray-400 uppercase text-xs tracking-wide">Momentum, volatility, flow</p>
-        <div class="flex justify-between"><span>RSI 14</span><span>{{ num(pf.get('ta_rsi14'), '%.0f') }}</span></div>
-        <div class="flex justify-between"><span>Stochastic %K / %D</span><span>{{ num(pf.get('ta_stoch_k'), '%.0f') }} / {{ num(pf.get('ta_stoch_d'), '%.0f') }}</span></div>
-        <div class="flex justify-between"><span>ADX (+DI − −DI)</span><span>{{ num(pf.get('ta_adx'), '%.0f') }} ({{ num(pf.get('ta_di_spread'), '%+.0f') }})</span></div>
-        <div class="flex justify-between"><span>Bollinger %B / squeeze</span><span>{{ num(pf.get('ta_bb_pct_b')) }} / {{ 'yes' if pf.get('ta_bb_squeeze') else 'no' }}</span></div>
-        <div class="flex justify-between"><span>ATR % of price</span><span>{{ rate(pf.get('ta_atr_pct')) }}</span></div>
-        <div class="flex justify-between"><span>MFI / CMF</span><span>{{ num(pf.get('ta_mfi14'), '%.0f') }} / {{ num(pf.get('ta_cmf20')) }}</span></div>
-        <div class="flex justify-between"><span>Close vs VWAP 20</span><span>{{ pct(pf.get('ta_close_vs_vwap20')) }}</span></div>
-        <div class="flex justify-between"><span>RSI / OBV bullish divergence</span><span>{{ 'yes' if pf.get('ta_rsi_bullish_divergence') else 'no' }} / {{ 'yes' if pf.get('ta_obv_bullish_divergence') else 'no' }}</span></div>
-    </div>
-    <div class="space-y-1">
-        <p class="text-gray-400 uppercase text-xs tracking-wide">Fibonacci</p>
-        {% set fib = ta.get('fibonacci') or {} %}
-        {% if fib %}
-        <div class="flex justify-between"><span>Swing</span><span>{{ fib.direction }}: ${{ '%.2f' % fib.swing_low }} → ${{ '%.2f' % fib.swing_high }}</span></div>
-        <div class="flex justify-between"><span>{{ 'Retracement' if fib.direction == 'up' else 'Bounce' }}</span><span>{{ '%.3f' % fib.retracement }} (nearest {{ fib.nearest_level }})</span></div>
-        <div class="flex justify-between"><span>Golden pocket</span><span>{{ 'yes' if fib.in_golden_pocket else 'no' }}</span></div>
-        <div class="flex justify-between"><span>Extensions 1.618 / 2.618</span><span>${{ '%.2f' % fib.extensions['1.618'] }} / ${{ '%.2f' % fib.extensions['2.618'] }}</span></div>
-        {% else %}<p class="text-gray-500">Not enough history</p>{% endif %}
-    </div>
-    <div class="space-y-1">
-        <p class="text-gray-400 uppercase text-xs tracking-wide">Structure &amp; levels</p>
-        {% set st = ta.get('structure') or {} %}{% set lv = ta.get('levels') or {} %}
-        <div class="flex justify-between"><span>Structure</span><span>{{ st.get('structure', '–') }}</span></div>
-        <div class="flex justify-between"><span>Higher highs / higher lows</span><span>{{ st.get('higher_highs', 0) }} / {{ st.get('higher_lows', 0) }}</span></div>
-        <div class="flex justify-between"><span>Support</span><span>{% if lv.get('support') %}${{ '%.2f' % lv.support.price }} ({{ lv.support.touches }} touches){% else %}–{% endif %}</span></div>
-        <div class="flex justify-between"><span>Resistance</span><span>{% if lv.get('resistance') %}${{ '%.2f' % lv.resistance.price }} ({{ lv.resistance.touches }} touches){% else %}–{% endif %}</span></div>
-        <div class="flex justify-between"><span>Break of structure</span><span>{{ 'yes' if pf.get('ta_break_of_structure') else 'no' }}</span></div>
-    </div>
-</div>
-<div class="mt-4 grid md:grid-cols-3 gap-4 text-sm">
-    {% for kind, title in [('harmonic', 'Harmonic patterns'), ('chart', 'Chart patterns'), ('candle', 'Candlesticks')] %}
-    <div>
-        <p class="text-gray-400 uppercase text-xs tracking-wide mb-1">{{ title }}</p>
-        {% set items = ta.get('patterns', [])|selectattr('type', 'equalto', kind)|list %}
-        {% for p in items %}
-        <div class="flex justify-between"><span class="{{ 'text-green-400' if p.direction == 'bullish' else 'text-red-400' if p.direction == 'bearish' else '' }}">{{ p.name.replace('_', ' ') }}</span>
-            <span class="text-gray-400">{{ p.get('completed_date') or p.get('date') }}{% if p.score is defined %} · {{ p.score }}{% endif %}</span></div>
-        {% else %}<p class="text-gray-500">none</p>{% endfor %}
-    </div>
+{% macro instruments(ta, pf) %}
+{% set fib = ta.get('fibonacci') or {} %}{% set st = ta.get('structure') or {} %}{% set lv = ta.get('levels') or {} %}
+<div class="obs-instruments">
+  <div class="obs-inst">
+    <h3>Moving averages · close vs</h3>
+    {% for key, label in [('ema8','EMA 8'),('ema21','EMA 21'),('ema50','EMA 50'),('ema200','EMA 200'),('wma10','Weighted 10'),('wma20','Weighted 20'),('wma50','Weighted 50'),('hma20','Hull 20'),('vwma20','Vol-weighted 20'),('sma50','SMA 50'),('sma200','SMA 200')] %}
+    <div class="obs-kv"><span>{{ label }}</span><span>{{ pct(pf.get('ta_close_vs_' ~ key)) }}</span></div>
     {% endfor %}
+    <div class="obs-kv"><span>EMA 8/21/50 stack</span><span>{{ 'bullish' if pf.get('ta_ema_bull_stack') else 'bearish' if pf.get('ta_ema_bear_stack') else 'mixed' }}</span></div>
+  </div>
+  <div class="obs-inst">
+    <h3>Momentum</h3>
+    <div class="obs-kv"><span>RSI 14</span><span>{{ num(pf.get('ta_rsi14'), '%.0f') }}</span></div>
+    <div class="obs-kv"><span>Lowest RSI in window</span><span>{{ num(pf.get('ta_rsi_min_in_window'), '%.0f') }}</span></div>
+    <div class="obs-kv"><span>Stochastic %K / %D</span><span>{{ num(pf.get('ta_stoch_k'), '%.0f') }} / {{ num(pf.get('ta_stoch_d'), '%.0f') }}</span></div>
+    <div class="obs-kv"><span>MACD bullish cross</span><span>{{ yesno(pf.get('ta_macd_bull_cross_in_window')) }}</span></div>
+    <div class="obs-kv"><span>ADX (trend strength)</span><span>{{ num(pf.get('ta_adx'), '%.0f') }}</span></div>
+    <div class="obs-kv"><span>+DI − −DI</span><span>{{ num(pf.get('ta_di_spread'), '%+.0f') }}</span></div>
+    <div class="obs-kv"><span>RSI bullish divergence</span><span>{{ yesno(pf.get('ta_rsi_bullish_divergence')) }}</span></div>
+  </div>
+  <div class="obs-inst">
+    <h3>Volatility &amp; flow</h3>
+    <div class="obs-kv"><span>Bollinger %B</span><span>{{ num(pf.get('ta_bb_pct_b')) }}</span></div>
+    <div class="obs-kv"><span>Bollinger squeeze</span><span>{{ yesno(pf.get('ta_bb_squeeze')) }}</span></div>
+    <div class="obs-kv"><span>ATR (% of price)</span><span>{{ rate(pf.get('ta_atr_pct')) }}</span></div>
+    <div class="obs-kv"><span>Money flow index</span><span>{{ num(pf.get('ta_mfi14'), '%.0f') }}</span></div>
+    <div class="obs-kv"><span>Chaikin money flow</span><span>{{ num(pf.get('ta_cmf20')) }}</span></div>
+    <div class="obs-kv"><span>Close vs VWAP 20</span><span>{{ pct(pf.get('ta_close_vs_vwap20')) }}</span></div>
+    <div class="obs-kv"><span>OBV accumulation divergence</span><span>{{ yesno(pf.get('ta_obv_bullish_divergence')) }}</span></div>
+  </div>
+  <div class="obs-inst">
+    <h3>Fibonacci</h3>
+    {% if fib %}
+    <div class="obs-kv"><span>Swing</span><span>{{ fib.direction }} ${{ '%.2f' % fib.swing_low }}→${{ '%.2f' % fib.swing_high }}</span></div>
+    <div class="obs-kv"><span>{{ 'Retracement' if fib.direction == 'up' else 'Bounce' }}</span><span>{{ '%.3f' % fib.retracement }}</span></div>
+    <div class="obs-kv"><span>Nearest level</span><span>{{ fib.nearest_level }}</span></div>
+    <div class="obs-kv"><span>Golden pocket</span><span>{{ yesno(fib.in_golden_pocket) }}</span></div>
+    <div class="obs-kv"><span>1.618 / 2.618 extension</span><span>${{ '%.2f' % fib.extensions['1.618'] }} / ${{ '%.2f' % fib.extensions['2.618'] }}</span></div>
+    {% else %}<p class="obs-empty">Not enough history</p>{% endif %}
+  </div>
+  <div class="obs-inst">
+    <h3>Structure &amp; levels</h3>
+    <div class="obs-kv"><span>Structure</span><span>{{ st.get('structure', '–') }}</span></div>
+    <div class="obs-kv"><span>Higher highs / lows</span><span>{{ st.get('higher_highs', 0) }} / {{ st.get('higher_lows', 0) }}</span></div>
+    <div class="obs-kv"><span>Support</span><span>{% if lv.get('support') %}${{ '%.2f' % lv.support.price }} · {{ lv.support.touches }}×{% else %}–{% endif %}</span></div>
+    <div class="obs-kv"><span>Resistance</span><span>{% if lv.get('resistance') %}${{ '%.2f' % lv.resistance.price }} · {{ lv.resistance.touches }}×{% else %}–{% endif %}</span></div>
+    <div class="obs-kv"><span>Break of structure</span><span>{{ yesno(pf.get('ta_break_of_structure')) }}</span></div>
+  </div>
+  <div class="obs-inst">
+    <h3>Patterns in window</h3>
+    {% for kind, title in [('harmonic', 'Harmonic'), ('chart', 'Chart'), ('candle', 'Candles')] %}
+    {% set items = ta.get('patterns', [])|selectattr('type', 'equalto', kind)|list %}
+    <div class="obs-kv"><span>{{ title }}</span><span>{{ items|length }}</span></div>
+    {% if items %}<div class="obs-chips">{% for p in items[:8] %}
+      <span class="obs-tag {{ 'bull' if p.direction == 'bullish' else 'bear' if p.direction == 'bearish' }}"
+            title="{{ p.get('completed_date') or p.get('date') }}{% if p.score is defined %} · fit {{ p.score }}{% endif %}">
+        {{ '▲' if p.direction == 'bullish' else '▼' if p.direction == 'bearish' else '◆' }} {{ p.name.replace('_', ' ') }}</span>
+    {% endfor %}</div>{% endif %}
+    {% endfor %}
+  </div>
 </div>
 {% endmacro %}
