@@ -7,6 +7,8 @@ from typing import Dict, List, Optional
 import numpy as np
 import pandas as pd
 
+from .technicals import technical_snapshot
+
 
 def rsi(closes: pd.Series, period: int = 14) -> Optional[float]:
     if len(closes) <= period:
@@ -23,10 +25,11 @@ def _ratio(a, b):
     return float(a / b) if b and not pd.isna(b) and b != 0 else None
 
 
-def price_features(prices: pd.DataFrame, window_end_idx: int, settings) -> Optional[Dict]:
+def price_features(prices: pd.DataFrame, window_end_idx: int, settings, technicals: Optional[Dict] = None) -> Optional[Dict]:
     """
     Features for the pre_window_days rows ending at window_end_idx (inclusive),
-    compared with the baseline_days rows before them.
+    compared with the baseline_days rows before them, plus every `ta_*` technical
+    feature. Pass a precomputed technical_snapshot to avoid recomputing it.
     """
     n = settings.pre_window_days
     w_start = window_end_idx - n + 1
@@ -42,7 +45,10 @@ def price_features(prices: pd.DataFrame, window_end_idx: int, settings) -> Optio
     history = prices["close"].iloc[:window_end_idx + 1]
     prev_closes = prices["close"].shift(1).iloc[w_start:window_end_idx + 1]
 
+    if technicals is None:
+        technicals = technical_snapshot(prices, window_end_idx, n)
     return {
+        **technicals["features"],
         "window_days": len(window),
         "baseline_days": len(baseline),
         "last_close": float(window["close"].iloc[-1]),

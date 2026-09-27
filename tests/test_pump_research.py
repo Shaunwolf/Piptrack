@@ -189,3 +189,22 @@ def test_full_pipeline_writes_dataset_and_report(settings):
 
     report = build_report(reloaded, result, settings)
     assert "## Event dossiers" in report and "PUMP" in report and "BLOCKED" in report
+
+
+def test_model_trains_and_scores_pre_pump_windows_higher(settings):
+    from pump_research.model import train, score_features, analyze_prices, load_model
+    frames = {f"P{i}": make_prices("2020-01-01", 400, pump_at=350, seed=10 + i) for i in range(10)}
+    seeds = [Seed(t, df.index[350], "extreme") for t, df in frames.items()]
+    records = collect_all(seeds, settings, [FakePrices(settings, frames)], [])
+    model = train(records, settings)
+    assert model["logistic"] is not None and model["logistic"]["cv_auc"] > 0.7
+    assert load_model(settings)["n_events"] == 10
+
+    pre = score_features(records[0]["price_features"], model)["score"]
+    ordinary = score_features(records[0]["controls"][0], model)["score"]
+    assert pre > ordinary
+
+    res = analyze_prices("P0", frames["P0"].iloc[:350], settings, model)
+    assert res["score"]["score"] is not None
+    assert "volume_spike_5x_day" in res["signals"]
+    assert res["technicals"]["fibonacci"]

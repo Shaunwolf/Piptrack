@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% from "pump_research/_macros.html" import pct, rate, mult, num, known, status_badge, card, plot, technical_panel %}
+
+{% block title %}{{ rec.seed.ticker }} Pump Dossier - PipSqueak{% endblock %}
+
+{% block content %}
+{% set pf = rec.price_features or {} %}{% set cf = rec.context_features or {} %}{% set ctx = rec.context or {} %}
+<div class="space-y-6">
+    <div>
+        <a href="{{ url_for('pump_research.dashboard') }}" class="text-blue-400 text-sm"><i class="fas fa-arrow-left mr-1"></i>All events</a>
+        <h1 class="text-4xl font-bold mt-2">{{ rec.seed.ticker }} <span class="text-gray-400 text-2xl">{{ ev.pump_date or (rec.seed.approx_date ~ ' (approx.)') }}</span></h1>
+        <p class="text-gray-400 mt-1">Reported: {{ rec.seed.reported_move or '–' }}{% if rec.seed.source_url %} · <a class="text-blue-400" href="{{ rec.seed.source_url }}" target="_blank" rel="noopener">source</a>{% endif %}</p>
+        {% if rec.seed.notes %}<p class="text-gray-500 text-sm">{{ rec.seed.notes }}</p>{% endif %}
+    </div>
+
+    {% if ev %}
+    <div class="grid grid-cols-2 md:grid-cols-6 gap-3">
+        {% for label, value in [('Type', ev.event_type.replace('_', ' ')), ('Close multiple', mult(ev.close_multiple)), ('High multiple', mult(ev.high_multiple)),
+                                ('Best run', mult(ev.run_multiple) ~ ' / ' ~ ev.run_days ~ 'd'), ('Qualifies', 'yes' if rec.qualifies else 'no'),
+                                ('Peak on fib ext.', num(ev.peak_fib_extension))] %}
+        <div class="bg-dark-surface rounded-xl p-3 border border-dark-accent"><p class="text-gray-400 text-xs">{{ label }}</p><p class="text-lg font-semibold">{{ value }}</p></div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-dark-surface rounded-xl p-4 border border-dark-accent text-yellow-300">{{ rec.detection }}</div>
+    {% endif %}
+
+    {% if fig.data %}
+    {% call card('Price, moving averages, Fibonacci and patterns', 'chart-line') %}{{ plot('chart', fig, 520) }}{% endcall %}
+    {% endif %}
+
+    {% if rec.technicals %}
+    {% call card('Technical picture at the end of the pre-pump window', 'drafting-compass') %}{{ technical_panel(rec.technicals, pf) }}{% endcall %}
+    {% endif %}
+
+    {% if rec.daily_profile %}
+    {% call card('Countdown', 'hourglass-half') %}
+    <table class="w-full text-sm"><thead class="text-gray-400 text-left"><tr><th class="py-1">Day</th><th>Date</th><th>Close</th><th>Return</th><th>Volume vs baseline</th><th>Reddit mentions</th></tr></thead><tbody>
+    {% for p in rec.daily_profile %}
+    <tr class="border-t border-dark-accent"><td class="py-1">{{ p.offset }}</td><td>{{ p.date }}</td><td>${{ '%.2f' % p.close }}</td><td>{{ pct(p['return']) }}</td><td>{{ mult(p.volume_ratio) }}</td>
+        <td>{% if cf.reddit_mentions_per_day %}{{ cf.reddit_mentions_per_day[loop.index0] if loop.index0 < cf.reddit_mentions_per_day|length else '–' }}{% else %}?{% endif %}</td></tr>
+    {% endfor %}</tbody></table>
+    {% endcall %}
+    {% endif %}
+
+    <div class="grid lg:grid-cols-2 gap-6">
+        {% call card('SEC filings in window', 'file-alt') %}
+        {% for f in ctx.get('sec_filings', []) %}
+        <p class="text-sm py-1 border-t border-dark-accent"><span class="text-gray-400">{{ f.date }}</span> <b>{{ f.form }}</b> ({{ f.group }}) — <a class="text-blue-400" href="{{ f.url }}" target="_blank" rel="noopener">{{ f.description or 'filing' }}</a></p>
+        {% else %}<p class="text-gray-500 text-sm">{{ 'None filed' if cf.filings_total == 0 else 'Unavailable (source not reachable)' }}</p>{% endfor %}
+        {% endcall %}
+        {% call card('News in window', 'newspaper') %}
+        {% for n in ctx.get('polygon_news', []) + ctx.get('gdelt_news', []) %}
+        <p class="text-sm py-1 border-t border-dark-accent"><span class="text-gray-400">{{ n.date }} {{ n.publisher }}</span> — {% if n.url and n.url.startswith(('http://', 'https://')) %}<a class="text-blue-400" href="{{ n.url }}" target="_blank" rel="noopener noreferrer">{{ n.title }}</a>{% else %}{{ n.title }}{% endif %}</p>
+        {% else %}<p class="text-gray-500 text-sm">{{ 'No articles found' if cf.news_articles == 0 else 'Unavailable (source not reachable or needs an API key)' }}</p>{% endfor %}
+        {% endcall %}
+    </div>
+
+    {% call card('Reddit chatter in window', 'reddit') %}
+    {% if cf.reddit_mentions is not none %}
+    <p class="text-sm text-gray-300 mb-3">{{ cf.reddit_mentions }} mentions by {{ cf.reddit_unique_authors }} authors · average sentiment {{ num(cf.reddit_avg_sentiment) }} · acceleration into the pump {{ mult(cf.reddit_mention_acceleration) }}</p>
+    {% for r in (ctx.get('reddit', [])|sort(attribute='score', reverse=True))[:15] %}
+    <p class="text-sm py-1 border-t border-dark-accent"><span class="text-gray-400">{{ r.date }} r/{{ r.subreddit }} · score {{ r.score }} · sentiment {{ '%.2f' % r.sentiment }}</span><br>
+        {% if r.url and r.url.startswith('https://www.reddit.com/') %}<a class="text-blue-400" href="{{ r.url }}" target="_blank" rel="noopener noreferrer">{{ r.title or r.text[:160] }}</a>{% else %}{{ r.title or r.text[:160] }}{% endif %}</p>
+    {% endfor %}
+    {% else %}<p class="text-gray-500 text-sm">Unavailable (source not reachable)</p>{% endif %}
+    {% endcall %}
+
+    {% call card('Data sources', 'plug') %}
+    <div class="grid md:grid-cols-2 gap-2 text-sm">
+    {% for name, info in rec.sources.items() %}
+        <div class="flex items-center gap-2">{{ status_badge(info.status) }}<span class="font-semibold">{{ name.replace('_', ' ') }}</span><span class="text-gray-500 truncate">{{ info.detail }}</span></div>
+    {% endfor %}
+    </div>
+    {% endcall %}
+</div>
+{% endblock %}

@@ -7,7 +7,7 @@ from typing import Dict, List
 
 import numpy as np
 import pandas as pd
-from scipy.stats import mannwhitneyu
+from scipy.stats import mannwhitneyu, fisher_exact
 
 # Price features compared between pre-pump and control windows
 COMPARED_FEATURES = [
@@ -16,20 +16,39 @@ COMPARED_FEATURES = [
     "rsi_14", "close_vs_period_low", "last_close", "avg_dollar_volume",
 ]
 
-# Simple yes/no warning signs checked for every event window
+# Simple yes/no warning signs checked for every event window: name -> (columns needed, test)
 SIGNALS = {
-    "volume_2x_baseline": ("avg_volume_ratio", lambda v: v >= 2),
-    "volume_spike_5x_day": ("max_volume_ratio", lambda v: v >= 5),
-    "volume_rising": ("volume_trend_slope", lambda v: v > 0.05),
-    "volatility_1_5x_baseline": ("volatility_ratio", lambda v: v >= 1.5),
-    "sub_5_dollar_price": ("last_close", lambda v: v < 5),
-    "sub_1_dollar_price": ("last_close", lambda v: v < 1),
-    "oversold_rsi_below_35": ("rsi_14", lambda v: v < 35),
-    "already_up_20pct": ("window_return", lambda v: v >= 0.20),
-    "reddit_chatter_accelerating": ("reddit_mention_acceleration", lambda v: v >= 2),
-    "offering_filing_in_window": ("filings_offering", lambda v: v >= 1),
-    "any_news_in_window": ("news_articles", lambda v: v >= 1),
+    "volume_2x_baseline": (["avg_volume_ratio"], lambda r: r["avg_volume_ratio"] >= 2),
+    "volume_spike_5x_day": (["max_volume_ratio"], lambda r: r["max_volume_ratio"] >= 5),
+    "volume_rising": (["volume_trend_slope"], lambda r: r["volume_trend_slope"] > 0.05),
+    "volatility_1_5x_baseline": (["volatility_ratio"], lambda r: r["volatility_ratio"] >= 1.5),
+    "sub_5_dollar_price": (["last_close"], lambda r: r["last_close"] < 5),
+    "sub_1_dollar_price": (["last_close"], lambda r: r["last_close"] < 1),
+    "oversold_rsi_below_35": (["rsi_14"], lambda r: r["rsi_14"] < 35),
+    "already_up_20pct": (["window_return"], lambda r: r["window_return"] >= 0.20),
+    "reddit_chatter_accelerating": (["reddit_mention_acceleration"], lambda r: r["reddit_mention_acceleration"] >= 2),
+    "offering_filing_in_window": (["filings_offering"], lambda r: r["filings_offering"] >= 1),
+    "any_news_in_window": (["news_articles"], lambda r: r["news_articles"] >= 1),
+    # Technical analysis
+    "ema_bull_stack": (["ta_ema_bull_stack"], lambda r: r["ta_ema_bull_stack"]),
+    "wma_bull_stack": (["ta_wma_bull_stack"], lambda r: r["ta_wma_bull_stack"]),
+    "bollinger_squeeze": (["ta_bb_squeeze"], lambda r: r["ta_bb_squeeze"]),
+    "macd_bull_cross": (["ta_macd_bull_cross_in_window"], lambda r: r["ta_macd_bull_cross_in_window"]),
+    "rsi_bullish_divergence": (["ta_rsi_bullish_divergence"], lambda r: r["ta_rsi_bullish_divergence"]),
+    "obv_accumulation_divergence": (["ta_obv_bullish_divergence"], lambda r: r["ta_obv_bullish_divergence"]),
+    "money_flow_positive": (["ta_cmf20"], lambda r: r["ta_cmf20"] > 0.05),
+    "fib_golden_pocket": (["ta_fib_golden_pocket"], lambda r: r["ta_fib_golden_pocket"]),
+    "bullish_harmonic_completed": (["ta_harmonic_bullish_in_window"], lambda r: r["ta_harmonic_bullish_in_window"] >= 1),
+    "bullish_chart_pattern": (["ta_chart_bullish_in_window"], lambda r: r["ta_chart_bullish_in_window"] >= 1),
+    "bullish_candles_outnumber_bearish": (["ta_candles_bullish", "ta_candles_bearish"],
+                                          lambda r: r["ta_candles_bullish"] > r["ta_candles_bearish"]),
+    "break_of_structure": (["ta_break_of_structure"], lambda r: r["ta_break_of_structure"]),
+    "trend_strong_adx_25": (["ta_adx"], lambda r: r["ta_adx"] >= 25),
 }
+
+
+def _missing(v):
+    return v is None or (not isinstance(v, (bool, np.bool_)) and pd.isna(v))
 
 
 def event_frame(records: List[Dict], qualifying_only=False) -> pd.DataFrame:
@@ -51,12 +70,37 @@ def control_frame(records: List[Dict]) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def _is_bool_column(series: pd.Series) -> bool:
+    values = series.dropna()
+    return len(values) > 0 and all(isinstance(v, (bool, np.bool_)) for v in values)
+
+
+def numeric_features(events: pd.DataFrame, controls: pd.DataFrame) -> List[str]:
+    """Core price features plus every numeric technical (ta_*) feature present in both groups"""
+    ta = sorted(c for c in events.columns if c.startswith("ta_") and c in controls
+                and not _is_bool_column(events[c]) and not _is_bool_column(controls[c]))
+    return [f for f in COMPARED_FEATURES if f in events and f in controls] + ta
+
+
+def compare_boolean_features(events: pd.DataFrame, controls: pd.DataFrame) -> List[Dict]:
+    """How often each yes/no technical signal fired before pumps vs in ordinary windows (Fisher exact test)"""
+    out = []
+    for col in sorted(c for c in events.columns if c in controls and _is_bool_column(events[c])):
+        e, c = events[col].dropna().astype(bool), controls[col].dropna().astype(bool)
+        if len(e) < 3 or len(c) < 3:
+            continue
+        table = [[int(e.sum()), int((~e).sum())], [int(c.sum()), int((~c).sum())]]
+        _, p = fisher_exact(table)
+        out.append({"feature": col, "event_rate": float(e.mean()), "control_rate": float(c.mean()),
+                    "lift": float(e.mean() / c.mean()) if c.mean() > 0 else None,
+                    "p_value": float(p), "events_n": len(e), "controls_n": len(c)})
+    return sorted(out, key=lambda r: abs(r["event_rate"] - r["control_rate"]), reverse=True)
+
+
 def compare_features(events: pd.DataFrame, controls: pd.DataFrame) -> List[Dict]:
     """Median pre-pump vs control value per feature, with a Mann-Whitney test, ranked by separation"""
     out = []
-    for feat in COMPARED_FEATURES:
-        if feat not in events or feat not in controls:
-            continue
+    for feat in numeric_features(events, controls):
         e = pd.to_numeric(events[feat], errors="coerce").dropna()
         c = pd.to_numeric(controls[feat], errors="coerce").dropna()
         if len(e) < 3 or len(c) < 3:
@@ -74,13 +118,13 @@ def compare_features(events: pd.DataFrame, controls: pd.DataFrame) -> List[Dict]
 
 def signal_table(events: pd.DataFrame) -> pd.DataFrame:
     """Per-event True/False/None for each warning sign (None = data unavailable)"""
-    table = pd.DataFrame(index=events["id"] if "id" in events else [])
-    for name, (feat, test) in SIGNALS.items():
-        if feat not in events:
-            table[name] = None
-            continue
-        table[name] = [None if pd.isna(v) else bool(test(v)) for v in events[feat]]
-    return table
+    rows = {}
+    for _, row in events.iterrows():
+        rows[row["id"]] = {
+            name: None if any(c not in row or _missing(row[c]) for c in cols) else bool(test(row))
+            for name, (cols, test) in SIGNALS.items()
+        }
+    return pd.DataFrame.from_dict(rows, orient="index", columns=list(SIGNALS))
 
 
 def signal_rates(table: pd.DataFrame) -> List[Dict]:
@@ -129,6 +173,7 @@ def analyze(records: List[Dict], qualifying_only=False) -> Dict:
         "n_controls": len(controls),
         "coverage": coverage(records),
         "feature_comparison": compare_features(events, controls) if not events.empty and not controls.empty else [],
+        "boolean_comparison": compare_boolean_features(events, controls) if not events.empty and not controls.empty else [],
         "signal_rates": signal_rates(signals) if not signals.empty else [],
         "signals_by_event": signals.replace({np.nan: None}).to_dict(orient="index") if not signals.empty else {},
         "countdown": countdown_profile(records),

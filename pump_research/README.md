@@ -18,7 +18,49 @@ uv run python -m pump_research collect      # research every candidate in seeds.
 open pump_data/pump_report.md               # the readable report
 ```
 
+```bash
+uv run python -m pump_research train        # fit the pre-pump similarity model on the collected data
+uv run python -m pump_research score GME    # full technical picture + similarity score for today's prices
+```
+
 Useful options: `--criterion strict|broad`, `--min-multiple 5`, `--window 10` (trading days before the pump), `--tickers GME,PHUN`, `--qualifying-only`.
+
+### In the web app
+
+The **Pump Research** item in the main nav (`/pump-research`) reads the same `pump_data/` folder (override it with `PUMP_DATA_DIR`):
+
+- **Dashboard**: event table, countdown chart, which numeric and yes/no technical features separate pre-pump windows from ordinary ones, and source coverage.
+- **Event dossier** (`/pump-research/event/<id>`): candlestick chart with EMA 21, WMA 20, Hull 20 and VWMA 20, Fibonacci levels, support/resistance, harmonic XABCD outlines, pattern markers and the shaded pre-pump window. Also the full technical panel, the day-by-day countdown, and the filings, news and Reddit posts from the window.
+- **Live scan** (`/pump-research/scan?ticker=XYZ`, JSON at `/api/pump-research/scan/XYZ`): the same technical picture for the latest sessions, plus warning signs and the similarity score with the features driving it.
+
+The old Backtest / Pump Analysis URLs redirect here.
+
+## Technical analysis engine (`technicals/`)
+
+Everything runs on daily OHLCV data up to the bar being analyzed (never later; a test checks this):
+
+| Area | What it computes |
+|---|---|
+| Moving averages | EMA 8/21/50/200, **linearly weighted** WMA 10/20/50, Hull 20, **volume-weighted** VWMA 20, SMA 50/200. Close vs each; EMA and WMA bull/bear stacks; ribbon width; EMA8×EMA21, close×WMA20, close×Hull20 and golden crosses inside the window; EMA21 slope |
+| Momentum | RSI 14 (and its window low), stochastic %K/%D, MACD histogram + bullish cross, ADX with +DI/−DI spread, bullish RSI divergence on swing lows |
+| Volatility | ATR %, Bollinger %B, bandwidth and **squeeze** (bandwidth in the lowest 20% of 120 bars), range expansion |
+| Volume / flow | OBV slope and accumulation divergence, MFI 14, Chaikin money flow, close vs rolling VWAP |
+| Fibonacci | Dominant swing, retracement or bounce level, nearest level, golden pocket, extension targets (1.272 → 4.236), and where each pump **peaked on the extension scale** |
+| Swings & structure | Volatility-scaled zigzag pivots, higher highs/lows, up/down/range structure, break of structure, clustered support/resistance with touch counts |
+| Harmonic patterns | Gartley, Bat, Alt Bat, Butterfly, Crab, Deep Crab, Shark, Cypher, AB=CD, with fit scores and bullish/bearish direction |
+| Chart patterns | Double bottom/top (with neckline breakout), head & shoulders and inverse, ascending/descending/symmetrical triangles, rising/falling wedges, bull flag, cup & handle, consolidation, range breakout/breakdown on volume |
+| Candlesticks | Hammer, inverted hammer, shooting star, hanging man, doji (plain/dragonfly/gravestone), marubozu, engulfing, piercing line, dark cloud, morning/evening star, three white soldiers/black crows, inside/outside bars, gaps |
+
+`technical_snapshot(prices, end_idx, window_days)` returns flat `ta_*` features (80+) for statistics, plus the detected patterns, Fibonacci levels, moving averages, levels and pivots for display.
+
+## Similarity model (`model.py`)
+
+The model is trained on pre-pump windows (label 1) versus ordinary windows from the same stocks (label 0), using price and technical features, which both groups have.
+
+- **Profile score** (works from 3 events): for the strongest separating features, it works out where today's value falls in the ordinary-window distribution, pointed toward the pre-pump side.
+- **Logistic regression** (from 8 events): regularized and class-balanced. It reports a cross-validated AUC, with folds grouped by stock so a stock's ordinary windows never leak into its own test fold.
+
+The score is a research aid built on a small, hand-picked sample. It is not a prediction or a trading signal.
 
 ## What it produces (in `pump_data/`)
 
@@ -29,6 +71,7 @@ Useful options: `--criterion strict|broad`, `--min-multiple 5`, `--window 10` (t
 | `pump_summary.csv` | One row per event with the key numbers (opens in Excel) |
 | `pump_report.md` | Coverage, event table, what separates pre-pump windows from ordinary ones, warning-sign rates, day-by-day countdown, and a dossier per event |
 | `analysis.json` | Raw analysis output (written by `report`) |
+| `model.json` | The trained similarity model (written by `train`) |
 
 ## How it works
 
@@ -64,4 +107,7 @@ To add a source, subclass `sources.base.DataSource`, implement `_fetch(ticker, s
 
 ## Tests
 
-`uv run python -m pytest tests/test_pump_research.py` runs the whole pipeline offline on synthetic data.
+`uv run python -m pytest tests` runs everything offline on synthetic data:
+- `test_technicals.py` checks each tool on hand-built price paths (known Gartley/Bat ratios, a 0.618 pullback, double bottoms, flags, candles, and no lookahead).
+- `test_pump_research.py` covers detection, collection, analysis, the report and the model.
+- `test_pump_web.py` renders the web pages through Flask's test client.

@@ -40,7 +40,7 @@ On 15 June 2025, commit `0d37565` ("Remove old pump detection files") deleted 9 
 
 **Backtest** and **Pump Analysis** were still linked in the main nav, so users could click straight into broken pages. They're hidden now. To bring them back, restore the files from git (`git show 0d37565^:simple_pump_analyzer.py > simple_pump_analyzer.py`, etc.) or delete the dead routes and templates.
 
-**Replacement in progress:** `pump_research/` is a new standalone toolkit that researches the 1–2 weeks before extreme pumps (prices, SEC filings, news, Reddit) and compares those windows with ordinary periods. See `pump_research/README.md`. It isn't wired into the web app yet, and it needs network access to its data sources before it can collect real data.
+**Replaced by `pump_research/`** (see `pump_research/README.md`). It researches the 1–2 weeks before extreme pumps (prices, SEC filings, news, Reddit), runs a full technical analysis engine over each window, compares those windows with ordinary periods, and trains a similarity model. In the app it's the **Pump Research** nav item (`/pump-research`), with an event dossier and a live ticker scan. The 23 dead pump routes and their 4 templates are gone, and the old URLs redirect to the new dashboard. It still needs network access to its data sources before it can collect real data.
 
 ## How the code is laid out
 
@@ -49,8 +49,11 @@ main.py              entry point: imports app + routes (gunicorn runs main:app)
 app.py               Flask app, SQLAlchemy, Flask-Login setup; creates tables on start
 models.py            User, Stock, TradeJournal, StockRecommendation, PatternEvolution,
                      ForecastPath, AIAnalysis, ScanResult
-routes.py            ~2,900 lines, every route; also builds every engine at import
-                     time and starts the background scanner threads
+routes.py            ~2,500 lines, most routes; also builds every engine at import
+                     time and starts the background scanner threads (DISABLE_BACKGROUND_SCANNER=1 skips them)
+pump_routes.py       Pump Research pages (Flask blueprint)
+pump_research/       pump research toolkit + technical analysis engine (technicals/)
+tests/               pytest suite (uv run python -m pytest tests)
 *_engine.py, *_scanner.py, *_tracker.py, ai_coach.py, ...   analysis modules (one class each)
 templates/           Jinja pages (base.html has the nav)
 static/js/           page scripts (forecast, journal, AI coach avatar, voice alerts, ...)
@@ -84,7 +87,9 @@ Verified by logging in and requesting every GET route with Flask's test client. 
 
 ## Known issues worth tackling next
 
-- **Old pump-detection routes:** delete the ~20 dead routes and 4 templates, or rewire those pages to read `pump_research` output.
+- **Collect real pump data:** open the session's network access (and optionally add a Polygon key), then run `pump_research collect` and `train`.
+- **Plotly is pinned to `plotly-latest.min.js`**, which has been frozen at v1.58 since 2021. Upgrading means checking the older charts for v2 changes.
+- **`/api/historical-comparison/<SYM>`** still imports a deleted module (the AI coach falls back to generic text).
 - **Security:**
   - `SESSION_SECRET` falls back to a hardcoded `"dev-secret-key"`.
   - Most `/api/*` routes need no login, including `/api/market/cache/clear` and `/api/background-scan/force/*`, which let anyone wipe the cache or start expensive scans with a plain GET.
@@ -94,5 +99,5 @@ Verified by logging in and requesting every GET route with Flask's test client. 
 - **Recommendations use made-up history.** `PersonalizedRecommender._get_user_trading_history` returns hardcoded sample trades instead of reading your journal.
 - **Some output is random:** the "sideways" forecast path uses `np.random`, and the fallback scanner shuffles a curated list. The same stock can show different results on reload.
 - **`routes.py` is huge:** about 2,900 lines, and it builds each engine twice (once in a `try` block at the top and again around line 140). Splitting it into Flask blueprints (auth, journal, analysis, api) would make it much easier to work on.
-- **No automated tests** and no README.
+- **Tests cover only the pump research toolkit and its pages**, and there's no README.
 - **Duplicate templates** (`journal.html`, `journal_new.html`, `journal_clean.html`). Only `journal_clean.html` is used.

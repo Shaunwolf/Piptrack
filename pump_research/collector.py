@@ -15,6 +15,8 @@ import pandas as pd
 
 from .detection import locate_pump, qualifies
 from .features import price_features, daily_profile, control_window_ends, context_features
+from .technicals import technical_snapshot
+from .technicals.fibonacci import extension_multiple
 from .models import Seed, OK, NO_DATA, SKIPPED
 from .sources.prices import records_to_frame
 
@@ -69,6 +71,7 @@ def collect_event(seed: Seed, settings, price_sources, context_sources) -> Dict:
         "qualifies": False,
         "detection": "",
         "price_features": None,
+        "technicals": None,
         "daily_profile": [],
         "controls": [],
         "context": {},
@@ -96,7 +99,12 @@ def collect_event(seed: Seed, settings, price_sources, context_sources) -> Dict:
         window_dates = dates[max(0, pump_idx - settings.pre_window_days):pump_idx]
 
         if pump_idx > settings.pre_window_days:
-            record["price_features"] = price_features(prices, pump_idx - 1, settings)
+            snapshot = technical_snapshot(prices, pump_idx - 1, settings.pre_window_days)
+            record["technicals"] = {k: v for k, v in snapshot.items() if k != "features"}
+            record["price_features"] = price_features(prices, pump_idx - 1, settings, snapshot)
+            # Where the pump peaked on the pre-pump swing's Fibonacci extension scale
+            peak = float(prices["high"].iloc[pump_idx:pump_idx + max(1, event.run_days)].max())
+            record["event"]["peak_fib_extension"] = extension_multiple(peak, snapshot["fibonacci"])
             record["daily_profile"] = daily_profile(prices, pump_idx, settings)
             for end_idx in control_window_ends(prices, pump_idx, settings):
                 feats = price_features(prices, end_idx, settings)

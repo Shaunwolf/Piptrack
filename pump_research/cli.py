@@ -6,6 +6,8 @@ Command line interface.
   python -m pump_research collect --tickers GME,PHUN
   python -m pump_research report                 # re-run analysis + report on collected data
   python -m pump_research discover --tickers-file universe.txt --start 2016-01-01
+  python -m pump_research train                  # fit the pre-pump similarity model
+  python -m pump_research score AAPL TSLA        # technicals + pre-pump score for current prices
 """
 
 import argparse
@@ -92,6 +94,38 @@ def cmd_discover(args):
     print(f"{len(found)} events found; written to {args.out}. Append them to seeds.csv to research them.")
 
 
+def cmd_train(args):
+    from .model import train
+    s = _settings(args)
+    model = train(load_dataset(s), s)
+    auc = model["logistic"]["cv_auc"] if model["logistic"] else None
+    print(f"Trained on {model['n_events']} pre-pump windows vs {model['n_controls']} ordinary windows; "
+          f"{len(model['profile'])} profile features" + (f"; logistic cross-validated AUC {auc:.2f}" if auc else
+          f" (logistic model needs {8} or more events)"))
+
+
+def cmd_score(args):
+    from .model import analyze_ticker, load_model
+    s = _settings(args)
+    try:
+        model = load_model(s)
+    except FileNotFoundError:
+        model = None
+        print("No model yet (run collect + train); showing technicals only.")
+    for ticker in args.tickers:
+        res = analyze_ticker(ticker.upper(), s, default_price_sources(s), model)
+        if "error" in res:
+            print(f"{ticker}: {res['error']} ({', '.join(x['source'] + '=' + x['status'] for x in res['sources'])})")
+            continue
+        score = res.get("score", {}).get("score")
+        fired = [k for k, v in res["signals"].items() if v]
+        pats = sorted({p["name"] for p in res["technicals"]["patterns"] if p["type"] != "candle"})
+        print(f"{res['ticker']} {res['as_of']} close ${res['close']:.2f}"
+              + (f"  pre-pump score {score:.0f}/100" if score is not None else ""))
+        print(f"  signals: {', '.join(fired) or 'none'}")
+        print(f"  patterns: {', '.join(pats) or 'none'}")
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="pump_research", description="Research what happened before extreme stock pumps")
     parser.add_argument("-v", "--verbose", action="store_true")
@@ -113,6 +147,11 @@ def main(argv=None):
     p.add_argument("--tickers-file", required=True); p.add_argument("--start", default="2016-01-01")
     p.add_argument("--end"); p.add_argument("--out", default="discovered_seeds.csv")
     p.set_defaults(func=cmd_discover)
+
+    p = sub.add_parser("train", help="fit the pre-pump similarity model on collected data"); common(p)
+    p.set_defaults(func=cmd_train)
+    p = sub.add_parser("score", help="technical picture + pre-pump score for tickers today"); common(p)
+    p.add_argument("tickers", nargs="+"); p.set_defaults(func=cmd_score)
 
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO if args.verbose else logging.WARNING)

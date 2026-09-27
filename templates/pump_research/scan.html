@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% from "pump_research/_macros.html" import pct, rate, mult, num, status_badge, card, plot, technical_panel, signal_list %}
+
+{% block title %}{{ ticker or 'Scan' }} Technical Scan - PipSqueak{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+        <div>
+            <a href="{{ url_for('pump_research.dashboard') }}" class="text-blue-400 text-sm"><i class="fas fa-arrow-left mr-1"></i>Pump research</a>
+            <h1 class="text-4xl font-bold mt-2">Technical Scan{% if ticker %}: {{ ticker }}{% endif %}</h1>
+            <p class="text-gray-400">Every tool on the latest 10 sessions: moving averages, oscillators, Fibonacci, harmonics, chart patterns, candlesticks, and the pre-pump similarity score.</p>
+        </div>
+        <form method="get" class="flex gap-2">
+            <input name="ticker" value="{{ ticker }}" placeholder="Ticker" required maxlength="10"
+                   class="bg-dark-accent border border-gray-600 rounded-lg px-3 py-2 text-white uppercase w-40">
+            <button class="btn-gradient-primary"><i class="fas fa-search mr-1"></i>Scan</button>
+        </form>
+    </div>
+
+    {% if res and res.error %}
+    <div class="bg-dark-surface rounded-xl p-4 border border-red-800">
+        <p class="text-red-300 mb-2">Couldn't analyze {{ res.ticker }}: {{ res.error }}.</p>
+        {% for s in res.sources %}<div class="flex items-center gap-2 text-sm">{{ status_badge(s.status) }}<span>{{ s.source }}</span><span class="text-gray-500">{{ s.detail }}</span></div>{% endfor %}
+    </div>
+    {% elif res %}
+    {% set sc = res.score or {} %}
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div class="bg-dark-surface rounded-xl p-4 border border-dark-accent"><p class="text-gray-400 text-xs">As of</p><p class="text-lg font-semibold">{{ res.as_of }}</p></div>
+        <div class="bg-dark-surface rounded-xl p-4 border border-dark-accent"><p class="text-gray-400 text-xs">Close</p><p class="text-lg font-semibold">${{ '%.2f' % res.close }}</p></div>
+        <div class="bg-dark-surface rounded-xl p-4 border border-dark-accent"><p class="text-gray-400 text-xs">Pre-pump similarity</p>
+            <p class="text-lg font-semibold">{% if sc and sc.score is not none %}{{ '%.0f' % sc.score }}/100{% else %}<span class="text-gray-500 text-sm">no model yet</span>{% endif %}</p></div>
+        <div class="bg-dark-surface rounded-xl p-4 border border-dark-accent"><p class="text-gray-400 text-xs">10-day volume vs baseline</p><p class="text-lg font-semibold">{{ mult(res.features.avg_volume_ratio) }}</p></div>
+    </div>
+    <p class="text-xs text-gray-500">The similarity score compares this stock's last 10 sessions with the windows before past pumps in the research dataset. It is a research aid built on a small sample, not a prediction or trading advice.</p>
+
+    {% call card('Chart', 'chart-line') %}{{ plot('chart', fig, 540) }}{% endcall %}
+    {% call card('Warning signs', 'exclamation-triangle') %}{{ signal_list(res.signals) }}{% endcall %}
+    {% call card('Technical picture', 'drafting-compass') %}{{ technical_panel(res.technicals, res.features) }}{% endcall %}
+
+    {% if sc.contributions %}
+    {% call card('What drives the score', 'sliders-h') %}
+    <table class="w-full text-sm"><thead class="text-gray-400 text-left"><tr><th class="py-1">Feature</th><th>Value</th><th>Percentile vs ordinary windows</th><th>Leans pre-pump</th></tr></thead><tbody>
+    {% for c in sc.contributions %}
+    <tr class="border-t border-dark-accent"><td class="py-1">{{ c.feature.replace('ta_', 'TA ').replace('_', ' ') }}</td><td>{{ '%.3g' % c.value }}</td>
+        <td>{{ rate(c.percentile_vs_ordinary) }}</td><td>{{ 'yes' if c.leans_pre_pump else 'no' }}</td></tr>
+    {% endfor %}</tbody></table>
+    {% endcall %}
+    {% endif %}
+    {% endif %}
+</div>
+{% endblock %}

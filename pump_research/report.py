@@ -30,6 +30,42 @@ def _table(headers, rows):
     return "\n".join(lines)
 
 
+def technical_summary(ta: Dict, pf: Dict, ev: Dict) -> str:
+    """Moving averages, oscillators, Fibonacci, structure and patterns at the end of the pre-pump window"""
+    lines = ["**Technical picture at the end of the window**"]
+    mas = ta.get("moving_averages", {})
+    stack = "bullish" if pf.get("ta_ema_bull_stack") else "bearish" if pf.get("ta_ema_bear_stack") else "mixed"
+    lines.append(f"- Moving averages: EMA 8/21/50 stack {stack}; close vs EMA21 {_pct(pf.get('ta_close_vs_ema21'))}, "
+                 f"vs WMA20 {_pct(pf.get('ta_close_vs_wma20'))}, vs HMA20 {_pct(pf.get('ta_close_vs_hma20'))}, "
+                 f"vs VWMA20 {_pct(pf.get('ta_close_vs_vwma20'))}, vs SMA200 {_pct(pf.get('ta_close_vs_sma200'))}"
+                 + (" (EMA200 unavailable: short history)" if mas.get("ema200") is None else ""))
+    lines.append(f"- Momentum: RSI {_num(pf.get('ta_rsi14'), '{:.0f}')}, stochastic %K {_num(pf.get('ta_stoch_k'), '{:.0f}')}, "
+                 f"MACD cross in window: {'yes' if pf.get('ta_macd_bull_cross_in_window') else 'no'}, "
+                 f"ADX {_num(pf.get('ta_adx'), '{:.0f}')}, RSI bullish divergence: {'yes' if pf.get('ta_rsi_bullish_divergence') else 'no'}")
+    lines.append(f"- Volatility & flow: Bollinger %B {_num(pf.get('ta_bb_pct_b'))}, squeeze: {'yes' if pf.get('ta_bb_squeeze') else 'no'}, "
+                 f"ATR {_pct(pf.get('ta_atr_pct')).lstrip('+')} of price, CMF {_num(pf.get('ta_cmf20'))}, MFI {_num(pf.get('ta_mfi14'), '{:.0f}')}, "
+                 f"OBV accumulation divergence: {'yes' if pf.get('ta_obv_bullish_divergence') else 'no'}")
+    fib = ta.get("fibonacci") or {}
+    if fib:
+        lines.append(f"- Fibonacci: {fib['direction']}swing ${fib['swing_low']:.2f} → ${fib['swing_high']:.2f}; "
+                     f"close at {fib['retracement']:.3f} {'retracement' if fib['direction'] == 'up' else 'bounce'} "
+                     f"(nearest {fib['nearest_level']:g}){', in golden pocket' if fib['in_golden_pocket'] else ''}"
+                     + (f"; pump peaked at the {ev['peak_fib_extension']:.2f} extension" if ev.get("peak_fib_extension") else ""))
+    st = ta.get("structure") or {}
+    lv = ta.get("levels") or {}
+    lines.append(f"- Structure: {st.get('structure', '–')} ({st.get('higher_highs', 0)} higher highs, {st.get('higher_lows', 0)} higher lows); "
+                 f"support {('$%.2f' % lv['support']['price']) if lv.get('support') else '–'}, "
+                 f"resistance {('$%.2f' % lv['resistance']['price']) if lv.get('resistance') else '–'}")
+    groups = {"harmonic": [], "chart": [], "candle": []}
+    for p in ta.get("patterns", []):
+        date_ = p.get("completed_date") or p.get("date")
+        label = f"{p['name'].replace('_', ' ')} ({p['direction']}, {date_}" + (f", score {p['score']}" if "score" in p else "") + ")"
+        groups[p["type"]].append(label)
+    for kind, title in (("harmonic", "Harmonic patterns"), ("chart", "Chart patterns"), ("candle", "Candlesticks")):
+        lines.append(f"- {title}: {', '.join(groups[kind]) or 'none'}")
+    return "\n".join(lines)
+
+
 def event_dossier(rec: Dict) -> str:
     seed, ev = rec["seed"], rec.get("event")
     out = [f"### {seed['ticker']} — {ev['pump_date'] if ev else seed['approx_date'] + ' (approx.)'}"]
@@ -53,6 +89,10 @@ def event_dossier(rec: Dict) -> str:
         out.append("\n" + _table(["Day", "Date", "Close", "Return", "Volume vs baseline"], [
             [p["offset"], p["date"], _num(p["close"]), _pct(p["return"]), _mult(p["volume_ratio"])]
             for p in rec["daily_profile"]]))
+
+    ta = rec.get("technicals")
+    if ta:
+        out.append("\n" + technical_summary(ta, pf or {}, ev or {}))
 
     ctx = rec.get("context", {})
     filings = ctx.get("sec_filings", [])
@@ -118,6 +158,12 @@ def build_report(records: List[Dict], result: Dict, settings) -> str:
                     [r["feature"], _num(r["event_median"], "{:.3g}"), _num(r["control_median"], "{:.3g}"),
                      _num(r["prob_event_higher"]), _num(r["p_value"], "{:.3f}"), f"{r['events_n']}/{r['controls_n']}"]
                     for r in result["feature_comparison"]])]
+
+    if result.get("boolean_comparison"):
+        out += ["", "## Yes/no technical signals: before pumps vs ordinary windows",
+                _table(["Signal", "Before pumps", "Ordinary", "Lift", "p-value"], [
+                    [r["feature"], _pct(r["event_rate"]).lstrip("+"), _pct(r["control_rate"]).lstrip("+"),
+                     _mult(r["lift"]), _num(r["p_value"], "{:.3f}")] for r in result["boolean_comparison"][:25]])]
 
     if result["signal_rates"]:
         out += ["", "## Warning signs present before the pump",

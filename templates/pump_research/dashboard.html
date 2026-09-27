@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% from "pump_research/_macros.html" import pct, rate, mult, num, known, status_badge, card, plot %}
+
+{% block title %}Pump Research - PipSqueak{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+        <div>
+            <h1 class="text-4xl font-bold mb-2">Pump Research</h1>
+            <p class="text-gray-400">What happened in the {{ settings.pre_window_days }} trading days before extreme price spikes, compared with ordinary periods for the same stocks.</p>
+        </div>
+        <form action="{{ url_for('pump_research.scan') }}" method="get" class="flex gap-2">
+            <input name="ticker" placeholder="Ticker, e.g. GME" required maxlength="10"
+                   class="bg-dark-accent border border-gray-600 rounded-lg px-3 py-2 text-white uppercase w-40">
+            <button class="btn-gradient-primary"><i class="fas fa-search mr-1"></i>Scan</button>
+        </form>
+    </div>
+
+    {% if records is none %}
+    {% call card('No research data yet', 'database') %}
+    <p class="text-gray-300 mb-4">Collect the dataset from the project folder, then reload this page:</p>
+    <pre class="bg-black/40 rounded-lg p-4 text-sm text-green-300 overflow-x-auto">uv run python -m pump_research check     # which data sources are reachable
+uv run python -m pump_research collect   # research the candidates in pump_research/seeds.csv
+uv run python -m pump_research train     # fit the pre-pump similarity model</pre>
+    <p class="text-gray-400 text-sm mt-4">Data is read from <code>{{ settings.data_dir }}</code> (set <code>PUMP_DATA_DIR</code> to change it). You can still scan any ticker for its full technical picture above.</p>
+    {% endcall %}
+    {% else %}
+
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+        {% for label, value in [('Candidates', result.n_records), ('Pump located', result.n_located), ('Clear the bar', result.n_qualifying), ('With pre-pump window', result.n_with_window), ('Ordinary windows', result.n_controls)] %}
+        <div class="bg-dark-surface rounded-xl p-4 border border-dark-accent text-center">
+            <p class="text-3xl font-bold">{{ value }}</p><p class="text-gray-400 text-sm">{{ label }}</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if model %}
+    <div class="bg-dark-surface rounded-xl p-4 border border-dark-accent text-sm text-gray-300">
+        <i class="fas fa-brain mr-2 text-purple-400"></i>Similarity model trained {{ model.trained_on }} on {{ model.n_events }} pre-pump windows vs {{ model.n_controls }} ordinary windows.
+        {% if model.logistic %}Cross-validated AUC {{ '%.2f' % model.logistic.cv_auc }} (0.5 = chance).{% else %}Using the profile score (the logistic model needs 8+ events).{% endif %}
+    </div>
+    {% endif %}
+
+    {% call card('Events', 'rocket') %}
+    <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+        <thead class="text-gray-400 text-left"><tr>
+            <th class="py-2 pr-3">Ticker</th><th class="pr-3">Pump date</th><th class="pr-3">Category</th><th class="pr-3">Type</th>
+            <th class="pr-3">Close</th><th class="pr-3">High</th><th class="pr-3">Run</th><th class="pr-3">Qualifies</th>
+            <th class="pr-3">Window return</th><th class="pr-3">Volume vs base</th><th class="pr-3">Filings</th><th class="pr-3">Reddit</th></tr></thead>
+        <tbody>
+        {% for rec in records %}{% set ev = rec.event or {} %}{% set pf = rec.price_features or {} %}{% set cf = rec.context_features or {} %}
+        <tr class="border-t border-dark-accent hover:bg-dark-accent/40">
+            <td class="py-2 pr-3 font-semibold"><a class="text-blue-400 hover:underline" href="{{ url_for('pump_research.event', event_id=rec.id) }}">{{ rec.seed.ticker }}</a></td>
+            <td class="pr-3">{{ ev.pump_date or (rec.seed.approx_date ~ '?') }}</td>
+            <td class="pr-3">{{ rec.seed.category.replace('_', ' ') }}</td>
+            <td class="pr-3">{{ (ev.event_type or '–').replace('_', ' ') }}</td>
+            <td class="pr-3">{{ mult(ev.close_multiple) }}</td><td class="pr-3">{{ mult(ev.high_multiple) }}</td><td class="pr-3">{{ mult(ev.run_multiple) }}</td>
+            <td class="pr-3">{% if rec.qualifies %}<span class="text-green-400">yes</span>{% else %}<span class="text-gray-500">no</span>{% endif %}</td>
+            <td class="pr-3">{{ pct(pf.window_return) }}</td><td class="pr-3">{{ mult(pf.avg_volume_ratio) }}</td>
+            <td class="pr-3">{{ known(cf.filings_total) }}</td><td class="pr-3">{{ known(cf.reddit_mentions) }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+    {% endcall %}
+
+    {% if countdown_fig %}
+    {% call card('Countdown: median day-by-day behavior before the pump', 'hourglass-half') %}
+    {{ plot('countdown', countdown_fig, 360) }}
+    {% endcall %}
+    {% endif %}
+
+    <div class="grid lg:grid-cols-2 gap-6">
+        {% call card('What separates pre-pump windows', 'balance-scale') %}
+        {% if result.feature_comparison %}
+        <p class="text-gray-400 text-xs mb-3">P(higher) = chance a pre-pump window scores higher than an ordinary one (0.5 = no difference). Small samples, so treat these as leads.</p>
+        <table class="w-full text-sm"><thead class="text-gray-400 text-left"><tr><th class="py-1">Feature</th><th>Pre-pump</th><th>Ordinary</th><th>P(higher)</th><th>p</th></tr></thead><tbody>
+        {% for r in result.feature_comparison[:20] %}
+        <tr class="border-t border-dark-accent"><td class="py-1 pr-2">{{ r.feature.replace('ta_', 'TA ').replace('_', ' ') }}</td>
+            <td>{{ '%.3g' % r.event_median }}</td><td>{{ '%.3g' % r.control_median }}</td>
+            <td class="{{ 'text-green-400' if r.prob_event_higher > 0.65 else 'text-red-400' if r.prob_event_higher < 0.35 else '' }}">{{ '%.2f' % r.prob_event_higher }}</td>
+            <td class="text-gray-400">{{ '%.3f' % r.p_value }}</td></tr>
+        {% endfor %}</tbody></table>
+        {% else %}<p class="text-gray-500">Needs at least 3 events with price data.</p>{% endif %}
+        {% endcall %}
+
+        {% call card('Yes/no signals: before pumps vs ordinary', 'check-double') %}
+        {% if result.boolean_comparison %}
+        <table class="w-full text-sm"><thead class="text-gray-400 text-left"><tr><th class="py-1">Signal</th><th>Before pumps</th><th>Ordinary</th><th>Lift</th><th>p</th></tr></thead><tbody>
+        {% for r in result.boolean_comparison[:20] %}
+        <tr class="border-t border-dark-accent"><td class="py-1 pr-2">{{ r.feature.replace('ta_', '').replace('_', ' ') }}</td>
+            <td>{{ rate(r.event_rate) }}</td><td>{{ rate(r.control_rate) }}</td><td>{{ mult(r.lift) }}</td><td class="text-gray-400">{{ '%.3f' % r.p_value }}</td></tr>
+        {% endfor %}</tbody></table>
+        {% else %}<p class="text-gray-500">Needs at least 3 events with price data.</p>{% endif %}
+        {% endcall %}
+    </div>
+
+    {% call card('Data coverage', 'plug') %}
+    <div class="flex flex-wrap gap-6 text-sm">
+    {% for source, counts in result.coverage.items()|sort %}
+        <div><p class="font-semibold mb-1">{{ source.replace('_', ' ') }}</p>
+        {% for status, n in counts.items() %}<div class="flex items-center gap-2">{{ status_badge(status) }}<span>{{ n }}</span></div>{% endfor %}</div>
+    {% endfor %}
+    </div>
+    {% endcall %}
+    {% endif %}
+</div>
+{% endblock %}
