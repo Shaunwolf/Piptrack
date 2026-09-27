@@ -3,7 +3,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 import os
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 
 class GoogleSheetsIntegration:
     def __init__(self):

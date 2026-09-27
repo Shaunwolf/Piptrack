@@ -39,4 +39,21 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pytest>=9.1.1",
+    "ruff>=0.16.9",
 ]
+
+[tool.ruff]
+line-length = 130
+target-version = "py311"
+extend-exclude = ["attached_assets", "static", "templates"]
+
+[tool.ruff.lint]
+# Errors only: syntax errors, undefined names, unused imports/variables
+select = ["E9", "F63", "F7", "F82", "F401", "F841"]
+
+[tool.ruff.lint.per-file-ignores]
+# Older app modules: only real errors are enforced (several imports exist for side effects)
+"{app,main,routes,models,auth_forms,reset_password,stock_scanner,forecasting_engine,ai_coach,confidence_scorer,pattern_evolution_tracker,personalized_recommender,google_sheets_integration,pdf_generator,stock_widgets,market_data_engine,background_scanner,scanner_monitor,animated_sparklines,animated_trading_journey,trading_journey}.py" = ["F401", "F841"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

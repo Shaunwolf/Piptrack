@@ -14,7 +14,7 @@ from pump_research.collector import collect_all
 from pump_research.config import Settings
 from pump_research.detection import locate_pump
 from pump_research.features import context_features
-from pump_research.models import Seed, PARTIAL, SKIPPED, NO_DATA, OK
+from pump_research.models import Seed, PARTIAL, SKIPPED, OK
 from pump_research.sources import filings as filings_mod, news as news_mod, social as social_mod
 
 

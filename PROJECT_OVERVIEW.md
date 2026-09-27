@@ -23,7 +23,6 @@ It's a server-rendered **Flask** app (Jinja templates, Tailwind CSS from a CDN, 
 | Confidence score | used everywhere | A 0–100 score: weighted mix of RSI, volume surge, pattern, Fibonacci position, trend and volatility | `confidence_scorer.py` |
 | AI coach | `/ai_review/<SYM>`, `/chart_story/<SYM>` | Rule-based commentary: pattern detection, mood tag ("breakout", "risky"…), chart annotations, voice-alert text | `ai_coach.py` |
 | Pattern evolution | `/pattern_evolution/<SYM>`, `/pattern_dashboard` | Tracks patterns like bull flags and wedges: stage, completion %, breakout odds | `pattern_evolution_tracker.py` |
-| Physics view | `/physics/<SYM>` | Playful "market physics" views (gravity wells, momentum particles, weather) | in `routes.py` |
 | Trading journey | `/api/trading_journey*` | XP, levels, achievements, leaderboard | `trading_journey.py`, `animated_trading_journey.py` |
 | Widgets / sparklines | `/widgets`, `/api/sparkline/<SYM>` | Mini charts with an animated "candle guy" mascot | `stock_widgets.py`, `animated_sparklines.py` |
 | Background market scanner | `/api/background-scan/*`, `/api/market/*` | Threads that scan hardcoded lists of tickers every 1, 5 and 30 minutes and cache the results | `background_scanner.py`, `market_data_engine.py` |
@@ -35,6 +34,7 @@ It's a server-rendered **Flask** app (Jinja templates, Tailwind CSS from a CDN, 
 On 15 June 2025, commit `0d37565` ("Remove old pump detection files") deleted 9 Python modules. **About 20 routes still import them** and return `{"error": "No module named …"}`:
 
 - **Pump detection / backtesting:** `/backtest`, `/pump-analysis`, `/early_detection`, `/historical_backtest`, `/enhanced_detector` and their `/api/…` endpoints. These were meant to spot stocks about to jump 75%+ in a few days, and were tested against the case list in `attached_assets/pumped_stock_cases_*.csv`.
+- **Physics view and widget presets** (`/physics/<SYM>`, `/api/physics/*`, `/api/widgets`): `physics_market_engine.py` and `scanner_widgets.py` were deleted, so these endpoints now answer "not available".
 - **Historical comparison** (`/api/historical-comparison/<SYM>`, and "similar to META's Nov 2022 bottom" text in the AI coach). It quietly falls back to generic text.
 - **Biotech catalysts and options flow** scans.
 
@@ -64,7 +64,7 @@ attached_assets/     old Replit prompts/specs, screenshots, the pump case CSV
 
 ```bash
 uv sync                                     # installs dependencies from uv.lock
-export DATABASE_URL=sqlite:///local.db      # or a Postgres URL
+export DATABASE_URL=postgresql://...        # optional: defaults to SQLite at instance/pipsqueak.db
 export SESSION_SECRET=change-me             # required in production
 export OPENAI_API_KEY=...                   # optional, enables AI insights
 uv run gunicorn --bind 0.0.0.0:5000 main:app
@@ -99,5 +99,5 @@ Verified by logging in and requesting every GET route with Flask's test client. 
 - **Recommendations use made-up history.** `PersonalizedRecommender._get_user_trading_history` returns hardcoded sample trades instead of reading your journal.
 - **Some output is random:** the "sideways" forecast path uses `np.random`, and the fallback scanner shuffles a curated list. The same stock can show different results on reload.
 - **`routes.py` is huge:** about 2,900 lines, and it builds each engine twice (once in a `try` block at the top and again around line 140). Splitting it into Flask blueprints (auth, journal, analysis, api) would make it much easier to work on.
-- **Tests cover only the pump research toolkit and its pages**, and there's no README.
+- **Tests cover only the pump research toolkit and its pages.** CI (`.github/workflows/ci.yml`) runs lint, tests and an app boot check; see `README.md` for setup.
 - **Duplicate templates** (`journal.html`, `journal_new.html`, `journal_clean.html`). Only `journal_clean.html` is used.

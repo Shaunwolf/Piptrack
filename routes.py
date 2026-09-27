@@ -150,6 +150,10 @@ personalizer = PersonalizedRecommender()
 sheets_integration = GoogleSheetsIntegration()
 pdf_generator = PDFGenerator()
 
+# Their modules (scanner_widgets.py, physics_market_engine.py) were removed; the routes report "not available"
+scanner_widgets = None
+physics_engine = None
+
 # Initialize core components
 from animated_sparklines import AnimatedSparklines
 sparklines_engine = AnimatedSparklines()

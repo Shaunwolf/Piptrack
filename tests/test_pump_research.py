@@ -13,7 +13,7 @@ from pump_research.collector import collect_all, load_dataset
 from pump_research.config import Settings
 from pump_research.detection import locate_pump, discover
 from pump_research.features import price_features, context_features
-from pump_research.models import Seed, SourceResult, OK, BLOCKED
+from pump_research.models import Seed, SourceResult, BLOCKED
 from pump_research.report import build_report
 from pump_research.sources.base import DataSource
 
