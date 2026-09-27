@@ -17,6 +17,7 @@
         <button type="submit">Scan</button>
       </form>
     </div>
+    <p class="obs-note"><a href="{{ url_for('pump_research.integrations_page') }}">Hugging Face integrations →</a></p>
     <p class="obs-lede">What each stock looked like in the {{ settings.pre_window_days }} trading days before it went vertical,
       measured against ordinary stretches of the same stock.</p>
     {% if seismo %}{{ seismo|safe }}

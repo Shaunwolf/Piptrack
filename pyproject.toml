@@ -36,8 +36,27 @@ dependencies = [
     "schedule>=1.2.2",
 ]
 
+[project.optional-dependencies]
+hf = [
+    "huggingface-hub>=2.0.0",
+    "pyarrow>=25.0.1",
+]
+vision = [
+    "matplotlib>=3.11.2",
+    "mplfinance>=0.12.10b0",
+    "ultralytics>=8.4.123",
+]
+nlp = [
+    "torch>=2.14.0",
+    "transformers>=4.12.2",
+]
+
 [dependency-groups]
 dev = [
+    "huggingface-hub>=2.0.0",
+    "matplotlib>=3.11.2",
+    "mplfinance>=0.12.10b0",
+    "pyarrow>=25.0.1",
     "pytest>=9.1.1",
     "ruff>=0.16.9",
 ]

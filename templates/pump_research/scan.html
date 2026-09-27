@@ -61,6 +61,34 @@
     {{ m.instruments(res.technicals, f) }}
   </section>
 
+  {% if res.integrations %}
+  <section class="obs-section">
+    <h2 class="obs-h2"><span class="idx">IN</span>Hugging Face integrations</h2>
+    <div class="obs-instruments">
+      {% for key, out in res.integrations.items() %}
+      <div class="obs-inst">
+        <h3>{{ key.replace('_', ' ') }}</h3>
+        {% if out.error %}<p class="obs-empty">{{ out.error }}</p>
+        {% else %}
+          {% if out.decision %}<div class="obs-kv"><span>Decision</span><span>{{ out.decision.replace('_', ' ') }}</span></div>
+            <div class="obs-kv"><span>Technical model</span><span>{{ out.technical_prediction }} ({{ m.rate(out.technical_probability_up) }})</span></div>
+            <div class="obs-kv"><span>Holdout accuracy / up-rate</span><span>{{ m.rate(out.holdout_accuracy) }} / {{ m.rate(out.holdout_up_rate) }}</span></div>
+            <div class="obs-kv"><span>News sentiment</span><span>{{ m.num(out.news_sentiment) }}</span></div>{% endif %}
+          {% if out.patterns is defined %}{% for p in out.patterns[:8] %}
+            <div class="obs-kv"><span class="{{ 'text-bull' if p.direction == 'bullish' }}">{{ '▲' if p.direction == 'bullish' else '▼' if p.direction == 'bearish' else '◆' }} {{ p.name.replace('_', ' ') }}</span><span>{{ p.completed_date }} · {{ '%.0f' % (p.confidence * 100) }}%</span></div>
+          {% else %}<p class="obs-empty">No detections</p>{% endfor %}{% endif %}
+          {% if out.class_probabilities %}{% for k, v in out.class_probabilities.items() %}<div class="obs-kv"><span>{{ k }}</span><span>{{ m.rate(v) }}</span></div>{% endfor %}{% endif %}
+          {% if out.mentions is defined %}<div class="obs-kv"><span>Mentions</span><span>{{ out.mentions }}</span></div>
+            {% for e in out.examples[:3] %}<p class="obs-note" style="margin:0">“{{ (e.title if e is mapping else e)|truncate(140) }}”</p>{% endfor %}{% endif %}
+          {% for c in out.caveats or [] %}<p class="obs-note" style="margin:0;color:var(--warning)">{{ c }}</p>{% endfor %}
+          {% if out.note %}<p class="obs-note" style="margin:0">{{ out.note }}</p>{% endif %}
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
   {% if sc.contributions %}
   <section class="obs-section">
     <h2 class="obs-h2"><span class="idx">04</span>What drives the score</h2>

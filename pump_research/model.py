@@ -182,4 +182,22 @@ def analyze_prices(ticker, prices: pd.DataFrame, settings, model=None, status=No
     }
     if model:
         out["score"] = score_features(feats, model)
+    from .integrations import is_enabled, run_enabled
+    headlines = recent_headlines(ticker) if is_enabled("multisignal_trader") else None
+    out["integrations"] = run_enabled(prices, ticker=ticker, headlines=headlines)
     return out
+
+
+def recent_headlines(ticker: str, limit: int = 5):
+    """Latest Yahoo Finance headlines (best effort; [] when offline)"""
+    try:
+        import yfinance as yf
+        items = yf.Ticker(ticker).news or []
+    except Exception:
+        return []
+    titles = []
+    for item in items[:limit]:
+        title = item.get("title") or (item.get("content") or {}).get("title")
+        if title:
+            titles.append(title)
+    return titles

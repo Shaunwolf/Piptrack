@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% import "pump_research/_macros.html" as m %}
+
+{% block title %}Integrations · Pump Observatory{% endblock %}
+{% block head %}{{ m.head() }}{% endblock %}
+
+{% block content %}
+<div class="obs">
+  <header class="obs-mast">
+    <a class="obs-back" href="{{ url_for('pump_research.dashboard') }}">← Observatory</a>
+    <div class="obs-kicker"><span class="dot" aria-hidden="true"></span>Hugging Face integrations</div>
+    <h1 class="obs-title">Plug in <em>outside models</em></h1>
+    <p class="obs-lede">Each integration wraps one model, dataset or app from the Hugging Face Hub. Switched-on integrations run on every
+      scan and on each pump's pre-pump window during collection. Downloads happen on first use and are cached.</p>
+  </header>
+
+  {% with messages = get_flashed_messages() %}{% if messages %}<p class="obs-note">{{ messages[-1] }}</p>{% endif %}{% endwith %}
+
+  <div class="obs-lamps" style="grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr))">
+    {% for i in integrations %}
+    <div class="obs-panel" style="display:grid;gap:10px">
+      <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start">
+        <div>
+          <p style="margin:0;font-weight:600">{{ i.title }}</p>
+          <p class="obs-note" style="margin:4px 0 0"><span class="obs-tag">{{ i.category.replace('_', ' ') }}</span>
+            <a class="obs-tag" href="{{ i.url }}" target="_blank" rel="noopener noreferrer">{{ i.hf_id }} ↗</a></p>
+        </div>
+        <form method="post" style="margin:0">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="key" value="{{ i.key }}">
+          <input type="hidden" name="enabled" value="{{ '0' if i.enabled else '1' }}">
+          <button type="submit" class="obs-lamp {{ 'on' if i.enabled }}" style="cursor:pointer" aria-pressed="{{ 'true' if i.enabled else 'false' }}">
+            <span class="bulb" aria-hidden="true"></span>{{ 'On' if i.enabled else 'Off' }}</button>
+        </form>
+      </div>
+      <p class="obs-note" style="margin:0">{{ i.description }}</p>
+      {% if not i.ready %}<p class="obs-note" style="margin:0;color:var(--warning)">Needs packages: <span class="mono">pip install {{ i.install }}</span></p>{% endif %}
+      <p class="obs-note mono" style="margin:0">key: {{ i.key }}</p>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

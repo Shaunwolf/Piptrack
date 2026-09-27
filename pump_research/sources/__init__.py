@@ -12,6 +12,10 @@ def default_price_sources(settings):
     if settings.polygon_api_key:
         sources.append(PolygonPrices(settings))
     sources.append(YahooPrices(settings))
+    # Hugging Face minute-bar history as a fallback (e.g. delisted tickers), when switched on
+    from ..integrations import is_enabled, HfMinutePrices
+    if is_enabled("ohlcv_1m_prices"):
+        sources.append(HfMinutePrices(settings))
     return sources
 
 

@@ -128,6 +128,50 @@ def api_tools(ticker):
     return jsonify({"ticker": ticker, "error": "no price data", "sources": statuses}), 502
 
 
+@pump_bp.route("/pump-research/integrations", methods=["GET", "POST"])
+@login_required
+def integrations_page():
+    from flask import flash, redirect, url_for
+    from flask_wtf.csrf import validate_csrf
+    from pump_research.integrations import list_integrations, set_enabled
+    if request.method == "POST":
+        try:
+            validate_csrf(request.form.get("csrf_token"))
+        except Exception:
+            abort(400)
+        key = request.form.get("key", "")
+        try:
+            set_enabled(key, request.form.get("enabled") == "1")
+        except KeyError:
+            abort(404)
+        flash(f"{key} {'enabled' if request.form.get('enabled') == '1' else 'disabled'}", "success")
+        return redirect(url_for("pump_research.integrations_page"))
+    return render_template("pump_research/integrations.html", integrations=list_integrations())
+
+
+@pump_bp.route("/api/pump-research/integrations", methods=["GET"])
+@login_required
+def api_integrations():
+    from pump_research.integrations import list_integrations
+    return jsonify(list_integrations())
+
+
+@pump_bp.route("/api/pump-research/integrations/<key>", methods=["POST"])
+@login_required
+def api_toggle_integration(key):
+    from flask_wtf.csrf import validate_csrf
+    from pump_research.integrations import set_enabled
+    try:
+        validate_csrf(request.headers.get("X-CSRFToken") or (request.get_json(silent=True) or {}).get("csrf_token"))
+    except Exception:
+        return jsonify({"error": "missing or invalid CSRF token"}), 400
+    body = request.get_json(silent=True) or {}
+    try:
+        return jsonify(set_enabled(key, bool(body.get("enabled"))))
+    except KeyError:
+        return jsonify({"error": "unknown integration"}), 404
+
+
 @pump_bp.route("/api/pump-research/scan/<ticker>")
 @login_required
 def api_scan(ticker):

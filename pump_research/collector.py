@@ -104,6 +104,8 @@ def collect_event(seed: Seed, settings, price_sources, context_sources) -> Dict:
             snapshot = technical_snapshot(prices, pump_idx - 1, settings.pre_window_days)
             record["technicals"] = {k: v for k, v in snapshot.items() if k != "features"}
             record["price_features"] = price_features(prices, pump_idx - 1, settings, snapshot)
+            from .integrations import run_enabled
+            record["integrations"] = run_enabled(prices.iloc[:pump_idx], ticker=seed.ticker)
             # Where the pump peaked on the pre-pump swing's Fibonacci extension scale
             peak = float(prices["high"].iloc[pump_idx:pump_idx + max(1, event.run_days)].max())
             record["event"]["peak_fib_extension"] = extension_multiple(peak, snapshot["fibonacci"])

@@ -113,3 +113,18 @@ def test_tools_api(client):
     assert r.status_code == 200 and set(body) >= {"gann_fan", "fear_greed_index", "as_of"}
     assert client.get("/api/pump-research/tools/LIVE?tool=nope").status_code == 400
     assert client.get("/api/pump-research/tools/UNKNOWN").status_code == 502
+
+
+def test_integrations_page_toggles_with_csrf(client, tmp_path, monkeypatch):
+    import re
+    from pump_research.integrations import base
+    monkeypatch.setenv(base.CONFIG_ENV, str(tmp_path / "integrations.json"))
+    html = client.get("/pump-research/integrations").get_data(as_text=True)
+    assert "OHLCV-1m minute history" in html and "YOLOv8 chart patterns" in html
+    token = re.search(r'name="csrf_token" value="([^"]+)"', html).group(1)
+    r = client.post("/pump-research/integrations", data={"csrf_token": token, "key": "wsb_corpus", "enabled": "1"})
+    assert r.status_code == 302
+    listed = {i["key"]: i["enabled"] for i in client.get("/api/pump-research/integrations").get_json()}
+    assert listed["wsb_corpus"] is True
+    assert client.post("/pump-research/integrations", data={"key": "wsb_corpus", "enabled": "0"}).status_code == 400
+    assert client.post("/api/pump-research/integrations/wsb_corpus", json={"enabled": False}).status_code == 400

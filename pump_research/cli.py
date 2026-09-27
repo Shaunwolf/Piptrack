@@ -145,6 +145,38 @@ def cmd_tools(args):
     print(f"No price data for {args.ticker} ({result.status}: {result.detail})")
 
 
+def cmd_integrations(args):
+    """List, enable, disable or run the Hugging Face integrations"""
+    from .integrations import REGISTRY, list_integrations, run_integration, set_enabled
+    if args.action == "list":
+        for i in list_integrations():
+            state = "ON " if i["enabled"] else "off"
+            ready = "ready" if i["ready"] else f"needs: pip install {i['install']}"
+            print(f"[{state}] {i['key']:22} {i['title']:48} {ready}")
+        return
+    if args.action in ("enable", "disable"):
+        for key in args.keys:
+            status = set_enabled(key, args.action == "enable")
+            print(f"{key}: {'enabled' if status['enabled'] else 'disabled'}"
+                  + ("" if status["ready"] else f" (install first: pip install {status['install']})"))
+        return
+    # run KEY TICKER
+    key, ticker = args.keys[0], (args.keys[1] if len(args.keys) > 1 else "")
+    if key not in REGISTRY:
+        raise SystemExit(f"unknown integration {key}")
+    s = _settings(args)
+    prices = None
+    if ticker:
+        end = date.today()
+        for source in default_price_sources(s):
+            result = source.fetch(ticker.upper(), end - timedelta(days=500), end)
+            if result.status == OK:
+                prices = records_to_frame(result.records)
+                break
+    kwargs = {"start": date.today() - timedelta(days=90), "end": date.today()} if key == "ohlcv_1m_prices" else {}
+    print(json.dumps(run_integration(key, prices, ticker=ticker.upper(), **kwargs), indent=2, default=str))
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="pump_research", description="Research what happened before extreme stock pumps")
     parser.add_argument("-v", "--verbose", action="store_true")
@@ -175,6 +207,11 @@ def main(argv=None):
     p = sub.add_parser("tools", help="list every technical tool, or run them on a ticker"); common(p)
     p.add_argument("ticker", nargs="?"); p.add_argument("--tool", action="append", help="run only this tool (repeatable)")
     p.set_defaults(func=cmd_tools)
+
+    p = sub.add_parser("integrations", help="list / enable / disable / run the Hugging Face integrations"); common(p)
+    p.add_argument("action", choices=["list", "enable", "disable", "run"])
+    p.add_argument("keys", nargs="*", help="integration keys (for run: KEY TICKER)")
+    p.set_defaults(func=cmd_integrations)
 
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO if args.verbose else logging.WARNING)
