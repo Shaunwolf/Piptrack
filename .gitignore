@@ -12,3 +12,8 @@ scan_results.json
 .venv/
 __pycache__/
 *.pyc
+
+# pump_research output
+pump_data/
+discovered_seeds.csv
+.pytest_cache/

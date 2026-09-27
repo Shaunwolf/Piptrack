@@ -40,6 +40,8 @@ On 15 June 2025, commit `0d37565` ("Remove old pump detection files") deleted 9 
 
 **Backtest** and **Pump Analysis** were still linked in the main nav, so users could click straight into broken pages. They're hidden now. To bring them back, restore the files from git (`git show 0d37565^:simple_pump_analyzer.py > simple_pump_analyzer.py`, etc.) or delete the dead routes and templates.
 
+**Replacement in progress:** `pump_research/` is a new standalone toolkit that researches the 1–2 weeks before extreme pumps (prices, SEC filings, news, Reddit) and compares those windows with ordinary periods. See `pump_research/README.md`. It isn't wired into the web app yet, and it needs network access to its data sources before it can collect real data.
+
 ## How the code is laid out
 
 ```
@@ -82,7 +84,7 @@ Verified by logging in and requesting every GET route with Flask's test client. 
 
 ## Known issues worth tackling next
 
-- **Decide what to do with the pump-detection feature:** restore it or delete about 20 dead routes and 4 templates.
+- **Old pump-detection routes:** delete the ~20 dead routes and 4 templates, or rewire those pages to read `pump_research` output.
 - **Security:**
   - `SESSION_SECRET` falls back to a hardcoded `"dev-secret-key"`.
   - Most `/api/*` routes need no login, including `/api/market/cache/clear` and `/api/background-scan/force/*`, which let anyone wipe the cache or start expensive scans with a plain GET.
