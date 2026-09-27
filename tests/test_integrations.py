@@ -212,4 +212,4 @@ def test_run_integration_passes_ticker_to_yolo_wrappers(monkeypatch):
     for key in ("yolo_candlesticks", "yolo_chart_patterns"):
         monkeypatch.setattr(integ.REGISTRY[key], "requires", [])
     for key in ("yolo_candlesticks", "yolo_chart_patterns"):
-        assert "error" not in integ.run_integration(key, prices, ticker="SPY")
+        assert "error" not in integ.run_integration(key, prices, ticker="SPY", headlines=["x"])

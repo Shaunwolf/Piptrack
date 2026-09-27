@@ -48,4 +48,4 @@ INTEGRATION = Integration(
     category="pattern_detector",
     description="Detects head & shoulders (top/bottom), double tops (M) and bottoms (W), triangles and trend lines on a rendered chart.",
     requires=["ultralytics", "mplfinance", "huggingface_hub"], pip=["ultralytics", "mplfinance", "huggingface_hub"])
-INTEGRATION.run = lambda prices=None, ticker="", **kw: yolo_chart_patterns(prices, **kw)
+INTEGRATION.run = lambda prices=None, bars=120, conf=0.25, **_: yolo_chart_patterns(prices, bars=bars, conf=conf)

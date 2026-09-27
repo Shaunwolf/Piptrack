@@ -44,4 +44,4 @@ INTEGRATION = Integration(
     category="pattern_detector",
     description="Reads Hammer, Shooting Star, Engulfing, Morning/Evening Star, Doji and Harami off the latest 20 candles.",
     requires=["ultralytics", "mplfinance", "huggingface_hub"], pip=["ultralytics", "mplfinance", "huggingface_hub"])
-INTEGRATION.run = lambda prices=None, ticker="", **kw: yolo_candlesticks(prices, **kw)
+INTEGRATION.run = lambda prices=None, conf=0.25, **_: yolo_candlesticks(prices, conf=conf)
