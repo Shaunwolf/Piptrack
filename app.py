@@ -42,4 +42,20 @@ def load_user(user_id):
 with app.app_context():
     import models  # Import models to register them
     db.create_all()
+
+    # Lightweight idempotent upgrades for existing databases.
+    # create_all() creates missing tables but never alters existing ones,
+    # so columns added to models after a deployment need explicit ALTERs.
+    from sqlalchemy import text
+    for stmt in [
+        "ALTER TABLE pattern_evolution ADD COLUMN support_resistance_strength FLOAT",
+        "ALTER TABLE pattern_evolution ADD COLUMN timing_confidence FLOAT",
+    ]:
+        with db.engine.connect() as conn:
+            try:
+                conn.execute(text(stmt))
+                conn.commit()
+            except Exception:
+                conn.rollback()  # column already exists
+
     logging.info("Database tables initialized")

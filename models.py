@@ -159,12 +159,14 @@ class PatternEvolution(db.Model):
     volatility_trend = db.Column(db.Float)
     volume_trend = db.Column(db.Float)
     momentum_change = db.Column(db.Float)
-    
+    support_resistance_strength = db.Column(db.Float)
+
     # Prediction metrics
     estimated_days_to_breakout = db.Column(db.Integer)
     breakout_probability_5_days = db.Column(db.Float)
     breakout_probability_10_days = db.Column(db.Float)
     direction_bias = db.Column(db.Float)  # 0-1 (bearish to bullish)
+    timing_confidence = db.Column(db.Float)  # 0-1 confidence in breakout timing
     
     # Key levels
     resistance_level = db.Column(db.Float)

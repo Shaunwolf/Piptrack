@@ -277,6 +277,7 @@ def scan_stocks():
 # High-Performance Market Data API Endpoints
 
 @app.route('/api/market/quick-scan')
+@login_required
 def api_quick_market_scan():
     """API endpoint for quick market scan of high-volume stocks"""
     try:
@@ -292,6 +293,7 @@ def api_quick_market_scan():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/market/comprehensive-scan')
+@login_required
 def api_comprehensive_market_scan():
     """API endpoint for comprehensive market scan"""
     try:
@@ -307,6 +309,7 @@ def api_comprehensive_market_scan():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/market/segment/<segment>')
+@login_required
 def api_market_segment_scan(segment):
     """API endpoint for market segment scanning"""
     try:
@@ -327,6 +330,7 @@ def api_market_segment_scan(segment):
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/market/movers')
+@login_required
 def api_market_movers():
     """API endpoint for market movers"""
     try:
@@ -340,6 +344,7 @@ def api_market_movers():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/background-scan/status')
+@login_required
 def api_background_scan_status():
     """API endpoint for background scanner status"""
     try:
@@ -355,6 +360,7 @@ def api_background_scan_status():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/background-scan/opportunities')
+@login_required
 def api_background_scan_opportunities():
     """API endpoint for top trading opportunities from background scanner"""
     try:
@@ -370,6 +376,7 @@ def api_background_scan_opportunities():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/background-scan/results/<scan_type>')
+@login_required
 def api_background_scan_results(scan_type):
     """API endpoint for specific background scan results"""
     try:
@@ -383,6 +390,7 @@ def api_background_scan_results(scan_type):
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/background-scan/force/<scan_type>')
+@login_required
 def api_force_background_scan(scan_type):
     """API endpoint to force an immediate scan"""
     try:
@@ -397,6 +405,7 @@ def api_force_background_scan(scan_type):
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/market/cache/stats')
+@login_required
 def api_cache_stats():
     """API endpoint for cache statistics"""
     try:
@@ -409,6 +418,7 @@ def api_cache_stats():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/market/cache/clear')
+@login_required
 def api_clear_cache():
     """API endpoint to clear market data cache"""
     try:
@@ -504,7 +514,8 @@ def help_support():
     """Help and support page"""
     return render_template('help_support.html')
 
-@app.route('/track_stock/<symbol>')
+@app.route('/track_stock/<symbol>', methods=['POST'])
+@login_required
 def track_stock(symbol):
     """Add stock to tracked list (Top 5)"""
     try:
@@ -528,6 +539,7 @@ def track_stock(symbol):
         return jsonify({'error': str(e)}), 500
 
 @app.route('/forecast/<symbol>')
+@login_required
 def forecast(symbol):
     """Forecast page for specific stock"""
     symbol = symbol.upper()
@@ -595,6 +607,7 @@ def forecast(symbol):
                              suggestions=suggestions)
 
 @app.route('/forecast_enhanced/<symbol>')
+@login_required
 def forecast_enhanced(symbol):
     """Enhanced forecast page with comprehensive analysis"""
     try:
@@ -1259,6 +1272,7 @@ def add_trade():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/ai_review/<symbol>')
+@login_required
 def ai_review(symbol):
     """Get AI analysis for a stock"""
     try:
@@ -1270,6 +1284,7 @@ def ai_review(symbol):
         return jsonify({'error': str(e)}), 500
 
 @app.route('/update_confidence_scores', methods=['POST'])
+@login_required
 def update_confidence_scores():
     """Update confidence scores for tracked stocks"""
     try:
@@ -1300,6 +1315,7 @@ def update_confidence_scores():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/export_weekly_report')
+@login_required
 def export_weekly_report():
     """Generate and download weekly PDF report"""
     try:
@@ -1311,6 +1327,7 @@ def export_weekly_report():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/chart_story/<symbol>')
+@login_required
 def chart_story(symbol):
     """Get chart story comments for hover functionality"""
     try:
@@ -1322,6 +1339,7 @@ def chart_story(symbol):
         return jsonify({'error': str(e)}), 500
 
 @app.route('/pattern_evolution/<symbol>')
+@login_required
 def pattern_evolution_analysis(symbol):
     """Get pattern evolution tracking and breakout timing predictions"""
     try:
@@ -1387,6 +1405,7 @@ def pattern_evolution_analysis(symbol):
         return jsonify({'error': str(e)}), 500
 
 @app.route('/pattern_evolution/all')
+@login_required
 def all_pattern_evolutions():
     """Get pattern evolution data for all tracked stocks"""
     try:
@@ -1475,6 +1494,7 @@ def scanner_dashboard():
         return redirect(url_for('dashboard'))
 
 @app.route('/api/sparkline/<symbol>')
+@login_required
 def get_sparkline_data(symbol):
     """Get enhanced animated sparkline data for a stock symbol"""
     try:
@@ -1558,6 +1578,7 @@ def get_sparkline_data(symbol):
         }), 500
 
 @app.route('/update_pattern_evolutions', methods=['POST'])
+@login_required
 def update_pattern_evolutions():
     """Update pattern evolution data for all tracked stocks"""
     try:
@@ -1585,6 +1606,7 @@ def update_pattern_evolutions():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/pattern_dashboard')
+@login_required
 def pattern_dashboard():
     """Pattern evolution dashboard page"""
     try:
@@ -1613,6 +1635,7 @@ def pattern_dashboard():
 # Scanner Widget Routes
 
 @app.route('/widgets')
+@login_required
 def widgets_page():
     """Scanner widget dashboard page"""
     try:
@@ -1757,6 +1780,7 @@ def quantum_tunneling_analysis(symbol):
 # Enhanced Stock Widgets with Fibonacci Scalers Routes
 
 @app.route('/api/widget/<symbol>')
+@login_required
 @optimize_route
 def get_stock_widget(symbol):
     """Get enhanced stock widget with Fibonacci scaler and chart indicators"""
@@ -1780,6 +1804,7 @@ def get_stock_widget(symbol):
         return jsonify({'success': False, 'error': str(e)})
 
 @app.route('/api/widgets/multiple')
+@login_required
 @optimize_route
 def get_multiple_widgets():
     """Get multiple enhanced widgets with Fibonacci scalers"""
@@ -1804,6 +1829,7 @@ def get_multiple_widgets():
         return jsonify({'success': False, 'error': str(e)})
 
 @app.route('/api/widgets/chart-types')
+@login_required
 def get_widget_chart_types():
     """Get available chart indicator types for widgets"""
     try:
@@ -1895,6 +1921,7 @@ def get_historical_comparison_api(symbol):
 
 # Trading Journey API Routes
 @app.route('/api/trading_journey')
+@login_required
 def get_trading_journey():
     """Get user's trading journey progress"""
     try:
@@ -1913,6 +1940,7 @@ def get_trading_journey():
         return jsonify({'success': False, 'error': str(e)})
 
 @app.route('/api/award_xp', methods=['POST'])
+@login_required
 def award_xp():
     """Award XP for user activities"""
     try:
@@ -1936,6 +1964,7 @@ def award_xp():
         return jsonify({'success': False, 'error': str(e)})
 
 @app.route('/api/leaderboard')
+@login_required
 def get_leaderboard():
     """Get leaderboard data"""
     try:
@@ -2379,6 +2408,7 @@ def enhanced_detector_dashboard():
     return render_template('enhanced_detector.html')
 
 @app.route('/api/trading_journey_progress')
+@login_required
 def get_trading_journey_progress():
     """Get animated trading journey progress data"""
     try:
@@ -2434,6 +2464,7 @@ def get_trading_journey_progress():
         return jsonify({'success': False, 'error': str(e)})
 
 @app.route('/api/journey_achievements')
+@login_required
 def get_journey_achievements():
     """Get detailed achievement data for progress tracking"""
     try:
@@ -2461,6 +2492,7 @@ def get_journey_achievements():
         return jsonify({'success': False, 'error': str(e)})
 
 @app.route('/api/journey_animation_test')
+@login_required
 def test_journey_animation():
     """Test journey animation with different experience levels"""
     try:
