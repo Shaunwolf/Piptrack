@@ -84,12 +84,13 @@ def locate_pump(prices: pd.DataFrame, approx_date: date, settings, ipo_price: Op
         event_type, pump_idx = "multi_day_run", min(run_start, spike)
 
     window = pre_window_dates(dates, pump_idx, settings.pre_window_days)
-    pump_row = prices.iloc[pump_idx]
+    # pump_date anchors the pre-pump window (the run start for multi-day runs);
+    # prev_close, day_* and the close/high multiples all describe the spike day itself
     return PumpEvent(
-        ticker="", pump_date=dates[pump_idx], event_type=event_type,
-        prev_close=prev_closes[pump_idx], day_open=float(pump_row["open"]),
-        day_high=float(pump_row["high"]), day_close=float(pump_row["close"]),
-        day_volume=float(pump_row["volume"]),
+        ticker="", pump_date=dates[pump_idx], event_type=event_type, spike_date=dates[spike],
+        prev_close=base, day_open=float(row["open"]),
+        day_high=float(row["high"]), day_close=float(row["close"]),
+        day_volume=float(row["volume"]),
         close_multiple=round(close_mult, 3), high_multiple=round(spike_mult, 3),
         run_multiple=round(run_mult, 3), run_days=run_days,
         meets_strict=bool(meets_strict), meets_broad=bool(meets_broad),

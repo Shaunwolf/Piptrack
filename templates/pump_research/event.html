@@ -14,8 +14,8 @@
     </div>
 
     {% if ev %}
-    <div class="grid grid-cols-2 md:grid-cols-6 gap-3">
-        {% for label, value in [('Type', ev.event_type.replace('_', ' ')), ('Close multiple', mult(ev.close_multiple)), ('High multiple', mult(ev.high_multiple)),
+    <div class="grid grid-cols-2 md:grid-cols-7 gap-3">
+        {% for label, value in [('Type', ev.event_type.replace('_', ' ')), ('Biggest day', ev.spike_date), ('Close multiple', mult(ev.close_multiple)), ('High multiple', mult(ev.high_multiple)),
                                 ('Best run', mult(ev.run_multiple) ~ ' / ' ~ ev.run_days ~ 'd'), ('Qualifies', 'yes' if rec.qualifies else 'no'),
                                 ('Peak on fib ext.', num(ev.peak_fib_extension))] %}
         <div class="bg-dark-surface rounded-xl p-3 border border-dark-accent"><p class="text-gray-400 text-xs">{{ label }}</p><p class="text-lg font-semibold">{{ value }}</p></div>
@@ -58,7 +58,7 @@
 
     {% call card('Reddit chatter in window', 'reddit') %}
     {% if cf.reddit_mentions is not none %}
-    <p class="text-sm text-gray-300 mb-3">{{ cf.reddit_mentions }} mentions by {{ cf.reddit_unique_authors }} authors · average sentiment {{ num(cf.reddit_avg_sentiment) }} · acceleration into the pump {{ mult(cf.reddit_mention_acceleration) }}</p>
+    <p class="text-sm text-gray-300 mb-3">{{ '≥' if cf.reddit_partial }}{{ cf.reddit_mentions }} mentions by {{ cf.reddit_unique_authors }} authors · average sentiment {{ num(cf.reddit_avg_sentiment) }} · acceleration into the pump {{ mult(cf.reddit_mention_acceleration) }}</p>
     {% for r in (ctx.get('reddit', [])|sort(attribute='score', reverse=True))[:15] %}
     <p class="text-sm py-1 border-t border-dark-accent"><span class="text-gray-400">{{ r.date }} r/{{ r.subreddit }} · score {{ r.score }} · sentiment {{ '%.2f' % r.sentiment }}</span><br>
         {% if r.url and r.url.startswith('https://www.reddit.com/') %}<a class="text-blue-400" href="{{ r.url }}" target="_blank" rel="noopener noreferrer">{{ r.title or r.text[:160] }}</a>{% else %}{{ r.title or r.text[:160] }}{% endif %}</p>

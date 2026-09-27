@@ -17,7 +17,7 @@ from .detection import locate_pump, qualifies
 from .features import price_features, daily_profile, control_window_ends, context_features
 from .technicals import technical_snapshot
 from .technicals.fibonacci import extension_multiple
-from .models import Seed, OK, NO_DATA, SKIPPED
+from .models import Seed, OK, NO_DATA, SKIPPED, PARTIAL
 from .sources.prices import records_to_frame
 
 log = logging.getLogger(__name__)
@@ -39,6 +39,7 @@ def load_seeds(path) -> List[Seed]:
                 source_url=row.get("source_url", ""),
                 notes=row.get("notes", ""),
                 ipo_price=float(row["ipo_price"]) if row.get("ipo_price") else None,
+                cik=int(row["cik"]) if row.get("cik") else None,
             ))
     return seeds
 
@@ -121,11 +122,12 @@ def collect_event(seed: Seed, settings, price_sources, context_sources) -> Dict:
     if window_dates:
         start, end = window_dates[0], window_dates[-1]
         for source in context_sources:
-            result = source.fetch(seed.ticker, start, end)
+            result = source.fetch(seed.ticker, start, end, cik=seed.cik)
             record["sources"][result.source] = {"status": result.status, "detail": result.detail, "records": len(result.records)}
             record["context"][result.source] = result.records
-        answered = [name for name, info in record["sources"].items() if info["status"] in (OK, NO_DATA)]
-        record["context_features"] = context_features(record["context"], window_dates, answered)
+        answered = [name for name, info in record["sources"].items() if info["status"] in (OK, NO_DATA, PARTIAL)]
+        partial = [name for name, info in record["sources"].items() if info["status"] == PARTIAL]
+        record["context_features"] = context_features(record["context"], window_dates, answered, partial)
         record["window_dates"] = [d.isoformat() for d in window_dates]
     else:
         for source in context_sources:

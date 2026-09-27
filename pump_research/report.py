@@ -3,7 +3,7 @@
 import os
 from typing import Dict, List
 
-STATUS_MARK = {"ok": "ok", "no_data": "none found", "blocked": "BLOCKED", "needs_key": "needs key",
+STATUS_MARK = {"ok": "ok", "partial": "partial (capped)", "no_data": "none found", "blocked": "BLOCKED", "needs_key": "needs key",
                "error": "error", "skipped": "n/a"}
 
 
@@ -73,9 +73,11 @@ def event_dossier(rec: Dict) -> str:
     if seed.get("notes"):
         out.append(f"*Notes:* {seed['notes']}")
     if ev:
-        out.append(f"*Measured:* {ev['event_type'].replace('_', ' ')}; close {_mult(ev['close_multiple'])}, "
-                   f"intraday high {_mult(ev['high_multiple'])}, best {ev['run_days']}-day run {_mult(ev['run_multiple'])} "
-                   f"from ${_num(ev['prev_close'])}. Qualifies: **{'yes' if rec['qualifies'] else 'no'}**")
+        spike = ev.get("spike_date")
+        on = f" on {spike}" if spike and spike != ev["pump_date"] else ""
+        out.append(f"*Measured:* {ev['event_type'].replace('_', ' ')} starting {ev['pump_date']}; biggest day{on}: close "
+                   f"{_mult(ev['close_multiple'])}, intraday high {_mult(ev['high_multiple'])} from ${_num(ev['prev_close'])}; "
+                   f"best {ev['run_days']}-day run {_mult(ev['run_multiple'])}. Qualifies: **{'yes' if rec['qualifies'] else 'no'}**")
     else:
         out.append(f"*Measured:* {rec['detection']}")
 
@@ -106,7 +108,7 @@ def event_dossier(rec: Dict) -> str:
     reddit = sorted(ctx.get("reddit", []), key=lambda r: -(r.get("score") or 0))
     if reddit:
         cf = rec.get("context_features") or {}
-        out.append(f"\n**Reddit** — {cf.get('reddit_mentions')} mentions by {cf.get('reddit_unique_authors')} authors, "
+        out.append(f"\n**Reddit** — {'≥' if cf.get('reddit_partial') else ''}{cf.get('reddit_mentions')} mentions by {cf.get('reddit_unique_authors')} authors, "
                    f"avg sentiment {_num(cf.get('reddit_avg_sentiment'))}, mentions per day {cf.get('reddit_mentions_per_day')}")
         for r in reddit[:8]:
             label = r["title"] or r["text"][:120]
@@ -145,7 +147,8 @@ def build_report(records: List[Dict], result: Dict, settings) -> str:
                      ev.get("event_type", "–"), _mult(ev.get("close_multiple")), _mult(ev.get("high_multiple")),
                      _mult(ev.get("run_multiple")), "yes" if rec["qualifies"] else "no",
                      _pct(pf.get("window_return")), _mult(pf.get("avg_volume_ratio")),
-                     _known(cf.get("filings_total")), _known(cf.get("reddit_mentions"))])
+                     _known(cf.get("filings_total")),
+                     ("≥" if cf.get("reddit_partial") else "") + str(_known(cf.get("reddit_mentions")))])
     out += ["", "## Events", _table(["Ticker", "Pump date", "Category", "Type", "Close", "High", "Run", "Qualifies",
                                      "Window return", "Volume vs base", "Filings", "Reddit"], rows)]
 

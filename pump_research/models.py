@@ -11,6 +11,7 @@ BLOCKED = "blocked"        # network policy / host unreachable
 NEEDS_KEY = "needs_key"    # source requires an API key that isn't configured
 ERROR = "error"
 SKIPPED = "skipped"
+PARTIAL = "partial"      # source answered but hit a result cap: counts are lower bounds
 
 
 @dataclass
@@ -23,6 +24,7 @@ class Seed:
     source_url: str = ""
     notes: str = ""
     ipo_price: Optional[float] = None
+    cik: Optional[int] = None        # SEC company id, needed for delisted/renamed tickers
 
 
 @dataclass
@@ -42,7 +44,8 @@ class PumpEvent:
     ticker: str
     pump_date: date
     event_type: str                # 'single_day', 'multi_day_run', 'ipo_debut'
-    prev_close: Optional[float]
+    spike_date: date               # day of the biggest intraday move (== pump_date except for runs)
+    prev_close: Optional[float]    # close before the spike day
     day_open: float
     day_high: float
     day_close: float
@@ -58,6 +61,6 @@ class PumpEvent:
 
     def to_dict(self):
         d = asdict(self)
-        for k in ("pump_date", "window_start", "window_end"):
+        for k in ("pump_date", "spike_date", "window_start", "window_end"):
             d[k] = d[k].isoformat() if d[k] else None
         return d

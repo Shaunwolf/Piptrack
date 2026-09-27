@@ -81,7 +81,8 @@ def cmd_discover(args):
         for source in sources:
             result = source.fetch(ticker, start - timedelta(days=5), end)
             if result.status == OK:
-                for d in discover(records_to_frame(result.records), s):
+                # The fetch starts a few days early for a previous close; only report dates in range
+                for d in (d for d in discover(records_to_frame(result.records), s) if start <= d <= end):
                     found.append({"ticker": ticker, "approx_date": d.isoformat(), "category": "discovered",
                                   "reported_move": "", "source_url": "", "ipo_price": "", "notes": f"found via {source.name}"})
                 break

@@ -75,7 +75,7 @@ The score is a research aid built on a small, hand-picked sample. It is not a pr
 
 ## How it works
 
-1. **Seeds** (`seeds.csv`): candidate events with an approximate date, a reported move and a source link. Nothing in this file counts as verified.
+1. **Seeds** (`seeds.csv`): candidate events with an approximate date, a reported move and a source link. Nothing in this file counts as verified. The optional `cik` column (the SEC company number) lets filings be found for delisted or renamed tickers.
 2. **Detection** (`detection.py`): searches ±10 trading days around the seed date for the real spike. It measures:
    - the same-day close multiple
    - the intraday-high multiple
@@ -86,7 +86,7 @@ The score is a research aid built on a small, hand-picked sample. It is not a pr
    - `broad` (default): the intraday high is ≥ 5x, or a run of up to 5 days reaches 5x.
 
    Famous squeezes below the bar (GME, AMC…) are still collected and marked `qualifies: false`, so you can compare them.
-3. **Collection** (`collector.py`, `sources/`): fetches the pre-pump window from each source. Every source reports `ok`, `no_data`, `blocked`, `needs_key`, `skipped` or `error`. A source that didn't answer shows up as **unknown** (`?`), never as zero.
+3. **Collection** (`collector.py`, `sources/`): fetches the pre-pump window from each source. Every source reports `ok`, `no_data`, `partial` (hit a result cap, so its counts are lower bounds, shown as `≥N`), `blocked`, `needs_key`, `skipped` or `error`. A source that didn't answer shows up as **unknown** (`?`), never as zero.
 4. **Features** (`features.py`):
    - Price: window return, volatility, and average, peak and last-3-day volume versus the prior 60-day baseline; volume trend, gap-ups, RSI, price level, dollar volume.
    - Context: counts of offering, 8-K, insider and ownership filings; news count; Reddit mentions, unique authors, acceleration into the pump, and sentiment (VADER).

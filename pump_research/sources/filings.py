@@ -3,6 +3,7 @@
 from datetime import date
 
 from .base import DataSource, http_get_json
+from ..models import SourceResult, SKIPPED
 
 # What each form type tells us about pre-pump activity
 FORM_GROUPS = {
@@ -39,19 +40,27 @@ class SecEdgarFilings(DataSource):
     def _fetch(self, ticker, start, end, cik=None, **kwargs):
         cik = cik or self._cik(ticker)
         if not cik:
-            return []
+            # Delisted/renamed tickers drop out of SEC's current list: that's unknown, not "no filings"
+            return SourceResult(self.name, SKIPPED,
+                                detail=f"{ticker} isn't in SEC's current ticker list; add its CIK to seeds.csv")
         data = http_get_json(f"https://data.sec.gov/submissions/CIK{int(cik):010d}.json",
                              headers=self._headers(), timeout=self.settings.request_timeout)
-        recent = data.get("filings", {}).get("recent", {})
+        filings = data.get("filings", {})
+        pages = [filings.get("recent", {})]
+        # The main response only holds the most recent ~1,000 filings; older ones live in extra files
+        for extra in filings.get("files", []):
+            if extra.get("filingFrom", "9999") <= end.isoformat() and extra.get("filingTo", "0000") >= start.isoformat():
+                pages.append(http_get_json(f"https://data.sec.gov/submissions/{extra['name']}",
+                                           headers=self._headers(), timeout=self.settings.request_timeout))
         records = []
-        for form, filed, acc, doc, desc in zip(recent.get("form", []), recent.get("filingDate", []),
-                                               recent.get("accessionNumber", []),
-                                               recent.get("primaryDocument", []),
-                                               recent.get("primaryDocDescription", [])):
-            filed_date = date.fromisoformat(filed)
-            if start <= filed_date <= end:
-                records.append({
-                    "date": filed, "form": form, "group": form_group(form), "description": desc,
-                    "url": f"https://www.sec.gov/Archives/edgar/data/{int(cik)}/{acc.replace('-', '')}/{doc}",
-                })
+        for page in pages:
+            for form, filed, acc, doc, desc in zip(page.get("form", []), page.get("filingDate", []),
+                                                   page.get("accessionNumber", []),
+                                                   page.get("primaryDocument", []),
+                                                   page.get("primaryDocDescription", [])):
+                if start <= date.fromisoformat(filed) <= end:
+                    records.append({
+                        "date": filed, "form": form, "group": form_group(form), "description": desc,
+                        "url": f"https://www.sec.gov/Archives/edgar/data/{int(cik)}/{acc.replace('-', '')}/{doc}",
+                    })
         return sorted(records, key=lambda r: r["date"])

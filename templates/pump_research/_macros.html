@@ -6,7 +6,7 @@
 
 {% macro status_badge(status) -%}
 {%- set colors = {'ok': 'bg-green-900 text-green-300', 'no_data': 'bg-gray-700 text-gray-300', 'blocked': 'bg-red-900 text-red-300',
-                  'needs_key': 'bg-yellow-900 text-yellow-300', 'error': 'bg-red-900 text-red-300', 'skipped': 'bg-gray-800 text-gray-400'} -%}
+                  'needs_key': 'bg-yellow-900 text-yellow-300', 'partial': 'bg-yellow-900 text-yellow-300', 'error': 'bg-red-900 text-red-300', 'skipped': 'bg-gray-800 text-gray-400'} -%}
 <span class="px-2 py-0.5 rounded text-xs {{ colors.get(status, 'bg-gray-700') }}">{{ status.replace('_', ' ') }}</span>
 {%- endmacro %}
 

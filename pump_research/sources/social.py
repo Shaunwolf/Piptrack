@@ -3,7 +3,7 @@
 import re
 from datetime import datetime, time, timezone
 
-from .base import DataSource, http_get_json
+from .base import DataSource, Partial, http_get_json
 
 # Tickers that are also common words/abbreviations: only count "$TICKER" mentions
 AMBIGUOUS_TICKERS = {
@@ -25,7 +25,7 @@ def mention_pattern(ticker):
 class PullpushReddit(DataSource):
     name = "reddit"
     base_url = "https://api.pullpush.io/reddit/search"
-    max_pages = 10  # 100 items per page per endpoint
+    max_pages = 30  # 100 items per page per endpoint; beyond this the result is marked partial
 
     def __init__(self, settings):
         super().__init__(settings)
@@ -33,6 +33,7 @@ class PullpushReddit(DataSource):
         self.analyzer = SentimentIntensityAnalyzer()
 
     def _search(self, kind, query, after, before):
+        """Returns (items, capped)"""
         items = []
         for _ in range(self.max_pages):
             data = http_get_json(f"{self.base_url}/{kind}/", params={
@@ -41,17 +42,20 @@ class PullpushReddit(DataSource):
             batch = data.get("data", [])
             items.extend(batch)
             if len(batch) < 100:
-                break
+                return items, False
             before = min(int(i["created_utc"]) for i in batch)
-        return items
+        return items, True
 
     def _fetch(self, ticker, start, end, **kwargs):
         pattern = mention_pattern(ticker)
         query = f"${ticker}" if ticker.upper() in AMBIGUOUS_TICKERS else ticker
         after, before = _epoch(start), _epoch(end, end_of_day=True)
-        records = []
+        records, capped_kinds = [], []
         for kind in ("submission", "comment"):
-            for item in self._search(kind, query, after, before):
+            items, capped = self._search(kind, query, after, before)
+            if capped:
+                capped_kinds.append(kind)
+            for item in items:
                 text = " ".join(filter(None, [item.get("title"), item.get("selftext"), item.get("body")]))
                 if not pattern.search(text):
                     continue
@@ -64,4 +68,7 @@ class PullpushReddit(DataSource):
                     "sentiment": self.analyzer.polarity_scores(text)["compound"],
                     "url": f"https://www.reddit.com{item['permalink']}" if item.get("permalink") else "",
                 })
-        return sorted(records, key=lambda r: r["date"])
+        records.sort(key=lambda r: r["date"])
+        if capped_kinds:
+            return Partial(records, f"stopped after {self.max_pages * 100} {'/'.join(capped_kinds)}s: counts are lower bounds")
+        return records

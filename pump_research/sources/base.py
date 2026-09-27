@@ -2,7 +2,7 @@
 
 import requests
 
-from ..models import SourceResult, OK, NO_DATA, BLOCKED, ERROR
+from ..models import SourceResult, OK, NO_DATA, BLOCKED, ERROR, PARTIAL
 
 
 class SourceBlocked(Exception):
@@ -22,8 +22,16 @@ def http_get_json(url, params=None, headers=None, timeout=20):
     return resp.json()
 
 
+class Partial(list):
+    """Records returned by a source that stopped at a result cap"""
+
+    def __init__(self, records, detail=""):
+        super().__init__(records)
+        self.detail = detail
+
+
 class DataSource:
-    """Base class: subclasses implement _fetch and return a list of records"""
+    """Base class: subclasses implement _fetch and return a list of records (or Partial when capped)"""
     name = "base"
 
     def __init__(self, settings):
@@ -38,6 +46,8 @@ class DataSource:
             return SourceResult(self.name, ERROR, detail=f"{type(e).__name__}: {e}")
         if isinstance(records, SourceResult):
             return records
+        if isinstance(records, Partial):
+            return SourceResult(self.name, PARTIAL, records=list(records), detail=records.detail)
         return SourceResult(self.name, OK if records else NO_DATA, records=records)
 
     def _fetch(self, ticker, start, end, **kwargs):

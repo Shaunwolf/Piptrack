@@ -90,7 +90,8 @@ def daily_profile(prices: pd.DataFrame, pump_idx: int, settings) -> List[Dict]:
 
 def control_window_ends(prices: pd.DataFrame, pump_idx: int, settings) -> List[int]:
     """Evenly spaced end positions for ordinary windows well before the pump"""
-    first = settings.pre_window_days + 20  # leave room for some baseline
+    # A full baseline before the window, so ratios are measured the same way as for pump windows
+    first = settings.baseline_days + settings.pre_window_days
     last = pump_idx - settings.control_gap_days
     if last <= first:
         return []
@@ -98,11 +99,12 @@ def control_window_ends(prices: pd.DataFrame, pump_idx: int, settings) -> List[i
     return sorted({int(x) for x in np.linspace(first, last, k)})
 
 
-def context_features(context: Dict[str, List[Dict]], window_dates: List[date], answered=None) -> Dict:
+def context_features(context: Dict[str, List[Dict]], window_dates: List[date], answered=None, partial=()) -> Dict:
     """
     Summaries of filings, news and Reddit activity inside the window.
     `answered` is the set of sources that actually responded; features from the others are None
     (unknown) rather than zero. Defaults to every source present in `context`.
+    `partial` lists sources that hit a result cap; their counts are lower bounds (flagged *_partial).
     """
     answered = set(context) if answered is None else set(answered)
     has_filings = "sec_filings" in answered
@@ -136,7 +138,11 @@ def context_features(context: Dict[str, List[Dict]], window_dates: List[date], a
         "reddit_avg_sentiment": float(np.mean(sentiments)) if sentiments else None,
         "reddit_top_subreddits": Counter(r["subreddit"] for r in reddit).most_common(5),
     }
+    feats["news_partial"] = bool({"polygon_news", "gdelt_news"} & set(partial))
+    feats["reddit_partial"] = "reddit" in set(partial)
     for key in feats:
+        if key.endswith("_partial"):
+            continue
         if (key.startswith("filings_") and not has_filings) or (key.startswith("news_") and not has_news) \
                 or (key.startswith("reddit_") and not has_reddit):
             feats[key] = None
