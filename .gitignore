@@ -17,3 +17,5 @@ __pycache__/
 pump_data/
 discovered_seeds.csv
 .pytest_cache/
+
+hf_inspect/
