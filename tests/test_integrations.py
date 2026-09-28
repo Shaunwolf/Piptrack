@@ -250,3 +250,16 @@ def test_onnx_chart_patterns_decodes_yolov8_output(monkeypatch):
     p = out["patterns"][0]
     assert p["direction"] == "bullish" and p["start_date"] < p["completed_date"]
     assert p["completed_date"] > window.index[len(window) // 2].isoformat()
+
+
+def test_minute_bars_are_split_adjusted_before_the_lead_in():
+    days = pd.date_range("2024-10-01", periods=40, freq="B").date
+    close = np.full(40, 0.27)
+    close[20:] = 2.7                    # 1:10 reverse split on day 20
+    close[35] = 27.0                    # a genuine 10x pump inside the protected lead-in
+    daily = pd.DataFrame({"open": close, "high": close * 1.02, "low": close * 0.98, "close": close,
+                          "volume": np.r_[np.full(20, 1e6), np.full(20, 1e5)]}, index=days)
+    adjusted, splits = ohlcv_minute.adjust_splits(daily, protect_from=days[30])
+    assert splits == [{"date": days[20].isoformat(), "kind": "reverse", "ratio": "1:10"}]
+    assert adjusted["close"].iloc[0] == pytest.approx(2.7) and adjusted["volume"].iloc[0] == pytest.approx(1e5)
+    assert adjusted["close"].iloc[35] == pytest.approx(27.0)
