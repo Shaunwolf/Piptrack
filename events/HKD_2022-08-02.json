@@ -1,0 +1,232 @@
+{
+  "id": "HKD_2022-08-02",
+  "seed": {
+    "ticker": "HKD",
+    "approx_date": "2022-08-02",
+    "category": "extreme",
+    "reported_move": "+1500% over 5 sessions, +21000% from IPO",
+    "source_url": "https://www.cbsnews.com/news/amtd-meme-stock-21000-percent-surge/",
+    "notes": "Multi-day run; IPO July 2022",
+    "ipo_price": 7.8,
+    "cik": null,
+    "price_ticker": ""
+  },
+  "criterion": "broad",
+  "min_multiple": 5.0,
+  "sources": {
+    "yahoo_prices": {
+      "status": "ok",
+      "detail": "",
+      "records": 35
+    },
+    "sec_filings": {
+      "status": "error",
+      "detail": "HTTPError: 403 from https://www.sec.gov/files/company_tickers.json: <!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\"> <html xmlns=\"http://www.w3.org/1999/xhtml\"> <head> <meta http-equiv=\"Content-T",
+      "records": 0
+    },
+    "polygon_news": {
+      "status": "needs_key",
+      "detail": "Set POLYGON_API_KEY",
+      "records": 0
+    },
+    "gdelt_news": {
+      "status": "skipped",
+      "detail": "Window is older than GDELT DOC's ~3 month search range",
+      "records": 0
+    },
+    "reddit": {
+      "status": "error",
+      "detail": "HTTPError: submission search failed (403 from https://api.pullpush.io/reddit/search/submission/: <!DOCTYPE html><html); comment search failed (403 from https://api.pullpush.io/reddit/search/comment/: <!DOCTYPE html><html la)",
+      "records": 0
+    },
+    "reddit_arctic_shift": {
+      "status": "partial",
+      "detail": "7 of 10 subreddits failed: counts are lower bounds",
+      "records": 0
+    }
+  },
+  "event": {
+    "ticker": "HKD",
+    "pump_date": "2022-07-22",
+    "event_type": "multi_day_run",
+    "spike_date": "2022-07-22",
+    "prev_close": 20.31999969482422,
+    "day_open": 19.709999084472656,
+    "day_high": 70.9800033569336,
+    "day_close": 68.0,
+    "day_volume": 2419200.0,
+    "close_multiple": 3.346,
+    "high_multiple": 3.493,
+    "run_multiple": 29.817,
+    "run_days": 5,
+    "meets_strict": false,
+    "meets_broad": true,
+    "window_start": "2022-07-15",
+    "window_end": "2022-07-21"
+  },
+  "qualifies": true,
+  "detection": "located",
+  "price_features": null,
+  "technicals": null,
+  "daily_profile": [],
+  "controls": [],
+  "context": {
+    "sec_filings": [],
+    "polygon_news": [],
+    "gdelt_news": [],
+    "reddit": []
+  },
+  "context_features": {
+    "filings_total": null,
+    "filings_offering": null,
+    "filings_material_event": null,
+    "filings_insider": null,
+    "filings_ownership": null,
+    "news_articles": null,
+    "reddit_mentions": null,
+    "reddit_unique_authors": null,
+    "reddit_mentions_per_day": null,
+    "reddit_mention_acceleration": null,
+    "reddit_avg_sentiment": null,
+    "reddit_top_subreddits": null,
+    "news_partial": false,
+    "reddit_partial": true
+  },
+  "price_history": [
+    {
+      "date": "2022-07-15",
+      "open": 13.0,
+      "high": 19.700000762939453,
+      "low": 12.050000190734863,
+      "close": 16.209999084472656,
+      "volume": 312700.0
+    },
+    {
+      "date": "2022-07-18",
+      "open": 22.440000534057617,
+      "high": 29.5,
+      "low": 22.100000381469727,
+      "close": 27.799999237060547,
+      "volume": 806900.0
+    },
+    {
+      "date": "2022-07-19",
+      "open": 31.739999771118164,
+      "high": 33.025001525878906,
+      "low": 13.520000457763672,
+      "close": 24.8799991607666,
+      "volume": 2265400.0
+    },
+    {
+      "date": "2022-07-20",
+      "open": 22.010000228881836,
+      "high": 23.299999237060547,
+      "low": 19.549999237060547,
+      "close": 20.700000762939453,
+      "volume": 393600.0
+    },
+    {
+      "date": "2022-07-21",
+      "open": 21.149999618530273,
+      "high": 22.700000762939453,
+      "low": 18.290000915527344,
+      "close": 20.31999969482422,
+      "volume": 404700.0
+    },
+    {
+      "date": "2022-07-22",
+      "open": 19.709999084472656,
+      "high": 70.9800033569336,
+      "low": 19.709999084472656,
+      "close": 68.0,
+      "volume": 2419200.0
+    },
+    {
+      "date": "2022-07-25",
+      "open": 57.70000076293945,
+      "high": 57.70000076293945,
+      "low": 38.5,
+      "close": 43.849998474121094,
+      "volume": 1233900.0
+    },
+    {
+      "date": "2022-07-26",
+      "open": 41.650001525878906,
+      "high": 59.0,
+      "low": 37.55099868774414,
+      "close": 56.310001373291016,
+      "volume": 888900.0
+    },
+    {
+      "date": "2022-07-27",
+      "open": 51.279998779296875,
+      "high": 79.9000015258789,
+      "low": 49.08000183105469,
+      "close": 76.69000244140625,
+      "volume": 1343200.0
+    },
+    {
+      "date": "2022-07-28",
+      "open": 71.02999877929688,
+      "high": 198.5,
+      "low": 69.55999755859375,
+      "close": 180.0,
+      "volume": 2426300.0
+    },
+    {
+      "date": "2022-07-29",
+      "open": 163.39999389648438,
+      "high": 485.0,
+      "low": 145.0,
+      "close": 400.25,
+      "volume": 1456200.0
+    },
+    {
+      "date": "2022-08-01",
+      "open": 335.5,
+      "high": 767.030029296875,
+      "low": 278.510009765625,
+      "close": 742.0,
+      "volume": 443800.0
+    },
+    {
+      "date": "2022-08-02",
+      "open": 930.0,
+      "high": 2555.300048828125,
+      "low": 668.010009765625,
+      "close": 1679.0,
+      "volume": 351200.0
+    },
+    {
+      "date": "2022-08-03",
+      "open": 1900.0,
+      "high": 2117.800048828125,
+      "low": 975.0,
+      "close": 1100.0,
+      "volume": 116800.0
+    },
+    {
+      "date": "2022-08-04",
+      "open": 1108.800048828125,
+      "high": 1108.800048828125,
+      "low": 545.010009765625,
+      "close": 800.0,
+      "volume": 89300.0
+    },
+    {
+      "date": "2022-08-05",
+      "open": 919.739990234375,
+      "high": 919.739990234375,
+      "low": 675.0,
+      "close": 721.22998046875,
+      "volume": 50600.0
+    }
+  ],
+  "window_dates": [
+    "2022-07-15",
+    "2022-07-18",
+    "2022-07-19",
+    "2022-07-20",
+    "2022-07-21"
+  ]
+}

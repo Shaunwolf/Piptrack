@@ -1,0 +1,261 @@
+{
+  "id": "MMAT_2021-06-28",
+  "seed": {
+    "ticker": "MMAT",
+    "approx_date": "2021-06-28",
+    "category": "famous_squeeze",
+    "reported_move": "TRCH merger squeeze (from memory)",
+    "source_url": "",
+    "notes": "No source yet - verify",
+    "ipo_price": null,
+    "cik": null,
+    "price_ticker": ""
+  },
+  "criterion": "broad",
+  "min_multiple": 5.0,
+  "sources": {
+    "yahoo_prices": {
+      "status": "no_data",
+      "detail": "",
+      "records": 0
+    },
+    "hf_ohlcv_1m": {
+      "status": "ok",
+      "detail": "",
+      "records": 22
+    },
+    "sec_filings": {
+      "status": "error",
+      "detail": "HTTPError: 403 from https://www.sec.gov/files/company_tickers.json: <!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\"> <html xmlns=\"http://www.w3.org/1999/xhtml\"> <head> <meta http-equiv=\"Content-T",
+      "records": 0
+    },
+    "polygon_news": {
+      "status": "needs_key",
+      "detail": "Set POLYGON_API_KEY",
+      "records": 0
+    },
+    "gdelt_news": {
+      "status": "skipped",
+      "detail": "Window is older than GDELT DOC's ~3 month search range",
+      "records": 0
+    },
+    "reddit": {
+      "status": "error",
+      "detail": "HTTPError: submission search failed (403 from https://api.pullpush.io/reddit/search/submission/: <!DOCTYPE html><html); comment search failed (403 from https://api.pullpush.io/reddit/search/comment/: <!DOCTYPE html><html la)",
+      "records": 0
+    },
+    "reddit_arctic_shift": {
+      "status": "partial",
+      "detail": "7 of 10 subreddits failed: counts are lower bounds",
+      "records": 1
+    }
+  },
+  "event": {
+    "ticker": "MMAT",
+    "pump_date": "2021-07-06",
+    "event_type": "multi_day_run",
+    "spike_date": "2021-07-06",
+    "prev_close": 6.74,
+    "day_open": 6.96,
+    "day_high": 7.995,
+    "day_close": 7.17,
+    "day_volume": 19729042.0,
+    "close_multiple": 1.064,
+    "high_multiple": 1.186,
+    "run_multiple": 1.084,
+    "run_days": 2,
+    "meets_strict": false,
+    "meets_broad": false,
+    "window_start": "2021-06-28",
+    "window_end": "2021-07-02"
+  },
+  "qualifies": false,
+  "detection": "located",
+  "price_features": null,
+  "technicals": null,
+  "daily_profile": [],
+  "controls": [],
+  "context": {
+    "sec_filings": [],
+    "polygon_news": [],
+    "gdelt_news": [],
+    "reddit": [
+      {
+        "date": "2021-06-28",
+        "kind": "submission",
+        "subreddit": "pennystocks",
+        "author": "Felix_D_Kat",
+        "score": 5,
+        "num_comments": 1,
+        "title": "4x2=8 MMAT and why it matters.....",
+        "text": "4x2=8 MMAT and why it matters..... [removed]",
+        "sentiment": 0.0258,
+        "url": "https://www.reddit.com/r/pennystocks/comments/o9lj90/4x28_mmat_and_why_it_matters/"
+      }
+    ]
+  },
+  "context_features": {
+    "filings_total": null,
+    "filings_offering": null,
+    "filings_material_event": null,
+    "filings_insider": null,
+    "filings_ownership": null,
+    "news_articles": null,
+    "reddit_mentions": 1,
+    "reddit_unique_authors": 1,
+    "reddit_mentions_per_day": [
+      1,
+      0,
+      0,
+      0,
+      0
+    ],
+    "reddit_mention_acceleration": 0.5,
+    "reddit_avg_sentiment": 0.0258,
+    "reddit_top_subreddits": [
+      [
+        "pennystocks",
+        1
+      ]
+    ],
+    "news_partial": false,
+    "reddit_partial": true
+  },
+  "price_history": [
+    {
+      "date": "2021-06-28",
+      "open": 9.76,
+      "high": 9.97,
+      "low": 7.6,
+      "close": 7.94,
+      "volume": 26898369.0
+    },
+    {
+      "date": "2021-06-29",
+      "open": 8.23,
+      "high": 8.48,
+      "low": 6.95,
+      "close": 7.03,
+      "volume": 19707627.0
+    },
+    {
+      "date": "2021-06-30",
+      "open": 6.84,
+      "high": 7.95,
+      "low": 6.311,
+      "close": 7.45,
+      "volume": 25352288.0
+    },
+    {
+      "date": "2021-07-01",
+      "open": 7.34,
+      "high": 7.76,
+      "low": 7.05,
+      "close": 7.29,
+      "volume": 9847006.0
+    },
+    {
+      "date": "2021-07-02",
+      "open": 7.27,
+      "high": 7.3,
+      "low": 6.73,
+      "close": 6.74,
+      "volume": 8715725.0
+    },
+    {
+      "date": "2021-07-06",
+      "open": 6.96,
+      "high": 7.995,
+      "low": 6.58,
+      "close": 7.17,
+      "volume": 19729042.0
+    },
+    {
+      "date": "2021-07-07",
+      "open": 6.93,
+      "high": 7.07,
+      "low": 5.79,
+      "close": 5.8,
+      "volume": 15705699.0
+    },
+    {
+      "date": "2021-07-08",
+      "open": 5.42,
+      "high": 6.25,
+      "low": 5.33,
+      "close": 5.72,
+      "volume": 13346076.0
+    },
+    {
+      "date": "2021-07-09",
+      "open": 5.64,
+      "high": 5.64,
+      "low": 4.72,
+      "close": 4.74,
+      "volume": 25637607.0
+    },
+    {
+      "date": "2021-07-12",
+      "open": 4.87,
+      "high": 4.87,
+      "low": 3.88,
+      "close": 3.94,
+      "volume": 39914123.0
+    },
+    {
+      "date": "2021-07-13",
+      "open": 4.0,
+      "high": 4.2,
+      "low": 3.51,
+      "close": 3.98,
+      "volume": 47690127.0
+    },
+    {
+      "date": "2021-07-14",
+      "open": 3.95,
+      "high": 4.7,
+      "low": 3.63,
+      "close": 4.27,
+      "volume": 37796725.0
+    },
+    {
+      "date": "2021-07-15",
+      "open": 4.25,
+      "high": 4.44,
+      "low": 3.73,
+      "close": 3.79,
+      "volume": 19101695.0
+    },
+    {
+      "date": "2021-07-16",
+      "open": 3.79,
+      "high": 3.9,
+      "low": 3.6,
+      "close": 3.63,
+      "volume": 11640820.0
+    },
+    {
+      "date": "2021-07-19",
+      "open": 3.43,
+      "high": 3.58,
+      "low": 3.31,
+      "close": 3.47,
+      "volume": 12096907.0
+    },
+    {
+      "date": "2021-07-20",
+      "open": 3.44,
+      "high": 3.47,
+      "low": 3.085,
+      "close": 3.19,
+      "volume": 21089962.0
+    }
+  ],
+  "window_dates": [
+    "2021-06-28",
+    "2021-06-29",
+    "2021-06-30",
+    "2021-07-01",
+    "2021-07-02"
+  ]
+}

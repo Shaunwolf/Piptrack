@@ -1,0 +1,165 @@
+{
+  "id": "MEGL_2022-08-05",
+  "seed": {
+    "ticker": "MEGL",
+    "approx_date": "2022-08-05",
+    "category": "extreme",
+    "reported_move": "+2000% on IPO debut vs $4 IPO price",
+    "source_url": "https://investorplace.com/2022/08/why-is-magic-empire-global-megl-stock-up-2000-today/",
+    "notes": "IPO debut: no pre-pump trading history",
+    "ipo_price": 4.0,
+    "cik": null,
+    "price_ticker": ""
+  },
+  "criterion": "broad",
+  "min_multiple": 5.0,
+  "sources": {
+    "yahoo_prices": {
+      "status": "ok",
+      "detail": "",
+      "records": 21
+    },
+    "sec_filings": {
+      "status": "skipped",
+      "detail": "no pre-pump window (IPO debut)",
+      "records": 0
+    },
+    "polygon_news": {
+      "status": "skipped",
+      "detail": "no pre-pump window (IPO debut)",
+      "records": 0
+    },
+    "gdelt_news": {
+      "status": "skipped",
+      "detail": "no pre-pump window (IPO debut)",
+      "records": 0
+    },
+    "reddit": {
+      "status": "skipped",
+      "detail": "no pre-pump window (IPO debut)",
+      "records": 0
+    },
+    "reddit_arctic_shift": {
+      "status": "skipped",
+      "detail": "no pre-pump window (IPO debut)",
+      "records": 0
+    }
+  },
+  "event": {
+    "ticker": "MEGL",
+    "pump_date": "2022-08-05",
+    "event_type": "ipo_debut",
+    "spike_date": "2022-08-05",
+    "prev_close": 4.0,
+    "day_open": 49.49999937077158,
+    "day_high": 233.59049400943093,
+    "day_close": 96.02999877929688,
+    "day_volume": 664400.0,
+    "close_multiple": 24.007,
+    "high_multiple": 58.398,
+    "run_multiple": 28.958,
+    "run_days": 2,
+    "meets_strict": true,
+    "meets_broad": true,
+    "window_start": null,
+    "window_end": null
+  },
+  "qualifies": true,
+  "detection": "located",
+  "price_features": null,
+  "technicals": null,
+  "daily_profile": [],
+  "controls": [],
+  "context": {},
+  "context_features": null,
+  "price_history": [
+    {
+      "date": "2022-08-05",
+      "open": 49.49999937077158,
+      "high": 233.59049400943093,
+      "low": 48.757499380210014,
+      "close": 96.02999877929688,
+      "volume": 664400.0
+    },
+    {
+      "date": "2022-08-08",
+      "open": 231.88769943597248,
+      "high": 247.44060632856323,
+      "low": 85.43700437183874,
+      "close": 115.83000183105469,
+      "volume": 948700.0
+    },
+    {
+      "date": "2022-08-09",
+      "open": 84.44700671889588,
+      "high": 89.06535027438937,
+      "low": 11.592900545380346,
+      "close": 12.196800231933594,
+      "volume": 11472100.0
+    },
+    {
+      "date": "2022-08-10",
+      "open": 13.028399695884895,
+      "high": 14.057999646024012,
+      "low": 9.980190207539533,
+      "close": 12.177000045776367,
+      "volume": 16540000.0
+    },
+    {
+      "date": "2022-08-11",
+      "open": 11.711699696759558,
+      "high": 11.850300033954293,
+      "low": 10.50290999972666,
+      "close": 10.790999412536621,
+      "volume": 4359300.0
+    },
+    {
+      "date": "2022-08-12",
+      "open": 10.197000129077846,
+      "high": 10.197000129077846,
+      "low": 7.949699689059945,
+      "close": 8.137800216674805,
+      "volume": 4135600.0
+    },
+    {
+      "date": "2022-08-15",
+      "open": 9.692100236062208,
+      "high": 18.30510029057494,
+      "low": 9.157500258723834,
+      "close": 17.55270004272461,
+      "volume": 77104300.0
+    },
+    {
+      "date": "2022-08-16",
+      "open": 20.681100106753224,
+      "high": 21.78000074878068,
+      "low": 13.068000260440886,
+      "close": 13.869900703430176,
+      "volume": 26382000.0
+    },
+    {
+      "date": "2022-08-17",
+      "open": 14.35500017325954,
+      "high": 15.572699734770689,
+      "low": 11.454299836125138,
+      "close": 12.642300605773926,
+      "volume": 6584300.0
+    },
+    {
+      "date": "2022-08-18",
+      "open": 11.879999924433731,
+      "high": 15.28559948735087,
+      "low": 10.05939018526658,
+      "close": 13.49370002746582,
+      "volume": 10499900.0
+    },
+    {
+      "date": "2022-08-19",
+      "open": 12.83039992367671,
+      "high": 14.741100208810657,
+      "low": 12.186900307053783,
+      "close": 12.869999885559082,
+      "volume": 5776800.0
+    }
+  ]
+}

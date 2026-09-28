@@ -1,0 +1,289 @@
+{
+  "id": "IRNT_2021-09-16",
+  "seed": {
+    "ticker": "IRNT",
+    "approx_date": "2021-09-16",
+    "category": "famous_squeeze",
+    "reported_move": "de-SPAC low-float squeeze (from memory)",
+    "source_url": "",
+    "notes": "No source yet - verify",
+    "ipo_price": null,
+    "cik": null,
+    "price_ticker": ""
+  },
+  "criterion": "broad",
+  "min_multiple": 5.0,
+  "sources": {
+    "yahoo_prices": {
+      "status": "no_data",
+      "detail": "",
+      "records": 0
+    },
+    "hf_ohlcv_1m": {
+      "status": "ok",
+      "detail": "",
+      "records": 35
+    },
+    "sec_filings": {
+      "status": "error",
+      "detail": "HTTPError: 403 from https://www.sec.gov/files/company_tickers.json: <!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\"> <html xmlns=\"http://www.w3.org/1999/xhtml\"> <head> <meta http-equiv=\"Content-T",
+      "records": 0
+    },
+    "polygon_news": {
+      "status": "needs_key",
+      "detail": "Set POLYGON_API_KEY",
+      "records": 0
+    },
+    "gdelt_news": {
+      "status": "skipped",
+      "detail": "Window is older than GDELT DOC's ~3 month search range",
+      "records": 0
+    },
+    "reddit": {
+      "status": "error",
+      "detail": "HTTPError: submission search failed (403 from https://api.pullpush.io/reddit/search/submission/: <!DOCTYPE html><html); comment search failed (403 from https://api.pullpush.io/reddit/search/comment/: <!DOCTYPE html><html la)",
+      "records": 0
+    },
+    "reddit_arctic_shift": {
+      "status": "partial",
+      "detail": "7 of 10 subreddits failed: counts are lower bounds",
+      "records": 3
+    }
+  },
+  "event": {
+    "ticker": "IRNT",
+    "pump_date": "2021-09-03",
+    "event_type": "multi_day_run",
+    "spike_date": "2021-09-07",
+    "prev_close": 16.52,
+    "day_open": 27.82,
+    "day_high": 29.96,
+    "day_close": 19.68,
+    "day_volume": 29825035.0,
+    "close_multiple": 1.191,
+    "high_multiple": 1.814,
+    "run_multiple": 2.391,
+    "run_days": 5,
+    "meets_strict": false,
+    "meets_broad": false,
+    "window_start": "2021-08-27",
+    "window_end": "2021-09-02"
+  },
+  "qualifies": false,
+  "detection": "located",
+  "price_features": null,
+  "technicals": null,
+  "daily_profile": [],
+  "controls": [],
+  "context": {
+    "sec_filings": [],
+    "polygon_news": [],
+    "gdelt_news": [],
+    "reddit": [
+      {
+        "date": "2021-08-30",
+        "kind": "submission",
+        "subreddit": "Shortsqueeze",
+        "author": "davidb12899",
+        "score": 19,
+        "num_comments": 9,
+        "title": "IRNT float is below 2mil shares. Short ban in place",
+        "text": "IRNT float is below 2mil shares. Short ban in place IRNT recently came out of spac and had 93% of the shares redeemed reducing the float greatly. Normally, stocks with such a low float don't have options making this an interesting opportunity. If people catch on, this could explode.",
+        "sentiment": 0.6705,
+        "url": "https://www.reddit.com/r/Shortsqueeze/comments/peoybj/irnt_float_is_below_2mil_shares_short_ban_in_place/"
+      },
+      {
+        "date": "2021-09-02",
+        "kind": "submission",
+        "subreddit": "Shortsqueeze",
+        "author": "socially_adept_num1",
+        "score": 322,
+        "num_comments": 117,
+        "title": "IRNT Gamma Squeeze Set Up",
+        "text": "IRNT Gamma Squeeze Set Up Credit to [u/Undercover\\_in\\_SF](https://www.reddit.com/u/Undercover_in_SF/) for this\n\nAlready running based on nothing!\n\n$IRNT - IronNet Cyber Security - an actual gamma squeeze candidate?\n\nNone of the subs I'm active on will take a post on this one since the market cap is too low. I've got to share it with someone, so the 57 of you following me directly may or may not see this.\n\nTo start with, I am super skeptical of anything that mentions the word \"squeeze.\" Post-GME, it became a way to lure in suckers to be holding the dump after your pump. However, either this is going to be an honest to God gamma squeeze, or I've missed something big time.\n\nHere's the background. DFNS, a pretty good SPAC sponsor actually, acquired IronNet Cyber Security. However, 90% of the shares were redeemed last week. This brought the total float down to 1.2M shares. In addition, 1.5M shares from management were unlocked, giving us a total 2.7M shares available to trade.\n\nUsually, op",
+        "sentiment": 0.9986,
+        "url": "https://www.reddit.com/r/Shortsqueeze/comments/pgo23x/irnt_gamma_squeeze_set_up/"
+      },
+      {
+        "date": "2021-09-02",
+        "kind": "submission",
+        "subreddit": "smallstreetbets",
+        "author": "[deleted]",
+        "score": 108,
+        "num_comments": 23,
+        "title": "$IRNT - IronNet Cyber Security, potentially extraordinary market dynamics at play, the hole in the liquidity rulebook",
+        "text": "$IRNT - IronNet Cyber Security, potentially extraordinary market dynamics at play, the hole in the liquidity rulebook [deleted]",
+        "sentiment": 0.7096,
+        "url": "https://www.reddit.com/r/smallstreetbets/comments/pgs07x/irnt_ironnet_cyber_security_potentially/"
+      }
+    ]
+  },
+  "context_features": {
+    "filings_total": null,
+    "filings_offering": null,
+    "filings_material_event": null,
+    "filings_insider": null,
+    "filings_ownership": null,
+    "news_articles": null,
+    "reddit_mentions": 3,
+    "reddit_unique_authors": 3,
+    "reddit_mentions_per_day": [
+      0,
+      1,
+      0,
+      0,
+      2
+    ],
+    "reddit_mention_acceleration": 1.1666666666666665,
+    "reddit_avg_sentiment": 0.7929,
+    "reddit_top_subreddits": [
+      [
+        "Shortsqueeze",
+        2
+      ],
+      [
+        "smallstreetbets",
+        1
+      ]
+    ],
+    "news_partial": false,
+    "reddit_partial": true
+  },
+  "price_history": [
+    {
+      "date": "2021-08-27",
+      "open": 13.44,
+      "high": 18.38,
+      "low": 11.77,
+      "close": 12.5,
+      "volume": 2978310.0
+    },
+    {
+      "date": "2021-08-30",
+      "open": 12.75,
+      "high": 15.5,
+      "low": 10.84,
+      "close": 13.97,
+      "volume": 2897072.0
+    },
+    {
+      "date": "2021-08-31",
+      "open": 13.77,
+      "high": 14.03,
+      "low": 13.04,
+      "close": 13.43,
+      "volume": 889668.0
+    },
+    {
+      "date": "2021-09-01",
+      "open": 14.19,
+      "high": 14.3,
+      "low": 13.24,
+      "close": 13.36,
+      "volume": 558651.0
+    },
+    {
+      "date": "2021-09-02",
+      "open": 13.5,
+      "high": 14.43,
+      "low": 12.19,
+      "close": 13.48,
+      "volume": 980114.0
+    },
+    {
+      "date": "2021-09-03",
+      "open": 14.0,
+      "high": 18.57,
+      "low": 13.99,
+      "close": 16.52,
+      "volume": 4358753.0
+    },
+    {
+      "date": "2021-09-07",
+      "open": 27.82,
+      "high": 29.96,
+      "low": 18.95,
+      "close": 19.68,
+      "volume": 29825035.0
+    },
+    {
+      "date": "2021-09-08",
+      "open": 19.19,
+      "high": 19.45,
+      "low": 16.75,
+      "close": 18.84,
+      "volume": 4889708.0
+    },
+    {
+      "date": "2021-09-09",
+      "open": 19.29,
+      "high": 19.54,
+      "low": 17.25,
+      "close": 17.3,
+      "volume": 1620879.0
+    },
+    {
+      "date": "2021-09-10",
+      "open": 17.9,
+      "high": 24.4,
+      "low": 17.75,
+      "close": 21.57,
+      "volume": 10930215.0
+    },
+    {
+      "date": "2021-09-13",
+      "open": 20.71,
+      "high": 23.22,
+      "low": 19.11,
+      "close": 19.44,
+      "volume": 5128685.0
+    },
+    {
+      "date": "2021-09-14",
+      "open": 20.35,
+      "high": 23.85,
+      "low": 19.5,
+      "close": 23.32,
+      "volume": 7620038.0
+    },
+    {
+      "date": "2021-09-15",
+      "open": 27.35,
+      "high": 32.72,
+      "low": 24.47,
+      "close": 32.06,
+      "volume": 44177435.0
+    },
+    {
+      "date": "2021-09-16",
+      "open": 43.99,
+      "high": 47.5,
+      "low": 35.06,
+      "close": 41.37,
+      "volume": 52557371.0
+    },
+    {
+      "date": "2021-09-17",
+      "open": 37.26,
+      "high": 37.64,
+      "low": 29.12,
+      "close": 30.255,
+      "volume": 15118474.0
+    },
+    {
+      "date": "2021-09-20",
+      "open": 27.95,
+      "high": 33.85,
+      "low": 26.18,
+      "close": 33.33,
+      "volume": 13377903.0
+    }
+  ],
+  "window_dates": [
+    "2021-08-27",
+    "2021-08-30",
+    "2021-08-31",
+    "2021-09-01",
+    "2021-09-02"
+  ]
+}

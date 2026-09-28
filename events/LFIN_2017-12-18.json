@@ -1,0 +1,205 @@
+{
+  "id": "LFIN_2017-12-18",
+  "seed": {
+    "ticker": "LFIN",
+    "approx_date": "2017-12-18",
+    "category": "extreme",
+    "reported_move": "up to +2,400% from float price after Ziddu blockchain deal",
+    "source_url": "https://www.cnbc.com/2017/12/18/small-cap-longfin-soars-2000-percent-after-acquiring-blockchain-company.html",
+    "notes": "Delisted 2019; needs a provider with delisted history",
+    "ipo_price": 5.0,
+    "cik": null,
+    "price_ticker": ""
+  },
+  "criterion": "broad",
+  "min_multiple": 5.0,
+  "sources": {
+    "yahoo_prices": {
+      "status": "ok",
+      "detail": "",
+      "records": 23
+    },
+    "sec_filings": {
+      "status": "error",
+      "detail": "HTTPError: 403 from https://www.sec.gov/files/company_tickers.json: <!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\"> <html xmlns=\"http://www.w3.org/1999/xhtml\"> <head> <meta http-equiv=\"Content-T",
+      "records": 0
+    },
+    "polygon_news": {
+      "status": "needs_key",
+      "detail": "Set POLYGON_API_KEY",
+      "records": 0
+    },
+    "gdelt_news": {
+      "status": "skipped",
+      "detail": "Window is older than GDELT DOC's ~3 month search range",
+      "records": 0
+    },
+    "reddit": {
+      "status": "error",
+      "detail": "HTTPError: submission search failed (403 from https://api.pullpush.io/reddit/search/submission/: <!DOCTYPE html><html); comment search failed (403 from https://api.pullpush.io/reddit/search/comment/: <!DOCTYPE html><html la)",
+      "records": 0
+    },
+    "reddit_arctic_shift": {
+      "status": "error",
+      "detail": "HTTPError: submission search failed (every subreddit search failed: r/wallstreetbets (422 from https://arctic-shift.p)",
+      "records": 0
+    }
+  },
+  "event": {
+    "ticker": "LFIN",
+    "pump_date": "2017-12-15",
+    "event_type": "multi_day_run",
+    "spike_date": "2017-12-18",
+    "prev_close": 22.010000228881836,
+    "day_open": 39.439998626708984,
+    "day_high": 142.82000732421875,
+    "day_close": 72.37999725341797,
+    "day_volume": 8507715.0,
+    "close_multiple": 3.289,
+    "high_multiple": 6.489,
+    "run_multiple": 14.476,
+    "run_days": 4,
+    "meets_strict": false,
+    "meets_broad": true,
+    "window_start": "2017-12-13",
+    "window_end": "2017-12-14"
+  },
+  "qualifies": true,
+  "detection": "located",
+  "price_features": null,
+  "technicals": null,
+  "daily_profile": [],
+  "controls": [],
+  "context": {
+    "sec_filings": [],
+    "polygon_news": [],
+    "gdelt_news": [],
+    "reddit": []
+  },
+  "context_features": {
+    "filings_total": null,
+    "filings_offering": null,
+    "filings_material_event": null,
+    "filings_insider": null,
+    "filings_ownership": null,
+    "news_articles": null,
+    "reddit_mentions": null,
+    "reddit_unique_authors": null,
+    "reddit_mentions_per_day": null,
+    "reddit_mention_acceleration": null,
+    "reddit_avg_sentiment": null,
+    "reddit_top_subreddits": null,
+    "news_partial": false,
+    "reddit_partial": false
+  },
+  "price_history": [
+    {
+      "date": "2017-12-13",
+      "open": 6.940000057220459,
+      "high": 6.940000057220459,
+      "low": 4.690000057220459,
+      "close": 5.170000076293945,
+      "volume": 297367.0
+    },
+    {
+      "date": "2017-12-14",
+      "open": 5.449999809265137,
+      "high": 5.510000228881836,
+      "low": 5.21999979019165,
+      "close": 5.389200210571289,
+      "volume": 185386.0
+    },
+    {
+      "date": "2017-12-15",
+      "open": 9.760000228881836,
+      "high": 26.799999237060547,
+      "low": 7.860000133514404,
+      "close": 22.010000228881836,
+      "volume": 15480740.0
+    },
+    {
+      "date": "2017-12-18",
+      "open": 39.439998626708984,
+      "high": 142.82000732421875,
+      "low": 35.0,
+      "close": 72.37999725341797,
+      "volume": 8507715.0
+    },
+    {
+      "date": "2017-12-19",
+      "open": 59.54999923706055,
+      "high": 89.0,
+      "low": 58.80030059814453,
+      "close": 68.2699966430664,
+      "volume": 6038391.0
+    },
+    {
+      "date": "2017-12-20",
+      "open": 76.91999816894531,
+      "high": 77.75679779052734,
+      "low": 63.060001373291016,
+      "close": 68.5,
+      "volume": 2472152.0
+    },
+    {
+      "date": "2017-12-21",
+      "open": 65.0,
+      "high": 68.12000274658203,
+      "low": 43.099998474121094,
+      "close": 45.90999984741211,
+      "volume": 1828937.0
+    },
+    {
+      "date": "2017-12-22",
+      "open": 38.25,
+      "high": 44.4900016784668,
+      "low": 36.7599983215332,
+      "close": 41.0,
+      "volume": 763702.0
+    },
+    {
+      "date": "2017-12-26",
+      "open": 48.34000015258789,
+      "high": 61.0,
+      "low": 46.0,
+      "close": 54.41999816894531,
+      "volume": 1337962.0
+    },
+    {
+      "date": "2017-12-27",
+      "open": 56.27000045776367,
+      "high": 68.0999984741211,
+      "low": 54.459999084472656,
+      "close": 58.869998931884766,
+      "volume": 1469373.0
+    },
+    {
+      "date": "2017-12-28",
+      "open": 56.91999816894531,
+      "high": 56.91999816894531,
+      "low": 53.0,
+      "close": 55.25,
+      "volume": 421869.0
+    },
+    {
+      "date": "2017-12-29",
+      "open": 56.5,
+      "high": 62.189998626708984,
+      "low": 55.349998474121094,
+      "close": 56.29999923706055,
+      "volume": 519071.0
+    },
+    {
+      "date": "2018-01-02",
+      "open": 53.2400016784668,
+      "high": 60.4900016784668,
+      "low": 52.5,
+      "close": 57.400001525878906,
+      "volume": 495208.0
+    }
+  ],
+  "window_dates": [
+    "2017-12-13",
+    "2017-12-14"
+  ]
+}
