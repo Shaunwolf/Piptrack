@@ -37,9 +37,13 @@ def letterbox(image: np.ndarray, size: int) -> Tuple[np.ndarray, float, float, f
     h, w = image.shape[:2]
     scale = min(size / h, size / w)
     nh, nw = int(round(h * scale)), int(round(w * scale))
-    rows = np.clip((np.arange(nh) / scale).astype(int), 0, h - 1)
-    cols = np.clip((np.arange(nw) / scale).astype(int), 0, w - 1)
-    resized = image[rows][:, cols]
+    try:
+        from PIL import Image  # bilinear, like Ultralytics' cv2.INTER_LINEAR
+        resized = np.asarray(Image.fromarray(image).resize((nw, nh), Image.BILINEAR))
+    except ImportError:
+        rows = np.clip((np.arange(nh) / scale).astype(int), 0, h - 1)
+        cols = np.clip((np.arange(nw) / scale).astype(int), 0, w - 1)
+        resized = image[rows][:, cols]
     pad_y, pad_x = (size - nh) / 2, (size - nw) / 2
     canvas = np.full((size, size, 3), 114, dtype=np.uint8)
     top, left = int(round(pad_y - 0.1)), int(round(pad_x - 0.1))
