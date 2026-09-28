@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% import "pump_research/_macros.html" as m %}
+
+{% block title %}{{ ticker or 'Scan' }} · Pump Observatory{% endblock %}
+{% block head %}{{ m.head() }}{% endblock %}
+
+{% block content %}
+<div class="obs">
+  <header class="obs-mast">
+    <a class="obs-back" href="{{ url_for('pump_research.dashboard') }}">← Observatory</a>
+    <div class="obs-kicker"><span class="dot" aria-hidden="true"></span>Live scan{% if res and res.as_of %}<span class="muted">· as of {{ res.as_of }}</span>{% endif %}</div>
+    <div class="obs-mast-row">
+      <h1 class="obs-title">{% if ticker %}Technical Scan: <em>{{ ticker }}</em>{% else %}Read the <em>pressure</em>{% endif %}</h1>
+      <form method="get" class="obs-search" role="search">
+        <label for="obs-ticker" style="position:absolute;left:-9999px">Ticker</label>
+        <input id="obs-ticker" name="ticker" value="{{ ticker }}" placeholder="Ticker" required maxlength="10" autocomplete="off">
+        <button type="submit">Scan</button>
+      </form>
+    </div>
+    <p class="obs-lede">Every tool on the latest 10 sessions: moving averages, momentum, volatility, money flow, Fibonacci, harmonics,
+      chart patterns and candlesticks, plus how closely the setup matches the build-ups before past pumps.</p>
+  </header>
+
+  {% if res and res.error %}
+  <div class="obs-panel">
+    <p style="margin:0 0 10px">Couldn't analyze <b class="mono">{{ res.ticker }}</b>: {{ res.error }}.</p>
+    <div class="obs-table-wrap"><table class="obs-table"><tbody>
+      {% for s in res.sources %}<tr><td class="mono">{{ s.source }}</td><td>{{ m.status(s.status) }}</td><td class="muted" style="white-space:normal">{{ s.detail }}</td></tr>{% endfor %}
+    </tbody></table></div>
+  </div>
+  {% elif res %}
+  {% set sc = res.score or {} %}{% set f = res.features %}
+  <div class="obs-hero">
+    <div class="obs-gauge-wrap">
+      {{ dial|safe }}
+      <span class="obs-kicker" style="color:var(--ink-2)">Pre-pump similarity</span>
+      {% if not sc %}<span class="obs-note">Train the model (collect, then train) to score tickers.</span>
+      {% elif sc.cv_auc %}<span class="obs-note">Model cross-validated AUC {{ sc.cv_auc }}</span>{% endif %}
+    </div>
+    <div class="obs-readouts">
+      <div class="obs-readout"><span class="v">${{ '%.2f' % res.close }}</span><span class="k">Close</span></div>
+      <div class="obs-readout"><span class="v">{{ m.mult(f.avg_volume_ratio) }}</span><span class="k">10-day volume vs normal</span></div>
+      <div class="obs-readout"><span class="v">{{ m.pct(f.window_return) }}</span><span class="k">10-day move</span></div>
+      <div class="obs-readout"><span class="v">{{ m.num(f.ta_rsi14, '%.0f') }}</span><span class="k">RSI 14</span></div>
+    </div>
+  </div>
+  <p class="obs-disclaimer">A research aid built on a small, hand-picked sample of past pumps. It is not a prediction or trading advice.</p>
+
+  <section class="obs-section">
+    <h2 class="obs-h2"><span class="idx">01</span>Chart</h2>
+    <div class="obs-panel">{{ m.plot('chart', fig, 560) }}</div>
+  </section>
+
+  <section class="obs-section">
+    <h2 class="obs-h2"><span class="idx">02</span>Warning lights</h2>
+    {{ m.lamps(res.signals) }}
+  </section>
+
+  <section class="obs-section">
+    <h2 class="obs-h2"><span class="idx">03</span>Instruments</h2>
+    {{ m.instruments(res.technicals, f) }}
+  </section>
+
+  {% if res.integrations %}
+  <section class="obs-section">
+    <h2 class="obs-h2"><span class="idx">IN</span>Hugging Face integrations</h2>
+    <div class="obs-instruments">
+      {% for key, out in res.integrations.items() %}
+      <div class="obs-inst">
+        <h3>{{ key.replace('_', ' ') }}</h3>
+        {% if out.error %}<p class="obs-empty">{{ out.error }}</p>
+        {% else %}
+          {% if out.decision %}<div class="obs-kv"><span>Decision</span><span>{{ out.decision.replace('_', ' ') }}</span></div>
+            <div class="obs-kv"><span>Technical model</span><span>{{ out.technical_prediction }} ({{ m.rate(out.technical_probability_up) }})</span></div>
+            <div class="obs-kv"><span>Holdout accuracy / up-rate</span><span>{{ m.rate(out.holdout_accuracy) }} / {{ m.rate(out.holdout_up_rate) }}</span></div>
+            <div class="obs-kv"><span>News sentiment</span><span>{{ m.num(out.news_sentiment) }}</span></div>{% endif %}
+          {% if out.patterns is defined %}{% for p in out.patterns[:8] %}
+            <div class="obs-kv"><span class="{{ 'text-bull' if p.direction == 'bullish' }}">{{ '▲' if p.direction == 'bullish' else '▼' if p.direction == 'bearish' else '◆' }} {{ p.name.replace('_', ' ') }}</span><span>{{ p.completed_date }} · {{ '%.0f' % (p.confidence * 100) }}%</span></div>
+          {% else %}<p class="obs-empty">No detections</p>{% endfor %}{% endif %}
+          {% if out.class_probabilities %}{% for k, v in out.class_probabilities.items() %}<div class="obs-kv"><span>{{ k }}</span><span>{{ m.rate(v) }}</span></div>{% endfor %}{% endif %}
+          {% if out.mentions is defined %}<div class="obs-kv"><span>Mentions</span><span>{{ out.mentions }}</span></div>
+            {% for e in out.examples[:3] %}<p class="obs-note" style="margin:0">“{{ (e.title if e is mapping else e)|truncate(140) }}”</p>{% endfor %}{% endif %}
+          {% for c in out.caveats or [] %}<p class="obs-note" style="margin:0;color:var(--warning)">{{ c }}</p>{% endfor %}
+          {% if out.note %}<p class="obs-note" style="margin:0">{{ out.note }}</p>{% endif %}
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {% if sc.contributions %}
+  <section class="obs-section">
+    <h2 class="obs-h2"><span class="idx">04</span>What drives the score</h2>
+    <div class="obs-table-wrap">
+      <table class="obs-table">
+        <thead><tr><th>Measure</th><th class="num">Value</th><th class="num">Percentile vs ordinary</th><th>Leans</th></tr></thead>
+        <tbody>{% for c in sc.contributions %}
+          <tr><td>{{ feature_label(c.feature) }}</td><td class="num">{{ '%.3g' % c.value }}</td><td class="num">{{ m.rate(c.percentile_vs_ordinary) }}</td>
+            <td>{% if c.leans_pre_pump %}<span class="obs-tag bull">▲ pre-pump</span>{% else %}<span class="obs-tag">ordinary</span>{% endif %}</td></tr>
+        {% endfor %}</tbody>
+      </table>
+    </div>
+  </section>
+  {% endif %}
+  {% else %}
+  <div class="obs-hero">
+    <div class="obs-gauge-wrap">{{ dial|safe }}<span class="obs-kicker" style="color:var(--ink-2)">Enter a ticker to read it</span></div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

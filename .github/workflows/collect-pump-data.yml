@@ -1,0 +1,91 @@
+name: Collect pump data
+
+# Runs the pump research collection on GitHub's servers (which have internet access),
+# uploads the results as an artifact and publishes them to the `pump-data` branch.
+on:
+  workflow_dispatch:
+    inputs:
+      tickers:
+        description: "Comma-separated subset of seeds.csv tickers (blank = all)"
+        required: false
+        default: ""
+      criterion:
+        description: "Pump criterion"
+        type: choice
+        options: [broad, strict]
+        default: broad
+  # Adding the `collect-data` label to a pull request runs it with that PR's code
+  pull_request:
+    types: [labeled]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: collect-pump-data
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'collect-data'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      DISABLE_BACKGROUND_SCANNER: "1"
+      # SEC requires a name and contact email; set the SEC_USER_AGENT repository variable to use your own
+      SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT || format('PipSqueak research {0}@users.noreply.github.com', github.repository_owner) }}
+      POLYGON_API_KEY: ${{ secrets.POLYGON_API_KEY }}
+      TICKERS: ${{ github.event.inputs.tickers }}
+      CRITERION: ${{ github.event.inputs.criterion || 'broad' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Use Hugging Face minute bars as a fallback price source (delisted tickers)
+        run: uv run python -m pump_research integrations enable ohlcv_1m_prices
+
+      - name: Check data sources
+        run: uv run python -m pump_research check
+
+      - name: Collect
+        run: |
+          args=(--criterion "$CRITERION")
+          if [ -n "$TICKERS" ]; then args+=(--tickers "$TICKERS"); fi
+          uv run python -m pump_research collect "${args[@]}"
+
+      - name: Analyze and train
+        run: |
+          uv run python -m pump_research report --criterion "$CRITERION"
+          uv run python -m pump_research train --criterion "$CRITERION" || echo "Not enough events with price data to train yet"
+
+      - name: Summary
+        run: |
+          {
+            echo "## Pump data collection"
+            echo
+            sed -n '1,/^## Events/p' pump_data/pump_report.md | head -n -1
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pump-data
+          path: pump_data/
+          retention-days: 30
+
+      - name: Publish to the pump-data branch
+        run: |
+          cd pump_data
+          git init -q -b pump-data
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Pump data from ${GITHUB_SHA::7} (run ${GITHUB_RUN_ID}, criterion ${CRITERION})"
+          git push -f "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" pump-data
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      DISABLE_BACKGROUND_SCANNER: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Lint
+        run: uv run ruff check .
+
+      - name: Tests
+        run: uv run python -m pytest tests -q
+
+      - name: App boots and serves pages
+        run: |
+          uv run python - <<'PY'
+          import main
+          from app import app
+          client = app.test_client()
+          for url in ("/", "/login", "/register"):
+              status = client.get(url).status_code
+              print(url, status)
+              assert status == 200, url
+          assert client.get("/pump-research").status_code == 302  # login required
+          PY

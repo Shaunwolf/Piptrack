@@ -1,0 +1,130 @@
+{% macro pct(v) %}{% if v is none or v is undefined %}–{% else %}{{ '%+.0f' % (v * 100) }}%{% endif %}{% endmacro %}
+{% macro rate(v) %}{% if v is none or v is undefined %}–{% else %}{{ '%.0f' % (v * 100) }}%{% endif %}{% endmacro %}
+{% macro mult(v) %}{% if v is none or v is undefined %}–{% else %}{{ '%.1f' % v }}×{% endif %}{% endmacro %}
+{% macro num(v, fmt='%.2f') %}{% if v is none or v is undefined %}–{% else %}{{ fmt % v }}{% endif %}{% endmacro %}
+{% macro known(v, partial=false) %}{% if v is none or v is undefined %}<span class="muted" title="source unavailable">?</span>{% else %}{{ '≥' if partial }}{{ v }}{% endif %}{% endmacro %}
+{% macro yesno(v) %}{% if v is none or v is undefined %}–{% elif v %}yes{% else %}no{% endif %}{% endmacro %}
+
+{% macro head() %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pump.css') }}">
+{% endmacro %}
+
+{% macro status(s) -%}
+<span class="obs-status {{ s }}">{{ s.replace('_', ' ') }}</span>
+{%- endmacro %}
+
+{% macro plot(id, fig, height=460) %}
+<div id="{{ id }}" class="obs-chart" style="height: {{ height }}px"></div>
+<script>
+  (function () {
+    var el = document.getElementById({{ id|tojson }});
+    if (window.Plotly) { Plotly.newPlot(el, {{ fig.data|tojson }}, {{ fig.layout|tojson }}, {responsive: true, displaylogo: false}); }
+    else { el.innerHTML = '<p class="obs-empty">Charts need Plotly, which could not load.</p>'; el.style.height = 'auto'; }
+  })();
+</script>
+{% endmacro %}
+
+{% macro lamps(signals) %}
+<div class="obs-lamps">
+{% for name, fired in signals.items() %}
+  <div class="obs-lamp {{ 'on' if fired }}"><span class="bulb" aria-hidden="true"></span>{{ signal_label(name) }}
+    <span class="state">{{ 'ON' if fired else 'OFF' }}</span></div>
+{% endfor %}
+</div>
+{% endmacro %}
+
+{% macro instruments(ta, pf) %}
+{% set fib = ta.get('fibonacci') or {} %}{% set st = ta.get('structure') or {} %}{% set lv = ta.get('levels') or {} %}
+<div class="obs-instruments">
+  <div class="obs-inst">
+    <h3>Moving averages · close vs</h3>
+    {% for key, label in [('ema8','EMA 8'),('ema21','EMA 21'),('ema50','EMA 50'),('ema200','EMA 200'),('wma10','Weighted 10'),('wma20','Weighted 20'),('wma50','Weighted 50'),('hma20','Hull 20'),('vwma20','Vol-weighted 20'),('sma50','SMA 50'),('sma200','SMA 200')] %}
+    <div class="obs-kv"><span>{{ label }}</span><span>{{ pct(pf.get('ta_close_vs_' ~ key)) }}</span></div>
+    {% endfor %}
+    <div class="obs-kv"><span>EMA 8/21/50 stack</span><span>{{ 'bullish' if pf.get('ta_ema_bull_stack') else 'bearish' if pf.get('ta_ema_bear_stack') else 'mixed' }}</span></div>
+  </div>
+  <div class="obs-inst">
+    <h3>Momentum</h3>
+    <div class="obs-kv"><span>RSI 14</span><span>{{ num(pf.get('ta_rsi14'), '%.0f') }}</span></div>
+    <div class="obs-kv"><span>Lowest RSI in window</span><span>{{ num(pf.get('ta_rsi_min_in_window'), '%.0f') }}</span></div>
+    <div class="obs-kv"><span>Stochastic %K / %D</span><span>{{ num(pf.get('ta_stoch_k'), '%.0f') }} / {{ num(pf.get('ta_stoch_d'), '%.0f') }}</span></div>
+    <div class="obs-kv"><span>MACD bullish cross</span><span>{{ yesno(pf.get('ta_macd_bull_cross_in_window')) }}</span></div>
+    <div class="obs-kv"><span>ADX (trend strength)</span><span>{{ num(pf.get('ta_adx'), '%.0f') }}</span></div>
+    <div class="obs-kv"><span>+DI − −DI</span><span>{{ num(pf.get('ta_di_spread'), '%+.0f') }}</span></div>
+    <div class="obs-kv"><span>RSI bullish divergence</span><span>{{ yesno(pf.get('ta_rsi_bullish_divergence')) }}</span></div>
+  </div>
+  <div class="obs-inst">
+    <h3>Volatility &amp; flow</h3>
+    <div class="obs-kv"><span>Bollinger %B</span><span>{{ num(pf.get('ta_bb_pct_b')) }}</span></div>
+    <div class="obs-kv"><span>Bollinger squeeze</span><span>{{ yesno(pf.get('ta_bb_squeeze')) }}</span></div>
+    <div class="obs-kv"><span>ATR (% of price)</span><span>{{ rate(pf.get('ta_atr_pct')) }}</span></div>
+    <div class="obs-kv"><span>Money flow index</span><span>{{ num(pf.get('ta_mfi14'), '%.0f') }}</span></div>
+    <div class="obs-kv"><span>Chaikin money flow</span><span>{{ num(pf.get('ta_cmf20')) }}</span></div>
+    <div class="obs-kv"><span>Close vs VWAP 20</span><span>{{ pct(pf.get('ta_close_vs_vwap20')) }}</span></div>
+    <div class="obs-kv"><span>OBV accumulation divergence</span><span>{{ yesno(pf.get('ta_obv_bullish_divergence')) }}</span></div>
+  </div>
+  <div class="obs-inst">
+    <h3>Fibonacci</h3>
+    {% if fib %}
+    <div class="obs-kv"><span>Swing</span><span>{{ fib.direction }} ${{ '%.2f' % fib.swing_low }}→${{ '%.2f' % fib.swing_high }}</span></div>
+    <div class="obs-kv"><span>{{ 'Retracement' if fib.direction == 'up' else 'Bounce' }}</span><span>{{ '%.3f' % fib.retracement }}</span></div>
+    <div class="obs-kv"><span>Nearest level</span><span>{{ fib.nearest_level }}</span></div>
+    <div class="obs-kv"><span>Golden pocket</span><span>{{ yesno(fib.in_golden_pocket) }}</span></div>
+    <div class="obs-kv"><span>1.618 / 2.618 extension</span><span>${{ '%.2f' % fib.extensions['1.618'] }} / ${{ '%.2f' % fib.extensions['2.618'] }}</span></div>
+    {% else %}<p class="obs-empty">Not enough history</p>{% endif %}
+  </div>
+  <div class="obs-inst">
+    <h3>Structure &amp; levels</h3>
+    <div class="obs-kv"><span>Structure</span><span>{{ st.get('structure', '–') }}</span></div>
+    <div class="obs-kv"><span>Higher highs / lows</span><span>{{ st.get('higher_highs', 0) }} / {{ st.get('higher_lows', 0) }}</span></div>
+    <div class="obs-kv"><span>Support</span><span>{% if lv.get('support') %}${{ '%.2f' % lv.support.price }} · {{ lv.support.touches }}×{% else %}–{% endif %}</span></div>
+    <div class="obs-kv"><span>Resistance</span><span>{% if lv.get('resistance') %}${{ '%.2f' % lv.resistance.price }} · {{ lv.resistance.touches }}×{% else %}–{% endif %}</span></div>
+    <div class="obs-kv"><span>Break of structure</span><span>{{ yesno(pf.get('ta_break_of_structure')) }}</span></div>
+  </div>
+  {% set fg = ta.get('fib_gann') or {} %}{% set sm = fg.get('summary') or {} %}
+  <div class="obs-inst">
+    <h3>Fibonacci &amp; Gann tools</h3>
+    <div class="obs-kv"><span>Tools agreeing on price</span><span>{{ pf.get('ta_fib_confluence', '–') }}{% if pf.get('ta_fib_confluence', 0) >= 4 %} · strong{% endif %}</span></div>
+    {% if fg.get('price_confluence') %}<div class="obs-chips">{% for t in fg.price_confluence %}<span class="obs-tag yes">{{ t.replace('_', ' ') }}</span>{% endfor %}</div>{% endif %}
+    <div class="obs-kv"><span>Time lines on this bar</span><span>{{ pf.get('ta_fib_time_confluence', '–') }}</span></div>
+    <div class="obs-kv"><span>Trend fib extension</span><span>{{ num(pf.get('ta_fib_ext_position'), '%.3f') }} (near {{ num(pf.get('ta_fib_ext_nearest'), '%g') }})</span></div>
+    <div class="obs-kv"><span>Fib channel position</span><span>{{ num(pf.get('ta_fib_channel_position')) }}</span></div>
+    <div class="obs-kv"><span>Next fib time zone</span><span>{% if pf.get('ta_fib_timezone_bars_to_next') is not none %}{{ pf.get('ta_fib_timezone_bars_to_next') }} bars{% else %}–{% endif %}</span></div>
+    <div class="obs-kv"><span>Next trend fib time</span><span>{% if pf.get('ta_fib_trend_time_bars_to_next') is not none %}{{ pf.get('ta_fib_trend_time_bars_to_next') }} bars{% else %}–{% endif %}</span></div>
+    <div class="obs-kv"><span>Speed fan lines below</span><span>{{ pf.get('ta_fib_speed_fan_zone', '–') }} / 6</span></div>
+    <div class="obs-kv"><span>Circle / arc ratio</span><span>{{ num(pf.get('ta_fib_circle_ratio')) }} / {{ num(pf.get('ta_fib_arc_ratio')) }}</span></div>
+    <div class="obs-kv"><span>Spiral distance</span><span>{{ num(pf.get('ta_fib_spiral_proximity')) }}</span></div>
+    <div class="obs-kv"><span>Inside fib wedge</span><span>{{ yesno(pf.get('ta_fib_wedge_inside')) }}</span></div>
+    <div class="obs-kv"><span>Pitchfan vs median</span><span>{{ num(pf.get('ta_pitchfan_position'), '%+.2f') }}</span></div>
+    <div class="obs-kv"><span>Gann box price / time</span><span>{{ num(pf.get('ta_gann_box_price_fraction')) }} / {{ num(pf.get('ta_gann_box_time_fraction')) }}</span></div>
+    <div class="obs-kv"><span>Gann square / fixed</span><span>{{ 'above' if pf.get('ta_gann_square_above_diagonal') else 'below' }} / {{ 'above' if pf.get('ta_gann_fixed_above_diagonal') else 'below' }} diagonal</span></div>
+    <div class="obs-kv"><span>Gann fan lines below</span><span>{{ pf.get('ta_gann_fan_zone', '–') }} / 9 · {{ 'above' if pf.get('ta_gann_above_1x1') else 'below' }} 1×1</span></div>
+  </div>
+  <div class="obs-inst">
+    <h3>Trend, sentiment &amp; signals</h3>
+    {% set fgi = ta.get('fear_greed') or {} %}
+    <div class="obs-kv"><span>Fear &amp; Greed</span><span>{% if fgi %}{{ '%.0f' % fgi.score }} · {{ fgi.label }}{% else %}–{% endif %}</span></div>
+    {% if fgi %}{% for k, v in fgi.components.items() %}<div class="obs-kv"><span class="muted">&nbsp;&nbsp;{{ k.replace('_', ' ') }}</span><span class="muted">{{ '%.0f' % v }}</span></div>{% endfor %}{% endif %}
+    <div class="obs-kv"><span>Kalman trend strength</span><span>{{ num(pf.get('ta_kalman_strength'), '%+.0f') }}</span></div>
+    <div class="obs-kv"><span>Price vs Kalman</span><span>{{ pct(pf.get('ta_close_vs_kalman')) }}</span></div>
+    <div class="obs-kv"><span>Kalman turned up in window</span><span>{{ yesno(pf.get('ta_kalman_turned_up_in_window')) }}</span></div>
+    <div class="obs-kv"><span>All-time range position</span><span>{{ rate(pf.get('ta_alltime_fib_position')) }}</span></div>
+    <div class="obs-kv"><span>S/R buy / sell signals</span><span>{{ pf.get('ta_sr_buy_signals', 0) }} / {{ pf.get('ta_sr_sell_signals', 0) }}</span></div>
+  </div>
+  <div class="obs-inst">
+    <h3>Patterns in window</h3>
+    {% for kind, title in [('harmonic', 'Harmonic'), ('chart', 'Chart'), ('candle', 'Candles'), ('signal', 'S/R signals')] %}
+    {% set items = ta.get('patterns', [])|selectattr('type', 'equalto', kind)|list %}
+    <div class="obs-kv"><span>{{ title }}</span><span>{{ items|length }}</span></div>
+    {% if items %}<div class="obs-chips">{% for name, group in items|groupby('name') %}{% set p = group[0] %}
+      <span class="obs-tag {{ 'bull' if p.direction == 'bullish' else 'bear' if p.direction == 'bearish' }}"
+            title="{% for g in group %}{{ g.get('completed_date') or g.get('date') }}{% if g.score is defined %} (fit {{ g.score }}){% endif %}{{ ', ' if not loop.last }}{% endfor %}">
+        {{ '▲' if p.direction == 'bullish' else '▼' if p.direction == 'bearish' else '◆' }} {{ name.replace('_', ' ') }}{% if group|length > 1 %} ×{{ group|length }}{% endif %}</span>
+    {% endfor %}</div>{% endif %}
+    {% endfor %}
+  </div>
+</div>
+{% endmacro %}

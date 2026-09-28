@@ -1,0 +1,47 @@
+name: Integrations smoke test
+
+# Runs every Hugging Face integration for real (downloads models and datasets) and
+# publishes the results to the integrations-smoke branch.
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [labeled]
+
+permissions:
+  contents: write
+
+jobs:
+  smoke:
+    if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'integrations-smoke'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      DISABLE_BACKGROUND_SCANNER: "1"
+      PYTHONPATH: ${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: Install app and integration extras (CPU torch)
+        run: |
+          uv sync --locked
+          uv pip install --index-url https://download.pytorch.org/whl/cpu torch torchvision
+          uv pip install ultralytics onnxruntime transformers mplfinance matplotlib pillow huggingface_hub pyarrow
+      - name: Run every integration
+        run: uv run --no-sync python scripts/integrations_smoke.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: integrations-smoke
+          path: integrations_smoke/
+      - name: Publish to the integrations-smoke branch
+        run: |
+          cd integrations_smoke
+          git init -q -b integrations-smoke
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Integrations smoke test from ${GITHUB_SHA::7}"
+          git push -f "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" integrations-smoke
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
