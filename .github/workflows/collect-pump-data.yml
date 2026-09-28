@@ -47,6 +47,9 @@ jobs:
       - name: Install dependencies
         run: uv sync --locked
 
+      - name: Use Hugging Face minute bars as a fallback price source (delisted tickers)
+        run: uv run python -m pump_research integrations enable ohlcv_1m_prices
+
       - name: Check data sources
         run: uv run python -m pump_research check
 

@@ -213,3 +213,10 @@ def test_run_integration_passes_ticker_to_yolo_wrappers(monkeypatch):
         monkeypatch.setattr(integ.REGISTRY[key], "requires", [])
     for key in ("yolo_candlesticks", "yolo_chart_patterns"):
         assert "error" not in integ.run_integration(key, prices, ticker="SPY", headlines=["x"])
+
+
+def test_minute_source_probes_one_month_for_unknown_tickers(monkeypatch):
+    calls = []
+    monkeypatch.setattr(ohlcv_minute, "_month_minutes", lambda t, m: calls.append(m) or pd.DataFrame())
+    out = ohlcv_minute.daily_prices("NOPE", date(2020, 1, 1), date(2021, 3, 1), probe=date(2021, 1, 15))
+    assert out.empty and calls == ["2021-01"]

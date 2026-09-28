@@ -8,8 +8,8 @@ months covering the request (cached), keep the ticker's regular-session bars
 acts as a fallback price source for tickers Yahoo no longer serves.
 """
 
-from datetime import date
-from typing import List
+from datetime import date, timedelta
+from typing import List, Optional
 
 import pandas as pd
 
@@ -40,18 +40,34 @@ def minute_to_daily(minutes: pd.DataFrame) -> pd.DataFrame:
     return daily.dropna()
 
 
-def daily_prices(ticker: str, start: date, end: date) -> pd.DataFrame:
+def _month_minutes(ticker: str, month: str) -> pd.DataFrame:
+    import pyarrow.parquet as pq
+    path = hf_download(REPO, f"data/ohlcv_{month}.parquet", repo_type="dataset")
+    table = pq.read_table(path, columns=["timestamp", "open", "high", "low", "close", "volume", "ticker"],
+                          filters=[("ticker", "=", ticker.upper())])
+    return table.to_pandas()
+
+
+def daily_prices(ticker: str, start: date, end: date, probe: Optional[date] = None) -> pd.DataFrame:
+    """Daily bars for ticker between start and end. With `probe`, the month holding that date is read
+    first and an empty result stops early, so a ticker the dataset lacks costs one download, not one per month."""
     try:
-        import pyarrow.parquet as pq
+        import pyarrow.parquet  # noqa: F401
     except ImportError:
         raise IntegrationUnavailable("needs pyarrow (pip install pyarrow)")
-    frames = []
-    for month in months_between(start, end):
-        path = hf_download(REPO, f"data/ohlcv_{month}.parquet", repo_type="dataset")
-        table = pq.read_table(path, columns=["timestamp", "open", "high", "low", "close", "volume", "ticker"],
-                              filters=[("ticker", "=", ticker.upper())])
-        frames.append(table.to_pandas())
-    daily = minute_to_daily(pd.concat(frames, ignore_index=True) if frames else pd.DataFrame())
+    months = months_between(start, end)
+    frames = {}
+    if probe is not None:
+        first = f"{probe.year:04d}-{probe.month:02d}"
+        if first in months:
+            frames[first] = _month_minutes(ticker, first)
+            if frames[first].empty:
+                return minute_to_daily(pd.DataFrame())
+    for month in months:
+        if month not in frames:
+            frames[month] = _month_minutes(ticker, month)
+    parts = [f for f in frames.values() if not f.empty]
+    daily = minute_to_daily(pd.concat(parts, ignore_index=True) if parts else pd.DataFrame())
     return daily[(daily.index >= start) & (daily.index <= end)]
 
 
@@ -61,7 +77,8 @@ class HfMinutePrices(DataSource):
 
     def _fetch(self, ticker, start, end, **kwargs):
         try:
-            df = daily_prices(ticker, start, end)
+            # The collector asks for ~400 days before the pump and 30 after: probe the month before the end
+            df = daily_prices(ticker, start, end, probe=max(start, end - timedelta(days=45)))
         except IntegrationUnavailable as e:
             return SourceResult(self.name, SKIPPED, detail=str(e))
         return [{"date": d.isoformat(), **{k: float(v) for k, v in row.items()}} for d, row in df.iterrows()]
