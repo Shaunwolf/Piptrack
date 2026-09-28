@@ -26,13 +26,20 @@ REPOS = [
     ("dataset", "Sentdex/wsb_reddit_v001"),
     ("dataset", "kowalsky/reddit_about_money"),
     ("dataset", "mito0o852/OHLCV-1m"),
+    # Second round: pattern resources
+    ("model", "JONNYVERSE/stockmarket-pattern-detection-yolov8-onnx"),
+    ("dataset", "jadhavmanasi70/chart-pattern-nse"),
+    ("dataset", "usamaahmedsh/synthetic-elliott-waves"),
+    ("dataset", "THULab/elliott_wave_market_data"),
+    ("space", "tosin2013/fibonacci_price_target"),
 ]
 
 SEARCHES = ["harmonic pattern", "harmonic", "gartley", "candlestick", "candlestick pattern", "chart pattern",
             "price action", "stock pattern", "technical analysis", "bollinger", "fibonacci", "gann", "elliott wave",
             "support resistance", "trading signals", "stock chart"]
 CODE_FILES = ("app.py", "requirements.txt", "main.py", "inference.py", "predict.py", "model.py", "config.json",
-              "data.yaml", "dataset.yaml", "args.yaml")
+              "data.yaml", "dataset.yaml", "args.yaml", "metadata.yaml", "labels.txt", "classes.txt",
+              "utils.py", "fibonacci.py")
 
 
 def get(url, **kw):
