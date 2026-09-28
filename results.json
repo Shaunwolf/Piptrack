@@ -1,0 +1,538 @@
+{
+  "packages": {
+    "yolo_chart_patterns": [],
+    "onnx_chart_patterns": [],
+    "yolo_candlesticks": [],
+    "candlestick_benchmark": [],
+    "multisignal_trader": [],
+    "candlefusion": [],
+    "wsb_corpus": [],
+    "reddit_money_corpus": [],
+    "ohlcv_1m_prices": []
+  },
+  "SPY:yolo_chart_patterns": {
+    "seconds": 8.4,
+    "result": {
+      "model": "foduucom/stockmarket-pattern-detection-yolov8",
+      "bars_rendered": 120,
+      "patterns": [
+        {
+          "type": "vision",
+          "name": "head_shoulders",
+          "model_label": "Head and shoulders top",
+          "direction": "bearish",
+          "confidence": 0.333,
+          "start_date": "2026-06-29",
+          "completed_date": "2026-07-24",
+          "recent": false
+        }
+      ],
+      "note": "Trained on screen captures (mAP@0.5 \u2248 0.61 per its card); treat detections as hints."
+    }
+  },
+  "SPY:onnx_chart_patterns": {
+    "seconds": 4.1,
+    "result": {
+      "model": "JONNYVERSE/stockmarket-pattern-detection-yolov8-onnx",
+      "bars_rendered": 120,
+      "patterns": [
+        {
+          "type": "vision",
+          "name": "head_shoulders",
+          "model_label": "Head and shoulders top",
+          "direction": "bearish",
+          "confidence": 0.306,
+          "start_date": "2026-06-29",
+          "completed_date": "2026-07-24",
+          "recent": false
+        }
+      ],
+      "note": "ONNX export of foduucom's detector (trained on screen captures); treat detections as hints."
+    }
+  },
+  "SPY:yolo_candlesticks": {
+    "seconds": 0.8,
+    "result": {
+      "model": "rohanjain2312/candlestick-pattern-recognition-system-yolo",
+      "window": [
+        "2026-08-28",
+        "2026-09-25"
+      ],
+      "patterns": [
+        {
+          "type": "vision",
+          "name": "Doji",
+          "direction": "neutral",
+          "confidence": 0.847,
+          "completed_date": "2026-08-31",
+          "on_last_candle": false
+        },
+        {
+          "type": "vision",
+          "name": "Doji",
+          "direction": "neutral",
+          "confidence": 0.953,
+          "completed_date": "2026-09-01",
+          "on_last_candle": false
+        },
+        {
+          "type": "vision",
+          "name": "Harami",
+          "direction": "neutral",
+          "confidence": 0.905,
+          "completed_date": "2026-09-04",
+          "on_last_candle": false
+        },
+        {
+          "type": "vision",
+          "name": "Doji",
+          "direction": "neutral",
+          "confidence": 0.956,
+          "completed_date": "2026-09-10",
+          "on_last_candle": false
+        },
+        {
+          "type": "vision",
+          "name": "Doji",
+          "direction": "neutral",
+          "confidence": 0.439,
+          "completed_date": "2026-09-11",
+          "on_last_candle": false
+        },
+        {
+          "type": "vision",
+          "name": "Doji",
+          "direction": "neutral",
+          "confidence": 0.603,
+          "completed_date": "2026-09-17",
+          "on_last_candle": false
+        },
+        {
+          "type": "vision",
+          "name": "Doji",
+          "direction": "neutral",
+          "confidence": 0.958,
+          "completed_date": "2026-09-18",
+          "on_last_candle": false
+        },
+        {
+          "type": "vision",
+          "name": "Doji",
+          "direction": "neutral",
+          "confidence": 0.735,
+          "completed_date": "2026-09-22",
+          "on_last_candle": false
+        }
+      ],
+      "note": "Labels imitate TA-Lib rules; the model's card finds no next-day predictive value on SPY."
+    }
+  },
+  "SPY:multisignal_trader": {
+    "seconds": 4.7,
+    "result": {
+      "decision": "hold_or_moderate_sell",
+      "technical_prediction": "down",
+      "technical_probability_up": 0.36233062720721393,
+      "holdout_accuracy": 0.6440677966101694,
+      "holdout_up_rate": 0.4745762711864407,
+      "news_sentiment": 0.0,
+      "headlines_scored": 5,
+      "note": "Compare holdout accuracy with the up-rate: beating it is the bar."
+    }
+  },
+  "SPY:candlefusion": {
+    "seconds": 5.5,
+    "result": {
+      "model": "tuankg1028/candlefusion",
+      "candle_text": "Candle: bullish, Price change: 0.33%, Open: 768.78, High: 772.28, Low: 766.29, Close: 771.35, Volume: normal, Range: 5.99, Body size: 2.57, Upper shadow: 0.93, Lower shadow: 2.49",
+      "last_candle_class": "neutral",
+      "class_probabilities": {
+        "bearish": 0.10936573892831802,
+        "neutral": 0.7626243233680725,
+        "bullish": 0.12800993025302887
+      },
+      "raw_forecast": 75895.046875,
+      "caveats": [
+        "Trained on BTC/USDT: the forecast is in that training scale, not this stock's price.",
+        "The class describes the latest candle already on the chart (its training label), not the next one."
+      ]
+    }
+  },
+  "SPY:wsb_corpus": {
+    "seconds": 1.8,
+    "result": {
+      "dataset": "Sentdex/wsb_reddit_v001",
+      "period": "~2017-2018 (undated)",
+      "corpus_size": 118497,
+      "mentions": 1446,
+      "examples": [
+        "haven't had 4 down days since aug \n  \n bought FDs on SPY for tmw\n \u2192 \n\nPuts? What are you, un-American??",
+        "Wb what i said below about buying dips of companies that get bad news coverage, like when intel got the bad rap for backdoors in chips, sent down 4 % before earnings then shot 10% after. Should i be buying those opportunities ?\n \u2192 \n\nGood companies that will almost always recover ",
+        "After-hours sure ain't.\n \u2192 \n\nThat was after Cohn.  My comment was post-meeting, pre-cohn quitting.  SPY did go cliff jumping though.",
+        "What are your expiries and how long are you planning to hold? I\u2019m sitting on tencent, baba and FB leaps.\n \u2192 \n\nMU -  July 60 and Jan 65. Prolly gonna flip the July soon once they get another 2% above SPY growth. \n  \n AAPL - July 190s \n  \n COST - Jan 170s (might sell these today if",
+        "Ya, it might get cut again but how much bad news do you really think is left on this stock?\n \u2192 \n\nMy sentiment as well but then again it's GE and everything else is doing impeccably well. Just take that money -&gt; buy SPY calls -&gt; take profits -&gt; name yacht."
+      ]
+    }
+  },
+  "SPY:reddit_money_corpus": {
+    "seconds": 0.7,
+    "result": {
+      "dataset": "kowalsky/reddit_about_money",
+      "period": "undated",
+      "posts_scanned": 253,
+      "mentions": 23,
+      "examples": [
+        {
+          "subreddit_file": "reddit_stocks",
+          "title": "BREAKING: Dow falls 240 points as Trump calls off coronavirus stimulus talks until after election",
+          "score": "43995",
+          "url": "https://www.reddit.com/r/stocks/comments/j6b8k8/breaking_dow_falls_240_points_as_trump_calls_off/"
+        },
+        {
+          "subreddit_file": "reddit_daytrading",
+          "title": "Crossing 1 Mil Profit. Never Thought I Would Able To Get Here This Early. But I Just Want To Says Thank You To Everyone In This Forum Who Supported Me.",
+          "score": "6101",
+          "url": ""
+        },
+        {
+          "subreddit_file": "reddit_daytrading",
+          "title": "Is anyone trading while holding a 9 to 5 job?",
+          "score": "3419",
+          "url": "https://www.reddit.com/r/Daytrading/comments/lhk49b/is_anyone_trading_while_holding_a_9_to_5_job/"
+        },
+        {
+          "subreddit_file": "reddit_daytrading",
+          "title": "I've been successfully trading since the late 90s. All I have is a single cheap 27\" HP monitor. What gains did I miss out on by not having 6 monitors?",
+          "score": "3286",
+          "url": "https://www.reddit.com/r/Daytrading/comments/lowvnw/ive_been_successfully_trading_since_the_late_90s/"
+        },
+        {
+          "subreddit_file": "reddit_daytrading",
+          "title": "+10k month. After a rough start to the year I decided to focus on ending days green over big dollar amount gains. 18/20 green days is a mental milestone that I crossed today worth more than any amount",
+          "score": "2825",
+          "url": ""
+        },
+        {
+          "subreddit_file": "reddit_daytrading",
+          "title": "After 2 years of Daytrading. 7 months full time. Here's my advice",
+          "score": "2533",
+          "url": "https://www.reddit.com/r/Daytrading/comments/fw82ow/after_2_years_of_daytrading_7_months_full_time/"
+        },
+        {
+          "subreddit_file": "reddit_posts",
+          "title": "Goldman Sachs cuts US economic forecast after Joe Manchin rejects Build Back Better",
+          "score": "2351",
+          "url": ""
+        },
+        {
+          "subreddit_file": "reddit_daytrading",
+          "title": "Things I've Learned After 15 Years Of Trading",
+          "score": "2120",
+          "url": "https://www.reddit.com/r/Daytrading/comments/ngcts4/things_ive_learned_after_15_years_of_trading/"
+        }
+      ]
+    }
+  },
+  "GME:yolo_chart_patterns": {
+    "seconds": 1.3,
+    "result": {
+      "model": "foduucom/stockmarket-pattern-detection-yolov8",
+      "bars_rendered": 120,
+      "patterns": [
+        {
+          "type": "vision",
+          "name": "head_shoulders",
+          "model_label": "Head and shoulders top",
+          "direction": "bearish",
+          "confidence": 0.412,
+          "start_date": "2026-04-13",
+          "completed_date": "2026-05-12",
+          "recent": false
+        }
+      ],
+      "note": "Trained on screen captures (mAP@0.5 \u2248 0.61 per its card); treat detections as hints."
+    }
+  },
+  "GME:onnx_chart_patterns": {
+    "seconds": 1.0,
+    "result": {
+      "model": "JONNYVERSE/stockmarket-pattern-detection-yolov8-onnx",
+      "bars_rendered": 120,
+      "patterns": [
+        {
+          "type": "vision",
+          "name": "head_shoulders",
+          "model_label": "Head and shoulders top",
+          "direction": "bearish",
+          "confidence": 0.384,
+          "start_date": "2026-04-13",
+          "completed_date": "2026-05-12",
+          "recent": false
+        }
+      ],
+      "note": "ONNX export of foduucom's detector (trained on screen captures); treat detections as hints."
+    }
+  },
+  "GME:yolo_candlesticks": {
+    "seconds": 0.1,
+    "result": {
+      "model": "rohanjain2312/candlestick-pattern-recognition-system-yolo",
+      "window": [
+        "2026-08-28",
+        "2026-09-25"
+      ],
+      "patterns": [
+        {
+          "type": "vision",
+          "name": "BullishEngulfing",
+          "direction": "bullish",
+          "confidence": 0.962,
+          "completed_date": "2026-09-01",
+          "on_last_candle": false
+        },
+        {
+          "type": "vision",
+          "name": "ShootingStar",
+          "direction": "bearish",
+          "confidence": 0.323,
+          "completed_date": "2026-09-02",
+          "on_last_candle": false
+        },
+        {
+          "type": "vision",
+          "name": "Harami",
+          "direction": "neutral",
+          "confidence": 0.963,
+          "completed_date": "2026-09-15",
+          "on_last_candle": false
+        },
+        {
+          "type": "vision",
+          "name": "Doji",
+          "direction": "neutral",
+          "confidence": 0.848,
+          "completed_date": "2026-09-15",
+          "on_last_candle": false
+        },
+        {
+          "type": "vision",
+          "name": "Doji",
+          "direction": "neutral",
+          "confidence": 0.957,
+          "completed_date": "2026-09-21",
+          "on_last_candle": false
+        }
+      ],
+      "note": "Labels imitate TA-Lib rules; the model's card finds no next-day predictive value on SPY."
+    }
+  },
+  "GME:multisignal_trader": {
+    "seconds": 0.5,
+    "result": {
+      "decision": "moderate_buy",
+      "technical_prediction": "up",
+      "technical_probability_up": 0.6228505249562215,
+      "holdout_accuracy": 0.5254237288135594,
+      "holdout_up_rate": 0.5254237288135594,
+      "news_sentiment": -0.7458132624626159,
+      "headlines_scored": 5,
+      "note": "Compare holdout accuracy with the up-rate: beating it is the bar."
+    }
+  },
+  "GME:candlefusion": {
+    "seconds": 0.8,
+    "result": {
+      "model": "tuankg1028/candlefusion",
+      "candle_text": "Candle: bearish, Price change: -6.29%, Open: 24.96, High: 24.96, Low: 23.06, Close: 23.39, Volume: normal, Range: 1.90, Body size: 1.57, Upper shadow: 0.00, Lower shadow: 0.33",
+      "last_candle_class": "neutral",
+      "class_probabilities": {
+        "bearish": 0.08003153651952744,
+        "neutral": 0.82209312915802,
+        "bullish": 0.09787534177303314
+      },
+      "raw_forecast": 91571.5625,
+      "caveats": [
+        "Trained on BTC/USDT: the forecast is in that training scale, not this stock's price.",
+        "The class describes the latest candle already on the chart (its training label), not the next one."
+      ]
+    }
+  },
+  "GME:wsb_corpus": {
+    "seconds": 0.6,
+    "result": {
+      "dataset": "Sentdex/wsb_reddit_v001",
+      "period": "~2017-2018 (undated)",
+      "corpus_size": 118497,
+      "mentions": 65,
+      "examples": [
+        "AMD and dick\n \u2192 \n\nAMD and MU could really make some movie quality fucking scenes if you took on both bad boys at once.   \n My autism spikes around federal reserve stamens time when the x3 gold miner stocks will swing 18% or so in a day. \n Otherwise I just find the hated wounded c",
+        "GME Jan20? Really? You think it\u2019ll show any liquidity when you want to exit?\n \u2192 \n\nNo not really, gonna have to ride it to execution and the writer will have to pay up. In this sense it is a bit risky. \n  \n I can't see Gamestop surviving much longer though and on the off chance we",
+        "I vanquish the foes and banish the hoes so I could get to the gold\n \u2192 \n\nOP is definitely a 12 year old white kid from upper-middle class suburbs of a large metropolitan city with $GPRO and $GME calls on his $278.12 Robinhood account.",
+        "What longs do you like right now. :)\n \u2192 \n\nI\u2019d love a lot of companies at better prices, but I\u2019m personally long GME. I don\u2019t know that they\u2019ll be around in five years, but the stock is just so damn cheap, such that even if they go out of business there\u2019s a lot of upside. \n I have",
+        "Game stop has to be dying right? I was thinking of this play too. Im a little older but fuck I haven't been in a gs in years... who still shops there? \n  \n When I see them in malls they're always dead\n \u2192 \n\nThey got a bump recently as there were rumors they had investors ready to "
+      ]
+    }
+  },
+  "GME:reddit_money_corpus": {
+    "seconds": 0.1,
+    "result": {
+      "dataset": "kowalsky/reddit_about_money",
+      "period": "undated",
+      "posts_scanned": 253,
+      "mentions": 71,
+      "examples": [
+        {
+          "subreddit_file": "reddit_stocks",
+          "title": "It's fucking awful seeing the \"Silver\" misinformation campaign everywhere I look",
+          "score": "102244",
+          "url": "https://www.reddit.com/r/stocks/comments/la34bh/its_fucking_awful_seeing_the_silver/"
+        },
+        {
+          "subreddit_file": "reddit_stocks",
+          "title": "Companies try to prevent people from trading GME and AMC",
+          "score": "88849",
+          "url": "https://www.reddit.com/r/stocks/comments/l6uva1/companies_try_to_prevent_people_from_trading_gme/"
+        },
+        {
+          "subreddit_file": "reddit_stocks",
+          "title": "Today is a dark day for traders",
+          "score": "45563",
+          "url": "https://www.reddit.com/r/stocks/comments/l7awnp/today_is_a_dark_day_for_traders/"
+        },
+        {
+          "subreddit_file": "reddit_posts",
+          "title": "Bipartisan bill would ban lawmakers from buying, selling stocks",
+          "score": "11904",
+          "url": ""
+        },
+        {
+          "subreddit_file": "reddit_posts",
+          "title": "Wall st short-sellers lost $1.6 billion in a single day as Reddit traders rebelled against them",
+          "score": "7750",
+          "url": ""
+        },
+        {
+          "subreddit_file": "reddit_daytrading",
+          "title": "Crossing 1 Mil Profit. Never Thought I Would Able To Get Here This Early. But I Just Want To Says Thank You To Everyone In This Forum Who Supported Me.",
+          "score": "6101",
+          "url": ""
+        },
+        {
+          "subreddit_file": "reddit_posts",
+          "title": "Robinhood, Interactive Brokers restrict trading in GameStop stock and options",
+          "score": "6007",
+          "url": ""
+        },
+        {
+          "subreddit_file": "reddit_daytrading",
+          "title": "Share your Trading Rig?",
+          "score": "5280",
+          "url": ""
+        }
+      ]
+    }
+  },
+  "candlestick_benchmark": {
+    "seconds": 1.1,
+    "result": {
+      "dataset": "rohanjain2312/candlestick-pattern-recognition-system-data",
+      "split": "test",
+      "charts_compared": 300,
+      "per_pattern": {
+        "Hammer": {
+          "agree": 75,
+          "only_ours": 7,
+          "only_talib": 17,
+          "precision_vs_talib": 0.9146341463414634,
+          "recall_vs_talib": 0.8152173913043478
+        },
+        "ShootingStar": {
+          "agree": 135,
+          "only_ours": 0,
+          "only_talib": 26,
+          "precision_vs_talib": 1.0,
+          "recall_vs_talib": 0.8385093167701864
+        },
+        "BullishEngulfing": {
+          "agree": 157,
+          "only_ours": 0,
+          "only_talib": 0,
+          "precision_vs_talib": 1.0,
+          "recall_vs_talib": 1.0
+        },
+        "BearishEngulfing": {
+          "agree": 223,
+          "only_ours": 0,
+          "only_talib": 0,
+          "precision_vs_talib": 1.0,
+          "recall_vs_talib": 1.0
+        },
+        "MorningStar": {
+          "agree": 27,
+          "only_ours": 8,
+          "only_talib": 3,
+          "precision_vs_talib": 0.7714285714285715,
+          "recall_vs_talib": 0.9
+        },
+        "EveningStar": {
+          "agree": 14,
+          "only_ours": 0,
+          "only_talib": 4,
+          "precision_vs_talib": 1.0,
+          "recall_vs_talib": 0.7777777777777778
+        },
+        "Doji": {
+          "agree": 734,
+          "only_ours": 14,
+          "only_talib": 99,
+          "precision_vs_talib": 0.9812834224598931,
+          "recall_vs_talib": 0.8811524609843937
+        },
+        "Harami": {
+          "agree": 249,
+          "only_ours": 24,
+          "only_talib": 50,
+          "precision_vs_talib": 0.9120879120879121,
+          "recall_vs_talib": 0.8327759197324415
+        }
+      },
+      "note": "Agreement with TA-Lib's rules, not correctness: both are heuristics."
+    }
+  },
+  "ohlcv_1m:LFIN": {
+    "seconds": 8.8,
+    "result": {
+      "days": 33,
+      "first": "2017-12-13",
+      "last": "2018-01-31",
+      "max_close": 72.38
+    }
+  },
+  "ohlcv_1m:BBBY": {
+    "seconds": 11.9,
+    "result": {
+      "days": 60,
+      "first": "2020-12-01",
+      "last": "2021-02-26",
+      "max_close": 52.94
+    }
+  },
+  "ohlcv_1m:EXPR": {
+    "seconds": 4.0,
+    "result": {
+      "days": 60,
+      "first": "2020-12-01",
+      "last": "2021-02-26",
+      "max_close": 9.64
+    }
+  },
+  "ohlcv_1m:IRNT": {
+    "seconds": 10.8,
+    "result": {
+      "days": 35,
+      "first": "2021-08-27",
+      "last": "2021-10-15",
+      "max_close": 41.37
+    }
+  }
+}
