@@ -21,16 +21,17 @@ from .ohlcv_minute import INTEGRATION as _OHLCV, HfMinutePrices, daily_prices
 from .reddit_corpora import MONEY_INTEGRATION as _MONEY, WSB_INTEGRATION as _WSB, reddit_money_mentions, wsb_corpus_mentions
 from .candlesticks_yolo import INTEGRATION as _YOLO_CANDLES, yolo_candlesticks
 from .chart_patterns_yolo import INTEGRATION as _YOLO_CHARTS, yolo_chart_patterns
+from .chart_patterns_onnx import INTEGRATION as _ONNX_CHARTS, onnx_chart_patterns
 
 REGISTRY: Dict[str, Integration] = {i.key: i for i in (
-    _YOLO_CHARTS, _YOLO_CANDLES, _BENCHMARK, _MULTISIGNAL, _CANDLEFUSION, _WSB, _MONEY, _OHLCV)}
+    _YOLO_CHARTS, _ONNX_CHARTS, _YOLO_CANDLES, _BENCHMARK, _MULTISIGNAL, _CANDLEFUSION, _WSB, _MONEY, _OHLCV)}
 
 # Integrations that analyse a ticker's recent prices (run on scans and dossiers)
-ANALYSIS_KEYS = ("yolo_chart_patterns", "yolo_candlesticks", "multisignal_trader", "candlefusion", "wsb_corpus",
+ANALYSIS_KEYS = ("yolo_chart_patterns", "onnx_chart_patterns", "yolo_candlesticks", "multisignal_trader", "candlefusion", "wsb_corpus",
                  "reddit_money_corpus")
 
 __all__ = ["REGISTRY", "list_integrations", "set_enabled", "is_enabled", "run_integration", "run_enabled",
-           "yolo_chart_patterns", "yolo_candlesticks", "candlestick_benchmark", "multisignal_trader", "candlefusion",
+           "yolo_chart_patterns", "onnx_chart_patterns", "yolo_candlesticks", "candlestick_benchmark", "multisignal_trader", "candlefusion",
            "wsb_corpus_mentions", "reddit_money_mentions", "daily_prices", "HfMinutePrices", "IntegrationUnavailable"]
 
 

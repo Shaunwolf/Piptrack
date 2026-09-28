@@ -35,7 +35,8 @@ def test_every_requested_resource_is_registered():
     assert ids == {
         "foduucom/stockmarket-pattern-detection-yolov8", "rohanjain2312/candlestick-pattern-recognition-system-yolo",
         "rohanjain2312/candlestick-pattern-recognition-system-data", "Rodri1970/MultiSignal-Trader",
-        "tuankg1028/candlefusion", "Sentdex/wsb_reddit_v001", "kowalsky/reddit_about_money", "mito0o852/OHLCV-1m"}
+        "tuankg1028/candlefusion", "Sentdex/wsb_reddit_v001", "kowalsky/reddit_about_money", "mito0o852/OHLCV-1m",
+        "JONNYVERSE/stockmarket-pattern-detection-yolov8-onnx"}
 
 
 def test_switches_persist_and_gate_what_runs(monkeypatch):
@@ -220,3 +221,32 @@ def test_minute_source_probes_one_month_for_unknown_tickers(monkeypatch):
     monkeypatch.setattr(ohlcv_minute, "_month_minutes", lambda t, m: calls.append(m) or pd.DataFrame())
     out = ohlcv_minute.daily_prices("NOPE", date(2020, 1, 1), date(2021, 3, 1), probe=date(2021, 1, 15))
     assert out.empty and calls == ["2021-01"]
+
+
+def test_onnx_chart_patterns_decodes_yolov8_output(monkeypatch):
+    from pump_research.integrations import chart_patterns_onnx as onnx
+    window = make_prices("2021-01-01", 150, seed=9)
+
+    class Input:
+        name, shape = "images", [1, 3, 640, 640]
+
+    class FakeSession:
+        def get_inputs(self):
+            return [Input()]
+
+        def run(self, _, feeds):
+            self.tensor = feeds["images"]
+            out = np.zeros((1, 10, 3), dtype=np.float32)
+            out[0, :4, 0] = [480, 320, 200, 100]; out[0, 4 + 5, 0] = 0.8   # W_Bottom on the right half
+            out[0, :4, 1] = [482, 321, 200, 100]; out[0, 4 + 5, 1] = 0.6   # overlapping duplicate, suppressed
+            out[0, :4, 2] = [100, 300, 50, 50]; out[0, 4 + 1, 2] = 0.1     # below the confidence bar
+            return [out]
+
+    fake = FakeSession()
+    monkeypatch.setattr(onnx, "load_session", lambda: fake)
+    out = onnx.onnx_chart_patterns(window)
+    assert fake.tensor.shape == (1, 3, 640, 640) and fake.tensor.dtype == np.float32 and fake.tensor.max() <= 1
+    assert [p["name"] for p in out["patterns"]] == ["double_bottom"]
+    p = out["patterns"][0]
+    assert p["direction"] == "bullish" and p["start_date"] < p["completed_date"]
+    assert p["completed_date"] > window.index[len(window) // 2].isoformat()

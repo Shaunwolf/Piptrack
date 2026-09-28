@@ -27,7 +27,7 @@ jobs:
         run: |
           uv sync --locked
           uv pip install --index-url https://download.pytorch.org/whl/cpu torch torchvision
-          uv pip install ultralytics transformers mplfinance matplotlib pillow huggingface_hub pyarrow
+          uv pip install ultralytics onnxruntime transformers mplfinance matplotlib pillow huggingface_hub pyarrow
       - name: Run every integration
         run: uv run --no-sync python scripts/integrations_smoke.py
       - uses: actions/upload-artifact@v4

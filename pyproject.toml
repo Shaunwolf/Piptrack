@@ -41,6 +41,11 @@ hf = [
     "huggingface-hub>=2.0.0",
     "pyarrow>=25.0.1",
 ]
+onnx = [
+    "matplotlib>=3.11.2",
+    "mplfinance>=0.12.10b0",
+    "onnxruntime>=1.20",
+]
 vision = [
     "matplotlib>=3.11.2",
     "mplfinance>=0.12.10b0",

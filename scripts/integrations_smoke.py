@@ -39,7 +39,7 @@ def main():
             results[ticker] = {"error": "no Yahoo prices"}
             continue
         headlines = recent_headlines(ticker)
-        for key in ("yolo_chart_patterns", "yolo_candlesticks", "multisignal_trader", "candlefusion", "wsb_corpus",
+        for key in ("yolo_chart_patterns", "onnx_chart_patterns", "yolo_candlesticks", "multisignal_trader", "candlefusion", "wsb_corpus",
                     "reddit_money_corpus"):
             results[f"{ticker}:{key}"] = timed(lambda: run_integration(key, df, ticker=ticker, headlines=headlines))
     results["candlestick_benchmark"] = timed(lambda: run_integration("candlestick_benchmark", limit=300))
