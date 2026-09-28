@@ -176,3 +176,32 @@ def test_snapshot_handles_short_history():
     df = path([10, 12], bars_per_leg=20)
     feats = technical_snapshot(df, len(df) - 1)["features"]
     assert feats["ta_close_vs_ema200"] is None and feats["ta_rsi14"] is not None
+
+
+def test_candles_match_talib():
+    """Doji, hammer-family, harami and star rules reproduce TA-Lib's CDLxxx output"""
+    talib = pytest.importorskip("talib")
+    rules = {"hammer": ("CDLHAMMER", 0), "hanging_man": ("CDLHANGINGMAN", 0), "shooting_star": ("CDLSHOOTINGSTAR", 0),
+             "inverted_hammer": ("CDLINVERTEDHAMMER", 0), "morning_star": ("CDLMORNINGSTAR", 0),
+             "evening_star": ("CDLEVENINGSTAR", 0), "bullish_harami": ("CDLHARAMI", 1),
+             "bearish_harami": ("CDLHARAMI", -1), "bullish_engulfing": ("CDLENGULFING", 1),
+             "bearish_engulfing": ("CDLENGULFING", -1)}
+    agree = total = 0
+    for seed in range(8):
+        rng = np.random.default_rng(seed)
+        n = 400
+        c = 50 * np.exp(np.cumsum(rng.normal(0, 0.02, n)))
+        o = np.r_[c[0], c[:-1]] * np.exp(rng.normal(0, 0.006, n))
+        wick = rng.choice([0.2, 1, 3], (2, n), p=[.3, .5, .2])
+        h = np.maximum(o, c) * np.exp(np.abs(rng.normal(0, 0.008, n)) * wick[0])
+        lo = np.minimum(o, c) * np.exp(-np.abs(rng.normal(0, 0.008, n)) * wick[1])
+        df = bars(np.c_[o, h, lo, c, np.full(n, 1e5)].tolist())
+        ours = {}
+        for p in detect_candles(df, 11, n - 1):
+            ours.setdefault(p["name"], set()).add(p["idx"])
+        for name, (fn, sign) in rules.items():
+            out = getattr(talib, fn)(o, h, lo, c)
+            theirs = {i for i in range(11, n) if (out[i] != 0 if not sign else out[i] * sign > 0)}
+            agree += len(ours.get(name, set()) & theirs)
+            total += len(ours.get(name, set()) | theirs)
+    assert total > 500 and agree / total > 0.99

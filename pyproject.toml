@@ -59,6 +59,7 @@ dev = [
     "pyarrow>=25.0.1",
     "pytest>=9.1.1",
     "ruff>=0.16.9",
+    "ta-lib>=0.8.1",
 ]
 
 [tool.ruff]
