@@ -152,4 +152,8 @@ Their labelled event lists could extend `seeds.csv`.
 | 34 | [SudheerMamidela/nifty50-sp500-trading-signals-lstm](https://huggingface.co/SudheerMamidela/nifty50-sp500-trading-signals-lstm) | Model | LSTM trading signals for Nifty 50 and S&P 500 |
 | 35 | [Hungry-Socrates/Technical_Analysis_Unsloth_v3](https://huggingface.co/Hungry-Socrates/Technical_Analysis_Unsloth_v3) | Model | LLM fine-tuned to write technical analysis |
 
-**Best next integrations:** #11 (ONNX chart patterns, no torch), #30 (synthetic labelled waves to test the harmonic/zigzag engine), #15 (real labelled chart patterns to benchmark `chart_patterns.py`, like the candlestick benchmark), and #27 (to cross-check Fibonacci targets).
+**Follow-up inspection (September 28):**
+- **#11 JONNYVERSE ONNX chart patterns:** built as the `onnx_chart_patterns` integration. It has the same six labels as foduucom's model and runs on onnxruntime alone.
+- **#15 jadhavmanasi70/chart-pattern-nse:** unlabelled chart PNGs with no README, so it can't serve as a benchmark. Not integrated.
+- **#30 usamaahmedsh/synthetic-elliott-waves:** 15M rows of five "geometry ratio" columns (plus 779 real patterns). The ratios aren't defined anywhere and there are no price series, so our waves can't be scored against them faithfully. Not integrated.
+- **#27 tosin2013/fibonacci_price_target:** its retracement formula (`(low + high) - (high - low) * r`) puts levels outside the swing, and the demo returns hard-coded values. Nothing worth porting; `technicals/fib_tools.py` already covers retracements and extensions properly.
