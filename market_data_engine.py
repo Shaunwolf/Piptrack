@@ -14,12 +14,14 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 import pickle
 import os
+
+from runtime_env import WRITABLE_DIR
 from typing import List, Dict, Tuple, Optional
 import queue
 
 class MarketDataEngine:
     def __init__(self):
-        self.cache_dir = "market_cache"
+        self.cache_dir = os.path.join(WRITABLE_DIR, "market_cache")
         self.cache_duration = 300  # 5 minutes
         self.batch_size = 50  # Process stocks in batches
         self.max_workers = 10  # Concurrent threads

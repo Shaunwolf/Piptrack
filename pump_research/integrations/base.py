@@ -62,16 +62,22 @@ class Integration:
 # --- Config ---------------------------------------------------------------------------------
 
 def config_path() -> str:
-    return os.environ.get(CONFIG_ENV, DEFAULT_CONFIG)
+    """Where switch changes are saved. On Vercel the code folder is read-only, so changes go to /tmp
+    (they last until the function restarts; edit integrations.json in the repo to change the defaults)."""
+    if os.environ.get(CONFIG_ENV):
+        return os.environ[CONFIG_ENV]
+    return os.path.join("/tmp", "integrations.json") if os.environ.get("VERCEL") else DEFAULT_CONFIG
 
 
 def load_config() -> Dict[str, bool]:
-    try:
-        with open(config_path()) as f:
-            data = json.load(f)
-        return {k: bool(v) for k, v in data.get("enabled", data).items()}
-    except (FileNotFoundError, json.JSONDecodeError):
-        return {}
+    for path in dict.fromkeys((config_path(), DEFAULT_CONFIG)):
+        try:
+            with open(path) as f:
+                data = json.load(f)
+            return {k: bool(v) for k, v in data.get("enabled", data).items()}
+        except (FileNotFoundError, json.JSONDecodeError):
+            continue
+    return {}
 
 
 def save_config(config: Dict[str, bool]):

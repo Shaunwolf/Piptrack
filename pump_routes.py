@@ -13,6 +13,7 @@ from pump_research.charts import (price_chart, countdown_chart, tremor_scale, tr
 from pump_research.labels import feature_label, signal_label
 from pump_research.config import Settings
 from pump_research.model import analyze_ticker, load_model
+from pump_research.remote_data import ensure_remote_data, github_branch_tarball
 from pump_research.sources import default_price_sources
 
 pump_bp = Blueprint("pump_research", __name__)
@@ -21,9 +22,25 @@ pump_bp.add_app_template_global(signal_label)
 TICKER_RE = re.compile(r"^[A-Z0-9.\-]{1,10}$")
 
 
+def _data_url():
+    """Where to download the research data from, when it isn't on disk (PUMP_DATA_URL, or the
+    deployed repo's pump-data branch on Vercel)"""
+    if os.environ.get("PUMP_DATA_URL"):
+        return os.environ["PUMP_DATA_URL"]
+    if os.environ.get("VERCEL"):
+        return github_branch_tarball(os.environ.get("VERCEL_GIT_REPO_OWNER") or "Shaunwolf",
+                                     os.environ.get("VERCEL_GIT_REPO_SLUG") or "Piptrack")
+    return ""
+
+
 def _settings():
     s = Settings()
-    s.data_dir = os.environ.get("PUMP_DATA_DIR", os.path.join(os.path.dirname(os.path.abspath(__file__)), "pump_data"))
+    default_dir = "/tmp/pump_data" if os.environ.get("VERCEL") else \
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "pump_data")
+    s.data_dir = os.environ.get("PUMP_DATA_DIR", default_dir)
+    url = _data_url()
+    if url:
+        ensure_remote_data(s.data_dir, url)
     return s
 
 

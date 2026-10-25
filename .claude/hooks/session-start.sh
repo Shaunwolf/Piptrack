@@ -9,7 +9,7 @@ fi
 cd "${CLAUDE_PROJECT_DIR:-$(pwd)}"
 
 # Dependencies (including pytest and ruff from the dev group); uv reuses its cache between sessions
-uv sync
+uv sync --extra hf --extra onnx
 
 # Session environment: skip background scanner threads, use the project venv
 if [ -n "${CLAUDE_ENV_FILE:-}" ]; then

@@ -7,6 +7,8 @@ from flask_wtf.csrf import generate_csrf
 from sqlalchemy.orm import DeclarativeBase
 from werkzeug.middleware.proxy_fix import ProxyFix
 
+from runtime_env import ON_VERCEL, database_url
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 
@@ -20,11 +22,14 @@ login_manager = LoginManager()
 # Create Flask app
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key")
+if ON_VERCEL and "SESSION_SECRET" not in os.environ:
+    logging.warning("SESSION_SECRET is not set: logins use an insecure default key. Set it in the Vercel project settings.")
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 # Database configuration
-# Postgres in production; a local SQLite file (instance/pipsqueak.db) when DATABASE_URL is unset
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///pipsqueak.db")
+# Postgres in production; a local SQLite file when DATABASE_URL is unset (in /tmp on Vercel,
+# where it is wiped whenever the function restarts, so add a Postgres database there)
+app.config["SQLALCHEMY_DATABASE_URI"] = database_url()
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_recycle": 300,
     "pool_pre_ping": True,

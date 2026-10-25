@@ -12,7 +12,7 @@ See [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) for what's in the app and its cur
 You need Python 3.11+ and [uv](https://docs.astral.sh/uv/).
 
 ```bash
-uv sync                                   # install dependencies (including test tools)
+uv sync --extra hf --extra onnx            # install dependencies (including test tools)
 cp .env.example .env                      # optional settings; export them with: set -a; . ./.env; set +a
 uv run gunicorn --bind 0.0.0.0:5000 main:app
 ```
@@ -53,6 +53,23 @@ Optional repository settings (Settings → Secrets and variables → Actions):
 - the `POLYGON_API_KEY` secret (adds delisted tickers and news history).
 
 Results land in `pump_data/`: the combined `pump_dataset.json`, `pump_summary.csv`, `pump_report.md` and `model.json`. The **Pump Research** page in the app reads that folder.
+
+## Deploy to Vercel
+
+The repo is set up to run as a Vercel project (`[tool.vercel] entrypoint = "main:app"` in `pyproject.toml`).
+
+1. On [vercel.com/new](https://vercel.com/new), import the GitHub repository. Vercel detects Flask; no build settings are needed.
+2. Under **Settings → Environment Variables**, add:
+   - `SESSION_SECRET`: a long random string (required, it signs logins).
+   - A Postgres database: **Storage → Create Database → Neon (Postgres)** and connect it to the project. It sets `DATABASE_URL`, which the app uses automatically. Without it, accounts live in a temporary SQLite file that is wiped whenever the function restarts.
+   - Optional: `POLYGON_API_KEY`, `OPENAI_API_KEY`, `SEC_USER_AGENT`.
+3. Deploy. Production deploys come from the default branch.
+
+How it adapts to serverless:
+- The research data isn't in the code. On first request the app downloads the repo's `pump-data` branch from GitHub into `/tmp` and refreshes it hourly, so a new collection shows up without redeploying. Set `PUMP_DATA_URL` to use another source.
+- Caches and integration switch changes go to `/tmp`. Switch changes last until the function restarts; edit `integrations.json` to change the defaults.
+- The background market scanner and weekly PDF export don't run on Vercel (no long-running process, read-only files).
+- The heavy Hugging Face integrations (PyTorch, YOLO, ONNX) aren't installed there; their switches show "missing packages". Only the core dependencies are deployed (about 350 MB of the 500 MB limit).
 
 ## Claude Code on the web
 

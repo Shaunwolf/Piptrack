@@ -19,6 +19,7 @@ from background_scanner import background_scanner
 import json
 import logging
 import os
+from runtime_env import background_threads_allowed
 import pandas as pd
 from datetime import datetime
 from threading import Thread
@@ -35,8 +36,8 @@ try:
     stock_widgets = StockWidgets()
     market_engine = MarketDataEngine()
     
-    # Start background scanning (set DISABLE_BACKGROUND_SCANNER=1 for tests and one-off scripts)
-    if os.environ.get("DISABLE_BACKGROUND_SCANNER") != "1":
+    # Start background scanning (off on serverless hosts; set DISABLE_BACKGROUND_SCANNER=1 for tests and scripts)
+    if background_threads_allowed():
         background_scanner.start_background_scanning()
     logging.info("All components initialized successfully including high-performance market scanner")
 except Exception as e:
