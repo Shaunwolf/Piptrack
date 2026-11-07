@@ -118,3 +118,73 @@ def crossed_above(a: pd.Series, b: pd.Series) -> pd.Series:
 
 def crossed_below(a: pd.Series, b: pd.Series) -> pd.Series:
     return (a < b) & (a.shift(1) >= b.shift(1))
+
+
+# --- Additional trend and oscillator indicators (used by the scanner) ---------
+
+def supertrend(df: pd.DataFrame, n: int = 10, mult: float = 3.0):
+    """Supertrend line and direction (+1 up, -1 down) from ATR bands around the median price"""
+    hl2 = (df["high"] + df["low"]) / 2
+    a = atr(df, n)
+    upper_basic, lower_basic = (hl2 + mult * a).to_numpy(), (hl2 - mult * a).to_numpy()
+    close = df["close"].to_numpy(float)
+    m = len(df)
+    upper, lower = upper_basic.copy(), lower_basic.copy()
+    direction = np.ones(m)
+    line = np.full(m, np.nan)
+    for i in range(1, m):
+        if np.isnan(upper_basic[i]) or np.isnan(upper[i - 1]):
+            continue
+        upper[i] = upper_basic[i] if upper_basic[i] < upper[i - 1] or close[i - 1] > upper[i - 1] else upper[i - 1]
+        lower[i] = lower_basic[i] if lower_basic[i] > lower[i - 1] or close[i - 1] < lower[i - 1] else lower[i - 1]
+        if direction[i - 1] == 1:
+            direction[i] = -1 if close[i] < lower[i] else 1
+        else:
+            direction[i] = 1 if close[i] > upper[i] else -1
+        line[i] = lower[i] if direction[i] == 1 else upper[i]
+    return pd.Series(line, index=df.index), pd.Series(direction, index=df.index)
+
+
+def ichimoku(df: pd.DataFrame, tenkan: int = 9, kijun: int = 26, senkou: int = 52):
+    """Tenkan, kijun, and the cloud (span A/B) as it sits under today's bar (projected `kijun` bars earlier)"""
+    mid = lambda n: (df["high"].rolling(n, min_periods=n).max() + df["low"].rolling(n, min_periods=n).min()) / 2  # noqa: E731
+    t, k = mid(tenkan), mid(kijun)
+    span_a = ((t + k) / 2).shift(kijun)
+    span_b = mid(senkou).shift(kijun)
+    return t, k, span_a, span_b
+
+
+def cci(df: pd.DataFrame, n: int = 20) -> pd.Series:
+    tp = (df["high"] + df["low"] + df["close"]) / 3
+    ma = tp.rolling(n, min_periods=n).mean()
+    md = tp.rolling(n, min_periods=n).apply(lambda x: np.mean(np.abs(x - x.mean())), raw=True)
+    return (tp - ma) / (0.015 * md.replace(0, np.nan))
+
+
+def williams_r(df: pd.DataFrame, n: int = 14) -> pd.Series:
+    hi, lo = df["high"].rolling(n, min_periods=n).max(), df["low"].rolling(n, min_periods=n).min()
+    return -100 * (hi - df["close"]) / (hi - lo).replace(0, np.nan)
+
+
+def roc(close: pd.Series, n: int = 10) -> pd.Series:
+    return 100 * (close / close.shift(n) - 1)
+
+
+def keltner(df: pd.DataFrame, n: int = 20, mult: float = 1.5):
+    mid = ema(df["close"], n)
+    a = atr(df, n)
+    return mid + mult * a, mid, mid - mult * a
+
+
+def heikin_ashi(df: pd.DataFrame) -> pd.DataFrame:
+    ha_close = (df["open"] + df["high"] + df["low"] + df["close"]) / 4
+    ha_open = ha_close.copy()
+    o, c = df["open"].to_numpy(float), ha_close.to_numpy(float)
+    vals = np.empty(len(df))
+    vals[0] = (o[0] + df["close"].iloc[0]) / 2
+    for i in range(1, len(df)):
+        vals[i] = (vals[i - 1] + c[i - 1]) / 2
+    ha_open[:] = vals
+    return pd.DataFrame({"open": ha_open, "close": ha_close,
+                         "high": pd.concat([df["high"], ha_open, ha_close], axis=1).max(axis=1),
+                         "low": pd.concat([df["low"], ha_open, ha_close], axis=1).min(axis=1)}, index=df.index)

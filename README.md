@@ -54,6 +54,34 @@ Optional repository settings (Settings → Secrets and variables → Actions):
 
 Results land in `pump_data/`: the combined `pump_dataset.json`, `pump_summary.csv`, `pump_report.md` and `model.json`. The **Pump Research** page in the app reads that folder.
 
+## Scan Lab (drag-and-drop scanner)
+
+Open **Scan Lab** in the top menu (`/scan-lab`). You build a scan from blocks, run it across sectors, and save it with alerts.
+
+- **Blocks** (46, in 11 families): candlestick patterns (TA-Lib definitions), candle anatomy, streaks and Heikin-Ashi;
+  completed and forming harmonics (Gartley, Bat, Butterfly, Crab, Deep Crab, Shark, Cypher, 5-0, AB=CD, with the
+  reversal zone projected); chart patterns, breakouts and tight bases; Fibonacci retracements, extensions, time,
+  drawing tools and Fib/Gann confluence; every moving-average type, crosses, ribbons, Kalman, ADX, Supertrend and
+  Ichimoku; RSI, MACD, stochastics, CCI, Williams %R, ROC, MFI and divergences; Bollinger Bands, TTM squeeze and range
+  expansion; volume spikes, accumulation and VWAP; support/resistance, market structure, gaps and highs/lows; price,
+  performance, liquidity and relative-strength filters; Fear & Greed and the Pump DNA model. Every block has its own
+  settings.
+- **Groups** combine blocks with ALL, ANY or AT LEAST n. A stock must pass every group (or any group). **Strict** mode
+  keeps only stocks that pass; **Ranked** mode ranks every stock by its blend score (0–100, how strongly the blocks
+  agree, weighted by each block's ×weight).
+- **Universe**: the 11 GICS sectors of the S&P 500 (`pump_research/scanlab/sp500.csv`), themed lists (meme stocks,
+  crypto, historic pump stocks, ETFs) and your own tickers, on daily, weekly or hourly charts.
+- **Starter scans** for each style: candlestick purist, harmonic hunter, Fibonacci & Gann, momentum breakout,
+  squeeze hunter, oversold bounce, trend follower and Pump DNA.
+- **Alerts**: save a scan, switch alerts on, and new matches appear under **Alerts** (and optionally in a Discord or
+  Slack channel through an incoming webhook). **Check now** runs a saved scan on demand. The daily check calls
+  `/api/scan-lab/alerts/run-all` with `Authorization: Bearer $CRON_SECRET`; on Vercel, `vercel.json` schedules it
+  after each US market close (set `CRON_SECRET` in the project's environment variables).
+
+From the command line: `python -m pump_research scan --list`, then for example
+`python -m pump_research scan --preset harmonic_hunter --sector Financials`. The **Scan Lab smoke test** workflow
+(label `scanlab-smoke`) runs every starter scan on live prices and writes the matches to its job summary.
+
 ## Deploy to Vercel
 
 The repo is set up to run as a Vercel project (`[tool.vercel] entrypoint = "main:app"` in `pyproject.toml`).
@@ -62,6 +90,7 @@ The repo is set up to run as a Vercel project (`[tool.vercel] entrypoint = "main
 2. Under **Settings → Environment Variables**, add:
    - `SESSION_SECRET`: a long random string (required, it signs logins).
    - A Postgres database: **Storage → Create Database → Neon (Postgres)** and connect it to the project. It sets `DATABASE_URL`, which the app uses automatically. Without it, accounts live in a temporary SQLite file that is wiped whenever the function restarts.
+   - `CRON_SECRET`: any long random string; Vercel Cron sends it to the daily Scan Lab alert check.
    - Optional: `POLYGON_API_KEY`, `OPENAI_API_KEY`, `SEC_USER_AGENT`.
 3. Deploy. Production deploys come from the default branch.
 

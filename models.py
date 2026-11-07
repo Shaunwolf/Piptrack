@@ -214,3 +214,55 @@ class ScanResult(db.Model):
     pattern_type = db.Column(db.String(50), nullable=True)
     scan_type = db.Column(db.String(20), nullable=False)  # 'quick', 'comprehensive', 'after_hours'
     created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+class SavedScan(db.Model):
+    """A Scan Lab scan a user saved, with its alert rule"""
+    __tablename__ = 'saved_scans'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    name = db.Column(db.String(80), nullable=False)
+    spec = db.Column(db.JSON, nullable=False)          # blocks and groups (pump_research.scanlab spec)
+    universe = db.Column(db.JSON, nullable=False)      # {'sectors': [...], 'lists': [...], 'tickers': [...]}
+    timeframe = db.Column(db.String(4), default='1d')
+
+    # Alert rule: notify on tickers that newly match (or every match) at or above a blend score
+    alert_enabled = db.Column(db.Boolean, default=False)
+    alert_min_score = db.Column(db.Float, default=0)
+    alert_new_only = db.Column(db.Boolean, default=True)
+    alert_webhook = db.Column(db.String(300), nullable=True)   # Discord or Slack incoming webhook
+    last_matches = db.Column(db.JSON, nullable=True)           # tickers matched on the last alert run
+    last_run_at = db.Column(db.DateTime, nullable=True)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    alerts = db.relationship('ScanAlert', backref='scan', lazy=True, cascade='all, delete-orphan')
+
+    def to_dict(self):
+        return {"id": self.id, "name": self.name, "spec": self.spec, "universe": self.universe, "timeframe": self.timeframe,
+                "alert_enabled": self.alert_enabled, "alert_min_score": self.alert_min_score,
+                "alert_new_only": self.alert_new_only, "alert_webhook": bool(self.alert_webhook),
+                "last_run_at": self.last_run_at.isoformat() if self.last_run_at else None,
+                "updated_at": self.updated_at.isoformat() if self.updated_at else None}
+
+
+class ScanAlert(db.Model):
+    """One alert: a ticker matching a saved scan"""
+    __tablename__ = 'scan_alerts'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    scan_id = db.Column(db.Integer, db.ForeignKey('saved_scans.id'), nullable=False, index=True)
+    ticker = db.Column(db.String(12), nullable=False)
+    sector = db.Column(db.String(60), nullable=True)
+    score = db.Column(db.Float, nullable=False)
+    price = db.Column(db.Float, nullable=True)
+    fired = db.Column(db.JSON, nullable=True)          # titles of the blocks that hit
+    seen = db.Column(db.Boolean, default=False, index=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+    def to_dict(self):
+        return {"id": self.id, "scan_id": self.scan_id, "scan": self.scan.name if self.scan else "", "ticker": self.ticker,
+                "sector": self.sector, "score": self.score, "price": self.price, "fired": self.fired or [],
+                "seen": self.seen, "created_at": self.created_at.isoformat()}

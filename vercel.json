@@ -1,0 +1,5 @@
+{
+  "crons": [
+    { "path": "/api/scan-lab/alerts/run-all", "schedule": "35 21 * * 1-5" }
+  ]
+}

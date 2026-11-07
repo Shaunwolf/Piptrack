@@ -8,6 +8,7 @@ Command line interface.
   python -m pump_research discover --tickers-file universe.txt --start 2016-01-01
   python -m pump_research train                  # fit the pre-pump similarity model
   python -m pump_research score AAPL TSLA        # technicals + pre-pump score for current prices
+  python -m pump_research scan --preset harmonic_hunter --sector Financials   # a Scan Lab scan on live prices
 """
 
 import argparse
@@ -177,6 +178,41 @@ def cmd_integrations(args):
     print(json.dumps(run_integration(key, prices, ticker=ticker.upper(), **kwargs), indent=2, default=str))
 
 
+def cmd_scan(args):
+    """Run a Scan Lab starter scan (or a spec file) over sectors, lists or tickers with live prices"""
+    from .model import load_model
+    from .scanlab import PRESETS, expand_universe, preset, run_scan
+    if args.list:
+        for key, p in PRESETS.items():
+            print(f"{key:20} {p['title']:22} {p['tagline']}")
+        return
+    if args.spec:
+        with open(args.spec) as f:
+            spec, universe = json.load(f), {}
+    else:
+        chosen = preset(args.preset)
+        spec, universe = chosen["spec"], chosen["universe"]
+    if args.sector or args.lists or args.tickers:
+        universe = {"sectors": args.sector or [], "lists": args.lists or [], "tickers": args.tickers or []}
+    u = expand_universe(universe, limit=args.limit)
+    settings = _settings(args)
+    try:
+        model = load_model(settings)
+    except Exception:
+        model = None
+    out = run_scan(spec, u["tickers"], u["sector_of"], timeframe=args.timeframe, model=model, settings=settings,
+                   include_misses=args.all)
+    if args.json:
+        print(json.dumps(out, indent=2, default=str))
+        return
+    print(f"{out['matched']} match(es) out of {out['scanned']} scanned ({len(out['missing'])} without data) in {out['seconds']} s")
+    for r in out["results"][:args.top]:
+        mark = "MATCH" if r["matched"] else "     "
+        print(f"{mark} {r['ticker']:7} {r['score']:5.1f}  {r['price']:>10.2f}  {r['sector'][:22]:22}  {', '.join(r['fired'][:5])}")
+    if out["missing"]:
+        print("no data:", ", ".join(out["missing"][:30]) + (" …" if len(out["missing"]) > 30 else ""))
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="pump_research", description="Research what happened before extreme stock pumps")
     parser.add_argument("-v", "--verbose", action="store_true")
@@ -212,6 +248,20 @@ def main(argv=None):
     p.add_argument("action", choices=["list", "enable", "disable", "run"])
     p.add_argument("keys", nargs="*", help="integration keys (for run: KEY TICKER)")
     p.set_defaults(func=cmd_integrations)
+
+    p = sub.add_parser("scan", help="run a Scan Lab scan over sectors, lists or tickers"); common(p)
+    p.add_argument("--preset", default="momentum_breakout", help="starter scan key (see --list)")
+    p.add_argument("--spec", help="JSON file with a scan spec instead of a preset")
+    p.add_argument("--sector", action="append", help="GICS sector name (repeatable)")
+    p.add_argument("--lists", action="append", help="themed list key, e.g. meme (repeatable)")
+    p.add_argument("--tickers", nargs="*")
+    p.add_argument("--timeframe", choices=["1d", "1wk", "1h"], default="1d")
+    p.add_argument("--limit", type=int, default=600)
+    p.add_argument("--top", type=int, default=25)
+    p.add_argument("--all", action="store_true", help="also list near misses")
+    p.add_argument("--json", action="store_true")
+    p.add_argument("--list", action="store_true", help="list the starter scans")
+    p.set_defaults(func=cmd_scan)
 
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO if args.verbose else logging.WARNING)
