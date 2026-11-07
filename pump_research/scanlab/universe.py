@@ -44,7 +44,7 @@ LISTS: Dict[str, Dict] = {
              "tickers": ["GME", "AMC", "KOSS", "BB", "NOK", "PLTR", "SOFI", "HOOD", "CLOV", "SPCE", "DJT", "RDDT", "LCID",
                          "RIVN", "NIO", "PLUG", "OPEN", "UPST", "AFRM", "SNAP", "RBLX", "CHWY", "BYND", "TLRY", "SNDL", "FUBO"]},
     "crypto": {"title": "Crypto miners & fintech", "theme": "Crypto",
-               "tickers": ["COIN", "MSTR", "MARA", "RIOT", "CLSK", "HUT", "BITF", "CIFR", "WULF", "IREN", "HOOD", "SQ", "PYPL"]},
+               "tickers": ["COIN", "MSTR", "MARA", "RIOT", "CLSK", "HUT", "CIFR", "WULF", "IREN", "HOOD", "XYZ", "PYPL"]},
     "pump_history": {"title": "Historic pump stocks", "theme": "From the pump research list", "tickers": _seed_tickers()},
     "sector_etfs": {"title": "Sector ETFs", "theme": "ETF",
                     "tickers": ["XLK", "XLF", "XLV", "XLE", "XLI", "XLY", "XLP", "XLU", "XLB", "XLRE", "XLC", "SMH", "XBI", "KRE"]},
