@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% import "pump_research/_macros.html" as m %}
+
+{% block title %}{{ rec.seed.ticker }} · Pump Observatory{% endblock %}
+{% block head %}{{ m.head() }}{% endblock %}
+
+{% block content %}
+{% set pf = rec.price_features or {} %}{% set cf = rec.context_features or {} %}{% set ctx = rec.context or {} %}
+<div class="obs">
+  <header class="obs-mast">
+    <a class="obs-back" href="{{ url_for('pump_research.dashboard') }}">← Observatory</a>
+    <div class="obs-hero">
+      <div>
+        <p class="ticker">{{ rec.seed.ticker }}</p>
+        <p class="sub">{% if ev %}{{ ev.event_type.replace('_', ' ') }} · biggest day {{ ev.spike_date }}{% if ev.spike_date != ev.pump_date %} · surge began {{ ev.pump_date }}{% endif %}
+          {% else %}approx. {{ rec.seed.approx_date }}{% endif %}</p>
+        <div class="obs-chips" style="margin-top:10px">
+          {% if rec.qualifies %}<span class="obs-tag yes">cleared the 5× bar</span>{% elif ev %}<span class="obs-tag">below the 5× bar</span>{% endif %}
+          <span class="obs-tag">{{ rec.seed.category.replace('_', ' ') }}</span>
+          {% if rec.seed.source_url %}<a class="obs-tag" href="{{ rec.seed.source_url }}" target="_blank" rel="noopener noreferrer">reported: {{ rec.seed.reported_move|truncate(48) }} ↗</a>{% endif %}
+        </div>
+      </div>
+      {% if ev %}
+      <div class="obs-big">{{ m.mult(ev.high_multiple) }}<small>intraday high vs prior close</small></div>
+      {% endif %}
+    </div>
+    {% if rec.seed.notes %}<p class="obs-note">{{ rec.seed.notes }}</p>{% endif %}
+  </header>
+
+  {% if ev %}
+  <div class="obs-readouts">
+    <div class="obs-readout"><span class="v">{{ m.mult(ev.close_multiple) }}</span><span class="k">Close vs prior</span></div>
+    <div class="obs-readout"><span class="v">{{ m.mult(ev.run_multiple) }}<small>{{ ev.run_days }}d</small></span><span class="k">Best run</span></div>
+    <div class="obs-readout"><span class="v">${{ m.num(ev.prev_close) }}</span><span class="k">Prior close</span></div>
+    <div class="obs-readout"><span class="v">{{ m.num(ev.peak_fib_extension) }}</span><span class="k">Peak on fib scale</span></div>
+    <div class="obs-readout"><span class="v">{{ m.pct(pf.window_return) }}</span><span class="k">Window move</span></div>
+    <div class="obs-readout"><span class="v">{{ m.mult(pf.max_volume_ratio) }}</span><span class="k">Peak volume day</span></div>
+  </div>
+  {% else %}
+  <div class="obs-panel"><p class="obs-empty">{{ rec.detection|capitalize }}. Price history for this ticker isn't available from the configured sources (often a delisted or renamed stock). A Polygon key or a <span class="mono">price_ticker</span> alias in seeds.csv can fill it in.</p></div>
+  {% endif %}
+
+  {% if strip %}
+  <section class="obs-section">
+    <h2 class="obs-h2"><span class="idx">01</span>The tremor</h2>
+    <div class="obs-panel">
+      <div class="obs-legend" style="margin-bottom:10px"><span><i class="sw-amber"></i>Volume vs normal, each day before the surge</span><span><i class="sw-pump"></i>Surge day</span><span><i class="sw-normal"></i>1× normal</span></div>
+      {{ strip|safe }}
+    </div>
+  </section>
+  {% endif %}
+
+  {% if fig.data %}
+  <section class="obs-section">
+    <h2 class="obs-h2"><span class="idx">02</span>Price, moving averages, Fibonacci &amp; patterns</h2>
+    <div class="obs-panel">{{ m.plot('chart', fig, 560) }}</div>
+    <p class="obs-note">Hollow candles closed up, filled candles closed down. Dotted lines are Fibonacci levels; solid and dashed grey lines are support and resistance. ▲ and ▼ mark bullish and bearish patterns.</p>
+  </section>
+  {% endif %}
+
+  {% if rec.technicals %}
+  <section class="obs-section">
+    <h2 class="obs-h2"><span class="idx">03</span>Instruments at the end of the window</h2>
+    {{ m.instruments(rec.technicals, pf) }}
+  </section>
+  {% endif %}
+
+  {% if rec.daily_profile %}
+  <section class="obs-section">
+    <h2 class="obs-h2"><span class="idx">04</span>Countdown</h2>
+    <div class="obs-table-wrap">
+      <table class="obs-table">
+        <thead><tr><th>Day</th><th>Date</th><th class="num">Close</th><th class="num">Move</th><th class="num">Volume vs normal</th><th class="num">Reddit mentions</th></tr></thead>
+        <tbody>{% for p in rec.daily_profile %}
+          <tr><td class="mono">{{ p.offset }}</td><td class="mono">{{ p.date }}</td><td class="num">${{ '%.2f' % p.close }}</td>
+            <td class="num">{{ m.pct(p['return']) }}</td><td class="num">{{ m.mult(p.volume_ratio) }}</td>
+            <td class="num">{% if cf.reddit_mentions_per_day %}{{ cf.reddit_mentions_per_day[loop.index0] if loop.index0 < cf.reddit_mentions_per_day|length else '–' }}{% else %}<span class="muted">?</span>{% endif %}</td></tr>
+        {% endfor %}</tbody>
+      </table>
+    </div>
+  </section>
+  {% endif %}
+
+  <section class="obs-section">
+    <h2 class="obs-h2"><span class="idx">05</span>What was being said</h2>
+    <div class="obs-grid-2">
+      <div class="obs-panel">
+        <h3 class="obs-kicker" style="margin:0 0 8px">SEC filings</h3>
+        <div class="obs-feed">
+        {% for f in ctx.get('sec_filings', []) %}
+          <div class="obs-feed-item"><span class="meta">{{ f.date }} · {{ f.form }} · {{ f.group }}</span>
+            <a href="{{ f.url }}" target="_blank" rel="noopener noreferrer">{{ f.description or f.form }}</a></div>
+        {% else %}<p class="obs-empty">{{ 'None filed in the window' if cf.filings_total == 0 else 'Unavailable: SEC did not answer (see data sources below)' }}</p>{% endfor %}
+        </div>
+      </div>
+      <div class="obs-panel">
+        <h3 class="obs-kicker" style="margin:0 0 8px">News</h3>
+        <div class="obs-feed">
+        {% for n in ctx.get('polygon_news', []) + ctx.get('gdelt_news', []) %}
+          <div class="obs-feed-item"><span class="meta">{{ n.date }} · {{ n.publisher }}</span>
+            {% if n.url and n.url.startswith(('http://', 'https://')) %}<a href="{{ n.url }}" target="_blank" rel="noopener noreferrer">{{ n.title }}</a>{% else %}{{ n.title }}{% endif %}</div>
+        {% else %}<p class="obs-empty">{{ 'No articles found' if cf.news_articles == 0 else 'Unavailable: needs a Polygon key for windows older than ~3 months' }}</p>{% endfor %}
+        </div>
+      </div>
+    </div>
+    <div class="obs-panel">
+      <h3 class="obs-kicker" style="margin:0 0 8px">Reddit</h3>
+      {% if cf.reddit_mentions is not none %}
+      <p class="obs-note">{{ '≥' if cf.reddit_partial }}{{ cf.reddit_mentions }} mentions by {{ cf.reddit_unique_authors }} authors · average sentiment {{ m.num(cf.reddit_avg_sentiment) }} · acceleration into the pump {{ m.mult(cf.reddit_mention_acceleration) }}</p>
+      <div class="obs-feed">
+      {% for r in (ctx.get('reddit', [])|sort(attribute='score', reverse=True))[:15] %}
+        <div class="obs-feed-item"><span class="meta">{{ r.date }} · r/{{ r.subreddit }} · score {{ r.score }} · sentiment {{ '%+.2f' % r.sentiment }}</span>
+          {% if r.url and r.url.startswith('https://www.reddit.com/') %}<a href="{{ r.url }}" target="_blank" rel="noopener noreferrer">{{ r.title or r.text[:160] }}</a>{% else %}{{ r.title or r.text[:160] }}{% endif %}</div>
+      {% endfor %}
+      </div>
+      {% else %}<p class="obs-empty">Unavailable: no Reddit archive answered (see data sources below)</p>{% endif %}
+    </div>
+  </section>
+
+  <section class="obs-section">
+    <h2 class="obs-h2"><span class="idx">06</span>Data sources</h2>
+    <div class="obs-table-wrap">
+      <table class="obs-table">
+        <thead><tr><th>Source</th><th>Status</th><th class="num">Records</th><th>Detail</th></tr></thead>
+        <tbody>{% for name, info in rec.sources.items() %}
+          <tr><td class="mono">{{ name.replace('_', ' ') }}</td><td>{{ m.status(info.status) }}</td><td class="num">{{ info.records }}</td>
+            <td class="muted" style="white-space:normal;max-width:520px">{{ info.detail|truncate(140) }}</td></tr>
+        {% endfor %}</tbody>
+      </table>
+    </div>
+  </section>
+</div>
+{% endblock %}

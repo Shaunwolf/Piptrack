@@ -1,0 +1,80 @@
+name: Collect triplers
+
+# Finds every listed US stock that tripled within 3 weeks (last two years), collects 1-hour, 4-hour and
+# daily readings, news, filings and Reddit posts for the window before each launch (plus ordinary windows
+# for comparison), learns the Tripler DNA scans and publishes everything to the `tripler-data` branch.
+on:
+  workflow_dispatch:
+    inputs:
+      tickers:
+        description: "Comma-separated tickers (blank = every listed common stock)"
+        required: false
+        default: ""
+      social_minutes:
+        description: "Minutes to spend searching the Reddit archive"
+        required: false
+        default: "75"
+  pull_request:
+    types: [labeled]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: collect-triplers
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    # `collect-triplers-sample` runs a quick check on the first 400 tickers
+    if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'collect-triplers' || github.event.label.name == 'collect-triplers-sample'
+    runs-on: ubuntu-latest
+    timeout-minutes: 345
+    env:
+      DISABLE_BACKGROUND_SCANNER: "1"
+      PUMP_SQUEEZE_DATA: "1"
+      SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT || format('PipSqueak research {0}@users.noreply.github.com', github.repository_owner) }}
+      POLYGON_API_KEY: ${{ secrets.POLYGON_API_KEY }}
+      TICKERS: ${{ github.event.inputs.tickers }}
+      SOCIAL_MINUTES: ${{ github.event.inputs.social_minutes || '75' }}
+      LIMIT: ${{ github.event.label.name == 'collect-triplers-sample' && '400' || '0' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Collect
+        run: |
+          args=(--out tripler_data --social-minutes "$SOCIAL_MINUTES" --limit "$LIMIT")
+          if [ -n "$TICKERS" ]; then args+=(--tickers "$TICKERS"); fi
+          uv run python -m pump_research -v triplers collect "${args[@]}" 2>&1 | grep --line-buffered -v -e "^DEBUG" -e "YFPricesMissingError" -e "Failed download" -e "^ERROR:yfinance:$"
+
+      - name: Analyze and learn the Tripler DNA scans
+        run: |
+          uv run python -m pump_research triplers analyze --out tripler_data --install
+          mkdir -p tripler_data/learned && cp pump_research/scanlab/learned/*.json tripler_data/learned/ 2>/dev/null || true
+          cat tripler_data/report.md >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tripler-data
+          path: tripler_data/
+          retention-days: 30
+
+      - name: Publish to the tripler-data branch
+        if: env.LIMIT == '0'
+        run: |
+          cd tripler_data
+          git init -q -b tripler-data
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Tripler data from ${GITHUB_SHA::7} (run ${GITHUB_RUN_ID})"
+          git push -f "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" tripler-data
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

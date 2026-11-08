@@ -13,7 +13,7 @@
     <!-- Settings Form -->
     <div class="max-w-4xl mx-auto">
         <form action="{{ url_for('update_settings') }}" method="POST" class="space-y-8">
-            {{ csrf_token() }}
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             
             <!-- Alert Preferences -->
             <div class="bg-dark-surface rounded-2xl p-6 border border-dark-accent">

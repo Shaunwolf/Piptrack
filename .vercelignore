@@ -1,0 +1,9 @@
+# Not needed by the deployed app
+tests/
+docs/
+scripts/
+screenshots/
+attached_assets/
+pump_data/
+.github/
+.claude/

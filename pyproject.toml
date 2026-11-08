@@ -16,22 +16,67 @@ dependencies = [
     "openai>=1.86.0",
     "pandas>=2.3.0",
     "pdfkit>=1.0.0",
-    "praw>=7.8.1",
     "psycopg2-binary>=2.9.10",
     "requests>=2.32.4",
     "scikit-learn>=1.7.0",
     "scipy>=1.15.3",
     "sqlalchemy>=2.0.41",
-    "ta>=0.11.0",
-    "textblob>=0.19.0",
-    "trafilatura>=2.0.0",
     "vadersentiment>=3.3.2",
     "werkzeug>=3.1.3",
     "yfinance>=0.2.63",
     "oauthlib>=3.2.2",
     "pyjwt>=2.10.1",
-    "flask-dance>=7.1.0",
     "flask-wtf>=1.2.2",
     "wtforms>=3.2.1",
     "schedule>=1.2.2",
+    "ta>=0.11.0",
 ]
+
+[project.optional-dependencies]
+hf = [
+    "huggingface-hub>=2.0.0",
+    "pyarrow>=25.0.1",
+]
+onnx = [
+    "matplotlib>=3.11.2",
+    "mplfinance>=0.12.10b0",
+    "onnxruntime>=1.20",
+]
+vision = [
+    "matplotlib>=3.11.2",
+    "mplfinance>=0.12.10b0",
+    "ultralytics>=8.4.123",
+]
+nlp = [
+    "torch>=2.14.0",
+    "transformers>=4.12.2",
+]
+
+[dependency-groups]
+# Kept small: Vercel may install this group. Tests also need the hf and onnx extras
+# (uv sync --extra hf --extra onnx), which CI and the session hook install.
+dev = [
+    "pytest>=9.1.1",
+    "ruff>=0.16.9",
+    "ta-lib>=0.8.1",
+]
+
+[tool.vercel]
+# main.py registers every route and blueprint on the app defined in app.py
+entrypoint = "main:app"
+
+[tool.ruff]
+line-length = 130
+target-version = "py311"
+extend-exclude = ["attached_assets", "static", "templates"]
+
+[tool.ruff.lint]
+# Errors only: syntax errors, undefined names, unused imports/variables
+select = ["E9", "F63", "F7", "F82", "F401", "F841"]
+
+[tool.ruff.lint.per-file-ignores]
+# Older app modules: only real errors are enforced (several imports exist for side effects)
+"{app,main,routes,models,auth_forms,reset_password,stock_scanner,forecasting_engine,ai_coach,confidence_scorer,pattern_evolution_tracker,personalized_recommender,google_sheets_integration,pdf_generator,stock_widgets,market_data_engine,background_scanner,scanner_monitor,animated_sparklines,animated_trading_journey,trading_journey}.py" = ["F401", "F841"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

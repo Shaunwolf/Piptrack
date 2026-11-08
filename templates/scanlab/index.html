@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% import "pump_research/_macros.html" as m %}
+
+{% block title %}Scan Lab · PipSqueak{% endblock %}
+{% block head %}{{ m.head() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/scanlab.css') }}">
+<meta name="csrf-token" content="{{ csrf_token() }}">{% endblock %}
+
+{% block content %}
+<div class="lab" id="lab">
+  <header class="lab-mast">
+    <div class="lab-kicker">PipSqueak · Scan Lab <a href="{{ url_for('pump_research.dashboard') }}">Pump Observatory →</a> <a href="{{ url_for('triplers.page') }}">Tripler Lab →</a></div>
+    <div class="lab-mast-row">
+      <input class="lab-name" id="scan-name" value="Untitled scan" maxlength="80" aria-label="Scan name">
+      <div class="lab-actions">
+        <button class="lab-btn" type="button" id="open-presets">Starter scans</button>
+        <button class="lab-btn" type="button" id="open-radar">Daily radar</button>
+        <button class="lab-btn" type="button" id="open-scans">My scans</button>
+        <button class="lab-btn" type="button" id="open-alerts">Alerts <span class="count" id="alert-count" hidden>0</span></button>
+        <button class="lab-btn" type="button" id="open-save">Save &amp; alert</button>
+      </div>
+    </div>
+    <p class="lab-sentence" id="sentence" aria-live="polite"></p>
+  </header>
+
+  <section class="lab-universe" aria-label="What to scan">
+    <div class="lab-universe-row"><span class="lab-label">Sectors</span><div class="lab-chips" id="sectors"></div></div>
+    <div class="lab-universe-row"><span class="lab-label">Lists</span><div class="lab-chips" id="lists"></div></div>
+    <div class="lab-universe-row"><label class="lab-label" for="tickers">Tickers</label>
+      <input class="lab-input lab-tickers" id="tickers" placeholder="Add your own: AAPL, TSLA, GME" autocomplete="off"></div>
+    <div class="lab-universe-foot">
+      <div class="lab-rule">Chart <div class="lab-seg" id="timeframe" role="group" aria-label="Chart timeframe"></div></div>
+      <span class="lab-universe-count" id="universe-count"></span>
+    </div>
+  </section>
+
+  <div class="lab-body">
+    <aside class="lab-panel lab-palette" id="palette" aria-label="Blocks">
+      <div class="lab-panel-head"><h2 class="lab-h2"><span class="idx">01</span>Blocks</h2>
+        <span class="muted mono" style="font-size:11px">drag onto a group, or press +</span></div>
+      <div class="lab-palette-search"><input class="lab-input" id="block-search" type="search" placeholder="Search 45+ blocks: hammer, gartley, RSI…"
+        aria-label="Search blocks"></div>
+      <div class="lab-palette-list" id="palette-list"></div>
+    </aside>
+
+    <section class="lab-panel" aria-label="Scan">
+      <div class="lab-panel-head"><h2 class="lab-h2"><span class="idx">02</span>Your scan</h2>
+        <button class="lab-icon-btn" type="button" id="clear-scan">Clear</button></div>
+      <div class="lab-canvas">
+        <div class="lab-rules">
+          <div class="lab-rule">A stock must pass <div class="lab-seg" id="match" role="group" aria-label="Group logic"></div></div>
+          <div class="lab-rule">Mode <div class="lab-seg" id="mode" role="group" aria-label="Scan mode"></div></div>
+          <div class="lab-rule"><label for="min-score">Min blend score</label>
+            <input type="range" id="min-score" min="0" max="100" step="5"><span class="mono" id="min-score-v"></span></div>
+        </div>
+        <div class="lab-groups" id="groups"></div>
+        <button class="lab-btn ghost lab-add-group" type="button" id="add-group">+ Add a group</button>
+      </div>
+    </section>
+
+    <section class="lab-panel lab-results" aria-label="Results">
+      <div class="lab-panel-head"><h2 class="lab-h2"><span class="idx">03</span>Results</h2>
+        <span class="muted mono" style="font-size:11px" id="as-of"></span></div>
+      <div class="lab-run">
+        <button class="lab-btn primary" type="button" id="run">Run scan</button>
+        <svg class="lab-trace" id="trace" viewBox="0 0 300 28" preserveAspectRatio="none" aria-hidden="true"><path d="M0 14 L300 14"/></svg>
+        <div class="lab-progress" aria-hidden="true"><span id="progress"></span></div>
+        <div class="lab-status" id="status" aria-live="polite"><span>Ready.</span></div>
+      </div>
+      <div class="lab-filter">
+        <div class="lab-seg" id="result-filter" role="group" aria-label="Which results"></div>
+        <select class="lab-input" id="sort" aria-label="Sort results">
+          <option value="score">Sort by blend score</option><option value="change">Sort by today's move</option>
+          <option value="ticker">Sort by ticker</option></select>
+      </div>
+      <div class="lab-list" id="results"><p class="lab-note">Pick sectors or lists above, build your scan, then press
+        <b>Run scan</b>. Matches appear here as each batch of stocks is checked.</p></div>
+    </section>
+  </div>
+
+  <button class="lab-btn primary lab-fab" type="button" id="fab">+ Add block</button>
+
+  <dialog class="lab-dialog" id="presets-dialog" aria-labelledby="presets-title">
+    <div class="lab-dialog-head"><h2 class="lab-h2" id="presets-title">Starter scans</h2>
+      <button class="lab-icon-btn" type="button" data-close>Close</button></div>
+    <div class="lab-dialog-body"><p class="muted" style="margin:0 0 14px">Each one is a normal scan you can change block by block.</p>
+      <div class="lab-presets" id="presets"></div></div>
+  </dialog>
+
+  <dialog class="lab-dialog" id="radar-dialog" aria-labelledby="radar-title">
+    <div class="lab-dialog-head"><h2 class="lab-h2" id="radar-title">Daily radar</h2>
+      <button class="lab-icon-btn" type="button" data-close>Close</button></div>
+    <div class="lab-dialog-body"><div class="lab-list-plain" id="radar"></div></div>
+  </dialog>
+
+  <dialog class="lab-dialog" id="scans-dialog" aria-labelledby="scans-title">
+    <div class="lab-dialog-head"><h2 class="lab-h2" id="scans-title">My scans</h2>
+      <button class="lab-icon-btn" type="button" data-close>Close</button></div>
+    <div class="lab-dialog-body"><div class="lab-list-plain" id="scans"></div></div>
+  </dialog>
+
+  <dialog class="lab-dialog" id="alerts-dialog" aria-labelledby="alerts-title">
+    <div class="lab-dialog-head"><h2 class="lab-h2" id="alerts-title">Alerts</h2>
+      <button class="lab-icon-btn" type="button" data-close>Close</button></div>
+    <div class="lab-dialog-body"><div class="lab-list-plain" id="alerts"></div></div>
+  </dialog>
+
+  <dialog class="lab-dialog" id="save-dialog" aria-labelledby="save-title">
+    <div class="lab-dialog-head"><h2 class="lab-h2" id="save-title">Save &amp; alert</h2>
+      <button class="lab-icon-btn" type="button" data-close>Close</button></div>
+    <div class="lab-dialog-body">
+      <form class="lab-form" id="save-form">
+        <div class="lab-field"><label for="save-name">Name</label><input class="lab-input" id="save-name" maxlength="80" required></div>
+        <label class="lab-switch"><input type="checkbox" id="alert-on"> Alert me when stocks match this scan</label>
+        <div class="lab-field"><label for="alert-score">Only when the blend score is at least <span class="mono" id="alert-score-v"></span></label>
+          <input type="range" id="alert-score" min="0" max="100" step="5" style="accent-color:var(--phosphor)"></div>
+        <label class="lab-switch"><input type="checkbox" id="alert-new" checked> Only stocks that weren't matching last time</label>
+        <div class="lab-field"><label for="alert-hook">Also post to Discord or Slack <span class="muted">optional</span></label>
+          <input class="lab-input" id="alert-hook" type="url" placeholder="https://discord.com/api/webhooks/…">
+          <span class="help">Paste an incoming-webhook URL. Leave it empty to keep alerts inside PipSqueak.</span></div>
+        <p class="help muted" style="margin:0;font-size:12px;line-height:1.5">Saved alerts are checked automatically after each US market close
+          when the scheduler is set up (see the README), and any time you press <b>Check now</b> in My scans.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="lab-btn primary" type="submit" id="save-submit">Save scan</button>
+          <button class="lab-btn" type="button" id="save-as-new">Save as a new scan</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+</div>
+<script src="{{ url_for('static', filename='js/scanlab.js') }}" defer></script>
+{% endblock %}

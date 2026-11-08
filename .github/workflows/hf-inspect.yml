@@ -1,0 +1,35 @@
+name: Inspect Hugging Face resources
+
+# Reads repository metadata, file lists, READMEs, dataset samples and Space code from
+# Hugging Face (reachable from GitHub's runners) and publishes them to the hf-inspect branch.
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [labeled]
+
+permissions:
+  contents: write
+
+jobs:
+  inspect:
+    if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'hf-inspect'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install requests
+      - run: python scripts/hf_inspect.py
+      - name: Publish to the hf-inspect branch
+        run: |
+          cd hf_inspect
+          git init -q -b hf-inspect
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Hugging Face inspection from ${GITHUB_SHA::7}"
+          git push -f "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" hf-inspect
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

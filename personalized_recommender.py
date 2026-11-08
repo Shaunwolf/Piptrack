@@ -19,7 +19,9 @@ class PersonalizedRecommender:
     """Advanced stock recommendation engine with personalization"""
     
     def __init__(self):
-        self.openai_client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+        # Only create the client when a key is configured; without one, insights use the rule-based fallback
+        api_key = os.environ.get("OPENAI_API_KEY")
+        self.openai_client = openai.OpenAI(api_key=api_key) if api_key else None
         self.user_profiles = {}
         self.market_sectors = [
             'Technology', 'Healthcare', 'Financial', 'Consumer Discretionary',
@@ -707,6 +709,9 @@ class PersonalizedRecommender:
             Provide a concise 2-3 sentence insight explaining why this stock fits the user's profile and what to watch for. Focus on actionable insights.
             """
             
+            if self.openai_client is None:
+                raise RuntimeError("OPENAI_API_KEY not configured")
+
             response = self.openai_client.chat.completions.create(
                 model="gpt-4o",  # the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
                 messages=[{"role": "user", "content": prompt}],

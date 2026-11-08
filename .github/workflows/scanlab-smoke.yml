@@ -1,0 +1,46 @@
+name: Scan Lab smoke test
+
+# Runs every Scan Lab starter scan on live Yahoo Finance prices (reachable from GitHub's runners)
+# and writes the matches to the job summary. Trigger with the `scanlab-smoke` label or manually.
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [labeled]
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'scanlab-smoke'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      DISABLE_BACKGROUND_SCANNER: "1"
+      PUMP_DATA_DIR: pump_data
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: Install dependencies
+        run: uv sync --locked
+      - name: Fetch the trained pump model (for the Pump DNA block)
+        run: |
+          mkdir -p pump_data
+          if git fetch --depth 1 origin pump-data; then git archive FETCH_HEAD | tar -x -C pump_data; fi
+      - name: Run every starter scan
+        run: |
+          {
+            echo "## Scan Lab smoke test ($(date -u +%F))"
+            for preset in squeeze_setup candlestick_purist harmonic_hunter fib_gann momentum_breakout squeeze_hunter mean_reversion trend_follower pump_dna; do
+              echo; echo "### $preset"; echo '```'
+              uv run python -m pump_research scan --preset "$preset" --top 15 2>&1 | tail -n 20
+              echo '```'
+            done
+            echo; echo "### Whole S&P 500, momentum breakout (timing)"; echo '```'
+            uv run python -m pump_research scan --preset momentum_breakout --sector "Communication Services" --sector "Consumer Discretionary" \
+              --sector "Consumer Staples" --sector Energy --sector Financials --sector "Health Care" --sector Industrials \
+              --sector "Information Technology" --sector Materials --sector "Real Estate" --sector Utilities --top 20 2>&1 | tail -n 25
+            echo '```'
+          } | tee -a "$GITHUB_STEP_SUMMARY"

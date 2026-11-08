@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% import "pump_research/_macros.html" as m %}
+
+{% block title %}Tripler Lab · PipSqueak{% endblock %}
+{% block head %}{{ m.head() }}{% endblock %}
+
+{% block content %}
+<div class="obs tl" id="tl">
+  <header class="obs-mast">
+    <div class="obs-kicker"><span class="dot" aria-hidden="true"></span>PipSqueak · Tripler Lab
+      <a href="{{ url_for('pump_research.dashboard') }}" style="margin-left:auto">Pump Observatory →</a>
+      <a href="{{ url_for('scanlab.page') }}">Scan Lab →</a></div>
+    <div class="obs-mast-row">
+      <h1 class="obs-title">Three times the price<br><em>in three weeks.</em></h1>
+      <form class="obs-search" id="match-form" role="search" aria-label="Overlay a ticker on history">
+        <input id="match-ticker" placeholder="Overlay a ticker" maxlength="10" autocomplete="off" aria-label="Ticker to overlay">
+        <button type="submit">Match</button>
+      </form>
+    </div>
+    <p class="obs-lede">Every listed US stock that tripled within 15 trading days, lined up on the day before it launched. Each one is
+      read on the 1-hour, 4-hour and daily charts (every Scan Lab block, Fibonacci, Gann and candlestick reading), then
+      compared with ordinary windows from stocks at the same price, so a reading only counts if it shows up more before triplers.</p>
+  </header>
+
+  {% if not data %}
+  <section class="obs-section">
+    <h2 class="obs-h2"><span class="idx">00</span>No tripler data collected yet</h2>
+    <div class="obs-panel">
+      <p class="obs-note" style="margin-bottom:12px">The collection runs on GitHub (it needs internet access to every exchange's symbol list and two years of hourly bars).
+        Add the <b>collect-triplers</b> label to the pull request, or run it by hand:</p>
+      <pre class="obs-code">uv run python -m pump_research triplers collect --out tripler_data
+uv run python -m pump_research triplers analyze --out tripler_data --install</pre>
+    </div>
+  </section>
+  {% else %}
+  {% set trips = data.records|rejectattr('control')|list %}
+  <div class="obs-readouts">
+    <div class="obs-readout"><span class="v">{{ meta.triplers }}</span><span class="k">Triplers found</span></div>
+    <div class="obs-readout"><span class="v">{{ meta.controls }}</span><span class="k">Ordinary windows</span></div>
+    <div class="obs-readout"><span class="v">{{ '{:,}'.format(meta.stocks_with_prices or 0) }}</span><span class="k">Stocks searched</span></div>
+    <div class="obs-readout"><span class="v">{{ (trips|map(attribute='days_to_triple')|sort|list)[trips|length // 2] if trips else '–' }}<small>days</small></span><span class="k">Median time to 3×</span></div>
+    <div class="obs-readout"><span class="v">{{ '%.1f' % (trips|map(attribute='peak_multiple')|sort|list)[trips|length // 2] if trips else '–' }}<small>×</small></span><span class="k">Median peak</span></div>
+  </div>
+
+  <section class="obs-section" aria-labelledby="s-overlay">
+    <h2 class="obs-h2" id="s-overlay"><span class="idx">01</span>Historical overlay</h2>
+    <div class="tl-bar">
+      <div class="tl-seg" role="group" aria-label="Chart timeframe" id="tf">
+        <button type="button" data-tf="1d" aria-pressed="true">Daily</button>
+        <button type="button" data-tf="4h" aria-pressed="false">4-hour</button>
+        <button type="button" data-tf="1h" aria-pressed="false">1-hour</button>
+      </div>
+      <label class="tl-check"><input type="checkbox" id="show-lines" checked> Every tripler</label>
+      <label class="tl-check"><input type="checkbox" id="show-ordinary" checked> Ordinary band</label>
+      <span class="muted mono tl-count" id="overlay-count"></span>
+    </div>
+    <div class="obs-grid-2 tl-overlay-grid">
+      <div class="obs-panel"><div id="overlay" class="obs-chart" style="height:480px"></div>
+        <p class="obs-note">Price relative to the launch close (log scale). Bar 0 is the last close before the run. The amber band is
+          the middle half of all triplers, grey is ordinary windows. Type a ticker above to lay today's chart on top, ending at bar 0.</p></div>
+      <div class="obs-panel tl-match" id="match-panel" aria-live="polite">
+        <h3 class="tl-h3">Analog match</h3>
+        <p class="obs-note">Enter a ticker to find the historical windows whose run-up looked most like its last few weeks, and how many of those went on to triple.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="obs-section" aria-labelledby="s-3d">
+    <h2 class="obs-h2" id="s-3d"><span class="idx">02</span>Chart action in three dimensions</h2>
+    <div class="tl-bar">
+      <div class="tl-seg" role="group" aria-label="3D view" id="view3d">
+        <button type="button" data-view="landscape" aria-pressed="true">Launch landscape</button>
+        <button type="button" data-view="phase" aria-pressed="false">Phase space</button>
+      </div>
+      <span class="muted tl-count" id="view3d-note"></span>
+    </div>
+    <div class="obs-panel"><div id="three" class="obs-chart" style="height:580px"></div>
+      <p class="obs-note" id="three-caption"></p></div>
+  </section>
+
+  <section class="obs-section" aria-labelledby="s-readings">
+    <h2 class="obs-h2" id="s-readings"><span class="idx">03</span>What came before, chart by chart</h2>
+    {% if matrix.rows %}
+    <div class="obs-panel"><div id="matrix" class="obs-chart" style="height:{{ 140 + 22 * matrix.rows|length }}px"></div>
+      <p class="obs-note">How much more often each Scan Lab block fired in the window before a launch than in ordinary windows, per chart.
+        Amber means more often before triplers, blue less often; hover for the rates. Sorted by strength of evidence (after correcting for
+        the number of readings tested).</p></div>
+    <script id="matrix-data" type="application/json">{{ matrix|tojson }}</script>
+    {% endif %}
+    {% if top %}
+    <div class="obs-table-wrap"><table class="obs-table">
+      <thead><tr><th>Chart</th><th>Reading</th><th class="num">Before triplers</th><th class="num">Ordinary</th><th class="num">Lift</th><th class="num">q</th></tr></thead>
+      <tbody>{% for r in top %}<tr><td class="mono">{{ r.timeframe }}</td><td>{{ r.label }}</td>
+        {% if r.kind == 'flag' %}<td class="num">{{ m.rate(r.tripler_rate) }}</td><td class="num">{{ m.rate(r.ordinary_rate) }}</td><td class="num">{{ m.mult(r.lift) }}</td>
+        {% else %}<td class="num">median {{ '%.3g' % r.tripler_median }}</td><td class="num">{{ '%.3g' % r.ordinary_median }}</td><td class="num">–</td>{% endif %}
+        <td class="num">{{ '%.3f' % r.q }}</td></tr>{% endfor %}</tbody></table></div>
+    {% else %}<p class="obs-note">No reading cleared the bar yet (q ≤ 0.10). More triplers make smaller differences visible.</p>{% endif %}
+    {% if multi %}
+    <h3 class="tl-h3">Firing on two or more charts at once</h3>
+    <div class="obs-chips">{% for r in multi if r.q <= 0.25 %}<span class="obs-tag {{ 'yes' if r.lift and r.lift > 1 }}">{{ r.label }} · {{ m.rate(r.tripler_rate) }} vs {{ m.rate(r.ordinary_rate) }}</span>{% else %}<span class="muted">nothing significant yet</span>{% endfor %}</div>
+    {% endif %}
+  </section>
+
+  <section class="obs-section" aria-labelledby="s-learned">
+    <h2 class="obs-h2" id="s-learned"><span class="idx">04</span>Scans the data learned</h2>
+    <div class="obs-grid-2">{% for tf, l in learned.items() %}
+      <div class="obs-panel"><h3 class="tl-h3">Tripler DNA · {{ {'1d':'daily','4h':'4-hour','1h':'1-hour'}[tf] }}</h3>
+        {% if l and l.picks %}
+        <div class="obs-chips" style="margin:8px 0 12px">{% for p in l.picks %}<span class="obs-tag yes">{{ p.title }} · {{ m.mult(p.lift) }}</span>{% endfor %}</div>
+        {% if l.test.flagged %}<p class="obs-note">Learned on launches before {{ l.cut }}, tested on the {{ l.test.windows }} windows after it: flagged {{ l.test.flagged }},
+          caught {{ m.rate(l.test.recall) }} of the triplers, <b>{{ m.mult(l.test.lift) }}</b> the base rate.</p>
+        {% else %}<p class="obs-note">Learned on launches before {{ l.cut }}, but it flagged none of the {{ l.test.windows }} later windows, so it hasn't proven itself yet.</p>{% endif %}
+        {% else %}<p class="obs-note">{{ (l or {}).get('note') or 'Not enough triplers on this chart yet.' }}</p>{% endif %}
+      </div>{% endfor %}</div>
+    <p class="obs-note">Learned scans appear in Scan Lab under Starter scans, and the daily one joins the daily radar, which grades its picks.</p>
+  </section>
+
+  <section class="obs-section" aria-labelledby="s-list">
+    <h2 class="obs-h2" id="s-list"><span class="idx">05</span>Every tripler</h2>
+    <div class="obs-table-wrap tl-list"><table class="obs-table">
+      <thead><tr><th>Ticker</th><th>Launch</th><th class="num">Days to 3×</th><th class="num">Peak</th><th class="num">Launch price</th><th>Charts</th><th class="num">News</th><th class="num">Reddit</th></tr></thead>
+      <tbody>{% for r in trips|sort(attribute='launch_date', reverse=true) %}{% set cf = r.context_features or {} %}<tr>
+        <td><a href="{{ url_for('triplers.event', event_id=r.id) }}">{{ r.ticker }}</a></td><td class="mono">{{ r.launch_date }}</td>
+        <td class="num">{{ r.days_to_triple }}</td><td class="num">{{ m.mult(r.peak_multiple) }}</td><td class="num">{{ '%.2f' % r.base_close }}</td>
+        <td class="mono muted">{{ (r.timeframes or [])|join(' ') }}</td><td class="num">{{ m.known(cf.news_articles, cf.news_partial) }}</td>
+        <td class="num">{{ m.known(cf.reddit_mentions, cf.reddit_partial) }}</td></tr>{% endfor %}</tbody></table></div>
+    <p class="obs-note">Survivorship bias: stocks that have since been delisted aren't in today's exchange lists, so some failed pumps are missing. Nothing here is investment advice.</p>
+  </section>
+  {% endif %}
+</div>
+<script src="{{ url_for('static', filename='js/triplers.js') }}" defer></script>
+{% endblock %}

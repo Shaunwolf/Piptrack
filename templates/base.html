@@ -36,6 +36,7 @@
             }
         }
     </script>
+    {% block head %}{% endblock %}
 </head>
 <body class="dark bg-dark-bg text-white min-h-screen">
     <!-- Navigation -->
@@ -72,21 +73,21 @@
                         <a href="{{ url_for('journal') }}" class="nav-link">
                             <i class="fas fa-book mr-1"></i>Journal
                         </a>
-                        <a href="{{ url_for('pump_backtest_dashboard') }}" class="nav-link">
-                            <i class="fas fa-history mr-1"></i>Backtest
+                        <a href="{{ url_for('pump_research.dashboard') }}" class="nav-link">
+                            <i class="fas fa-rocket mr-1"></i>Pump Research
                         </a>
-                        <a href="{{ url_for('pump_analysis_dashboard') }}" class="nav-link">
-                            <i class="fas fa-rocket mr-1"></i>Pump Analysis
+                        <a href="{{ url_for('scanlab.page') }}" class="nav-link">
+                            <i class="fas fa-flask mr-1"></i>Scan Lab
                         </a>
                     </div>
                 </div>
                 
                 <!-- Right side buttons -->
                 <div class="flex items-center space-x-4">
-                    <button id="voiceToggle" class="btn-secondary">
+                    <button id="voiceToggle" class="btn-secondary hidden sm:inline-block">
                         <i class="fas fa-volume-up mr-1"></i>Voice: ON
                     </button>
-                    <button onclick="exportWeeklyReport()" class="btn-primary">
+                    <button onclick="exportWeeklyReport()" class="btn-primary hidden sm:inline-block">
                         <i class="fas fa-download mr-1"></i>Export
                     </button>
                     
@@ -100,7 +101,7 @@
                                     <i class="fas fa-user text-sm text-white"></i>
                                 {% endif %}
                             </div>
-                            <span class="text-sm">
+                            <span class="text-sm hidden sm:inline">
                                 {% if current_user.is_authenticated and current_user.first_name %}
                                     {{ current_user.first_name }}
                                 {% else %}
@@ -184,6 +185,14 @@
                         </div>
                     </div>
                 </div>
+            </div>
+            <!-- Phones: the links above are hidden below md -->
+            <div class="md:hidden flex gap-5 overflow-x-auto pb-3 text-sm whitespace-nowrap">
+                <a href="{{ url_for('index') }}" class="shrink-0 py-1 text-gray-300 hover:text-white">Dashboard</a>
+                <a href="{{ url_for('recommendations_dashboard') }}" class="shrink-0 py-1 text-gray-300 hover:text-white">AI Picks</a>
+                <a href="{{ url_for('journal') }}" class="shrink-0 py-1 text-gray-300 hover:text-white">Journal</a>
+                <a href="{{ url_for('pump_research.dashboard') }}" class="shrink-0 py-1 text-gray-300 hover:text-white">Pump Research</a>
+                <a href="{{ url_for('scanlab.page') }}" class="shrink-0 py-1 text-gray-300 hover:text-white">Scan Lab</a>
             </div>
         </div>
     </nav>

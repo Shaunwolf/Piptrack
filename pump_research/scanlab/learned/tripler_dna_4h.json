@@ -1,0 +1,129 @@
+{
+ "title": "Tripler DNA (4-hour)",
+ "style": "tripler",
+ "tagline": "Learned from stocks that tripled within 3 weeks: on later launches, flagged windows were 3.04\u00d7 as likely to be triplers as an average window.",
+ "universe": {
+  "lists": [
+   "trending",
+   "reg_sho",
+   "pump_history",
+   "meme"
+  ]
+ },
+ "timeframe": "4h",
+ "spec": {
+  "match": "all",
+  "mode": "ranked",
+  "min_score": 70,
+  "groups": [
+   {
+    "name": "Tripler build-up",
+    "logic": "atleast",
+    "min": 1,
+    "weight": 1,
+    "blocks": [
+     {
+      "type": "chart_reading",
+      "weight": 1.96,
+      "negate": false,
+      "params": {
+       "reading": "ta_atr_pct",
+       "condition": "above",
+       "value": 0.106
+      }
+     },
+     {
+      "type": "chart_reading",
+      "weight": 1.52,
+      "negate": false,
+      "params": {
+       "reading": "ta_alltime_fib_position",
+       "condition": "below",
+       "value": 0.048
+      }
+     },
+     {
+      "type": "chart_reading",
+      "weight": 1.29,
+      "negate": false,
+      "params": {
+       "reading": "ta_stoch_k",
+       "condition": "below",
+       "value": 16.0
+      }
+     },
+     {
+      "type": "chart_reading",
+      "weight": 1.51,
+      "negate": false,
+      "params": {
+       "reading": "ta_fear_greed",
+       "condition": "below",
+       "value": 27.1
+      }
+     },
+     {
+      "type": "chart_reading",
+      "weight": 1.37,
+      "negate": false,
+      "params": {
+       "reading": "ta_close_vs_hma20",
+       "condition": "below",
+       "value": -0.0433
+      }
+     },
+     {
+      "type": "chart_reading",
+      "weight": 1.38,
+      "negate": false,
+      "params": {
+       "reading": "ta_macd_hist_pct",
+       "condition": "below",
+       "value": -0.0117
+      }
+     },
+     {
+      "type": "chart_reading",
+      "weight": 1.26,
+      "negate": false,
+      "params": {
+       "reading": "ta_cmf20",
+       "condition": "below",
+       "value": -0.218
+      }
+     },
+     {
+      "type": "chart_reading",
+      "weight": 2.28,
+      "negate": false,
+      "params": {
+       "reading": "ta_range_expansion_last",
+       "condition": "below",
+       "value": 0.397
+      }
+     }
+    ]
+   }
+  ]
+ },
+ "learned": {
+  "cut": "2026-05-11",
+  "train": {
+   "windows": 1195,
+   "flagged": 111,
+   "recall": 0.301,
+   "tripler_share_flagged": 0.7658,
+   "tripler_share_all": 0.236,
+   "lift": 3.25
+  },
+  "test": {
+   "windows": 570,
+   "flagged": 83,
+   "recall": 0.443,
+   "tripler_share_flagged": 0.6506,
+   "tripler_share_all": 0.214,
+   "lift": 3.04
+  },
+  "min_score": 70
+ }
+}
