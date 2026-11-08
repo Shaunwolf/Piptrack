@@ -195,8 +195,14 @@ def context_for(win: Dict, settings, sources, social: bool) -> Dict:
         if src.name.startswith("reddit") and not social:
             statuses[src.name] = {"status": "skipped", "detail": "Reddit search budget used up", "records": 0}
             continue
+        if getattr(src, "_refused", None):
+            statuses[src.name] = dict(src._refused)
+            continue
         res = src.fetch(win["ticker"], start, end)
         statuses[src.name] = {"status": res.status, "detail": res.detail, "records": len(res.records)}
+        if res.status in ("blocked", "needs_key") or (res.status == "error" and any(c in (res.detail or "") for c in ("401", "403"))):
+            # A source that refuses this machine will refuse every window: stop asking for the rest of the run
+            src._refused = {**statuses[src.name], "detail": f"not retried after: {res.detail}"[:200]}
         context[src.name] = res.records
     reddit = [p for n in list(context) if n.startswith("reddit") for p in context.pop(n)]
     answered = [n for n, s in statuses.items() if s["status"] in ("ok", "no_data") or (s["status"] == "partial" and s["records"])]

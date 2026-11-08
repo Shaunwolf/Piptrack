@@ -153,3 +153,20 @@ def test_overlay_analogs_and_pages(tmp_path, monkeypatch):
     assert "tripler_share" in m and m["live"]["close"][-1] == 1.0
     assert c.get(f"/pump-research/triplers/event/{trip['id']}?tf=1h&tool=spiral").status_code == 200
     assert c.get("/pump-research/triplers/event/NOPE_1").status_code == 404
+
+
+def test_refusing_source_is_asked_once():
+    from pump_research.config import Settings
+    from pump_research.triplers.collect import context_for
+
+    class Refuser:
+        name, calls = "sec_filings", 0
+
+        def fetch(self, *a, **k):
+            Refuser.calls += 1
+            return SourceResult(self.name, "error", detail="HTTPError: 403 from https://www.sec.gov")
+    src = Refuser()
+    win = {"ticker": "ABC", "window_dates": ["2025-01-02", "2025-01-03"]}
+    for _ in range(3):
+        out = context_for(win, Settings(), [src], social=True)
+    assert Refuser.calls == 1 and out["sources"]["sec_filings"]["status"] == "error"
