@@ -1,0 +1,61 @@
+{
+ "title": "Tripler DNA (4-hour)",
+ "style": "tripler",
+ "tagline": "Learned from stocks that tripled within 3 weeks: on later launches, flagged windows were 2.42\u00d7 as likely to be triplers as an average window.",
+ "universe": {
+  "lists": [
+   "trending",
+   "reg_sho",
+   "pump_history",
+   "meme"
+  ]
+ },
+ "timeframe": "4h",
+ "spec": {
+  "match": "all",
+  "mode": "ranked",
+  "min_score": 65,
+  "groups": [
+   {
+    "name": "Tripler build-up",
+    "logic": "atleast",
+    "min": 1,
+    "weight": 1,
+    "blocks": [
+     {
+      "type": "fear_greed",
+      "params": {},
+      "weight": 1.72,
+      "negate": false
+     },
+     {
+      "type": "divergence",
+      "params": {},
+      "weight": 0.76,
+      "negate": false
+     }
+    ]
+   }
+  ]
+ },
+ "learned": {
+  "cut": "2026-05-11",
+  "train": {
+   "windows": 1195,
+   "flagged": 239,
+   "recall": 0.426,
+   "tripler_share_flagged": 0.5021,
+   "tripler_share_all": 0.236,
+   "lift": 2.13
+  },
+  "test": {
+   "windows": 570,
+   "flagged": 143,
+   "recall": 0.607,
+   "tripler_share_flagged": 0.5175,
+   "tripler_share_all": 0.214,
+   "lift": 2.42
+  },
+  "min_score": 65
+ }
+}
