@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% import "pump_research/_macros.html" as m %}
+
+{% block title %}{{ rec.ticker }} tripler · PipSqueak{% endblock %}
+{% block head %}{{ m.head() }}{% endblock %}
+
+{% block content %}
+{% set cf = rec.context_features or {} %}
+<div class="obs tl">
+  <header class="obs-mast">
+    <a class="obs-back" href="{{ url_for('triplers.page') }}">← Tripler Lab</a>
+    <div class="obs-hero">
+      <div>
+        <p class="ticker">{{ rec.ticker }}</p>
+        <p class="sub">launched after the close of {{ rec.launch_date }} at {{ '%.2f' % rec.base_close }} · tripled by {{ rec.triple_date }}
+          ({{ rec.days_to_triple }} trading days) · peaked {{ rec.peak_date }}</p>
+      </div>
+      <div class="obs-big">{{ m.mult(rec.peak_multiple) }}<small>peak close vs launch close</small></div>
+    </div>
+  </header>
+
+  <section class="obs-section" aria-labelledby="s-chart">
+    <h2 class="obs-h2" id="s-chart"><span class="idx">01</span>The chart, with the drawing tools anchored before launch</h2>
+    <form method="get" class="tl-bar">
+      <div class="tl-seg" role="group" aria-label="Timeframe">{% for t, label in [('1h','1-hour'),('4h','4-hour'),('1d','Daily')] %}
+        {% if t in available %}<a href="?tf={{ t }}{% for x in tools %}&tool={{ x }}{% endfor %}" aria-current="{{ 'true' if t == tf else 'false' }}">{{ label }}</a>{% endif %}{% endfor %}</div>
+      <input type="hidden" name="tf" value="{{ tf }}">
+      {% for t in tool_names %}<label class="tl-check"><input type="checkbox" name="tool" value="{{ t }}" {{ 'checked' if t in tools }} onchange="this.form.submit()">
+        {{ {'spiral':'Fib spiral','gann_fan':'Gann fan','speed_fan':'Fib speed fan','circles':'Fib circles','arcs':'Speed arcs','pitchfan':'Pitchfan','channel':'Fib channel','gann_box':'Gann box','extension':'Fib extension','time':'Fib time zones'}[t] }}</label>{% endfor %}
+    </form>
+    <div class="obs-panel">
+      {% if chart %}{{ m.plot('chart', chart.figure, 540) }}
+      <p class="obs-note">Fibonacci retracement levels are the dotted horizontal lines; the spiral, fans and other tools are anchored on the
+        last swings before launch, so they use only what a trader could have drawn that day. Toggle more tools above or in the legend.
+        {% if chart.fib_gann and chart.fib_gann.price_confluence %}At launch the price sat on: <b>{{ chart.fib_gann.price_confluence|join(', ')|replace('_', ' ') }}</b>.{% endif %}</p>
+      {% else %}<p class="obs-empty">No bars stored for this chart.</p>{% endif %}
+    </div>
+  </section>
+
+  <section class="obs-section" aria-labelledby="s-read">
+    <h2 class="obs-h2" id="s-read"><span class="idx">02</span>What fired before launch</h2>
+    <div class="obs-grid-2">{% for t in ['1h', '4h', '1d'] if t in (rec.readings or {}) %}{% set rd = rec.readings[t] %}
+      <div class="obs-panel"><h3 class="tl-h3">{{ {'1d':'Daily','4h':'4-hour','1h':'1-hour'}[t] }} · as of {{ rd.as_of[:10] if t == '1d' else rd.as_of[:16]|replace('T', ' ') }}</h3>
+        <ul class="tl-fired">{% for bid, b in rd.blocks.items() if b.hit %}<li><span>{{ bid.replace('_', ' ') }}</span><span>{{ b.detail }}</span></li>
+        {% else %}<li><span class="muted">nothing fired</span><span></span></li>{% endfor %}</ul>
+        {% if rd.fib_gann.price_confluence or rd.fib_gann.time_confluence %}<p class="obs-note">Fib/Gann confluence: {{ (rd.fib_gann.price_confluence + rd.fib_gann.time_confluence)|join(', ')|replace('_', ' ') }}</p>{% endif %}
+      </div>{% endfor %}</div>
+  </section>
+
+  <section class="obs-section" aria-labelledby="s-ctx">
+    <h2 class="obs-h2" id="s-ctx"><span class="idx">03</span>News, filings and Reddit in the window</h2>
+    <div class="obs-grid-2">
+      <div class="obs-panel"><h3 class="tl-h3">News ({{ m.known(cf.news_articles, cf.news_partial) }})</h3>
+        <ul class="tl-feed">{% for n in rec.news %}<li><a href="{{ n.url }}" target="_blank" rel="noopener noreferrer">{{ n.title }}</a><span class="meta">{{ n.date }} · {{ n.publisher }}</span></li>
+        {% else %}<li class="muted">No articles found.</li>{% endfor %}</ul></div>
+      <div class="obs-panel"><h3 class="tl-h3">Reddit ({{ m.known(cf.reddit_mentions, cf.reddit_partial) }})</h3>
+        <ul class="tl-feed">{% for p in rec.reddit %}<li><a href="{{ p.url }}" target="_blank" rel="noopener noreferrer">{{ p.title or (p.text or '')[:120] }}</a><span class="meta">{{ p.date }} · r/{{ p.subreddit }}{% if p.score is not none %} · {{ p.score }} pts{% endif %}</span></li>
+        {% else %}<li class="muted">No posts found{% if (rec.sources or {}).get('reddit_arctic_shift', {}).get('status') == 'skipped' %} (search budget ran out){% endif %}.</li>{% endfor %}</ul></div>
+    </div>
+    <div class="obs-chips">{% for name, s in (rec.sources or {}).items() %}<span class="obs-tag" title="{{ s.detail }}">{{ name.replace('_', ' ') }}: {{ s.status }}</span>{% endfor %}
+      {% if cf.sq_threshold_streak is defined %}<span class="obs-tag">Reg SHO streak {{ cf.sq_threshold_streak }}</span>{% endif %}
+      {% if cf.sq_days_to_cover is defined %}<span class="obs-tag">days to cover {{ '%.1f' % cf.sq_days_to_cover }}</span>{% endif %}</div>
+  </section>
+</div>
+{% endblock %}

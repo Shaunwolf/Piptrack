@@ -52,14 +52,15 @@ def _extract(content: bytes, dest: str):
                 shutil.copyfileobj(src, out)
 
 
-def ensure_remote_data(data_dir: str, url: str, max_age: float = 3600, timeout: float = 20) -> bool:
+def ensure_remote_data(data_dir: str, url: str, max_age: float = 3600, timeout: float = 20,
+                       marker: str = "pump_dataset.json") -> bool:
     """Make sure data_dir holds a recent copy of the data at url. Returns whether data is available."""
     if _fresh(data_dir, max_age):
         return True
     with _LOCK:
         if _fresh(data_dir, max_age):
             return True
-        have_old = os.path.exists(os.path.join(data_dir, "pump_dataset.json"))
+        have_old = os.path.exists(os.path.join(data_dir, marker))
         try:
             response = requests.get(url, timeout=timeout)
             response.raise_for_status()

@@ -211,3 +211,29 @@
   .obs-readout { border-right: 0; border-bottom: 1px solid var(--line); }
   .obs-tell, .obs-tell-axis { grid-template-columns: minmax(0, 1fr) 90px 44px; }
 }
+
+/* Tripler Lab ------------------------------------------------------------------ */
+.tl-bar { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; }
+.tl-seg { display: inline-flex; border: 1px solid var(--line-strong); border-radius: 10px; overflow: hidden; }
+.tl-seg button, .tl-seg a { background: transparent; color: var(--ink-2); border: 0; padding: 7px 12px; font: 500 12px var(--mono);
+  cursor: pointer; text-decoration: none; }
+.tl-seg button + button, .tl-seg a + a { border-left: 1px solid var(--line-strong); }
+.tl-seg [aria-pressed="true"], .tl-seg [aria-current="true"] { background: var(--phosphor); color: #1a1204; }
+.tl-seg button:focus-visible, .tl-seg a:focus-visible { outline: 2px solid var(--phosphor); outline-offset: -2px; }
+.tl-check { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; color: var(--ink-2); cursor: pointer; }
+.tl-check input { accent-color: var(--phosphor); }
+.tl-count { font-size: 12px; }
+.tl-h3 { margin: 0 0 6px; font-size: 15px; font-weight: 600; }
+.tl-overlay-grid { grid-template-columns: minmax(0, 2.2fr) minmax(min(100%, 280px), 1fr); }
+@media (max-width: 900px) { .tl-overlay-grid { grid-template-columns: 1fr; } }
+.tl-match .odds { font: 600 34px var(--mono); line-height: 1; margin: 10px 0 4px; }
+.tl-match ol { margin: 10px 0 0; padding-left: 18px; display: grid; gap: 4px; font-size: 13px; }
+.tl-match li a { font-family: var(--mono); font-weight: 600; text-decoration: none; }
+.tl-match .yes { color: var(--amber); }
+.tl-list { max-height: 560px; overflow: auto; }
+.tl-fired { display: grid; gap: 4px; font-size: 13px; margin: 0; padding: 0; list-style: none; }
+.tl-fired li { display: grid; grid-template-columns: minmax(120px, 180px) 1fr; gap: 10px; border-bottom: 1px solid var(--line); padding: 5px 0; }
+.tl-fired li span:last-child { color: var(--ink-3); }
+.tl-feed { display: grid; gap: 8px; font-size: 13px; margin: 0; padding: 0; list-style: none; max-height: 360px; overflow: auto; }
+.tl-feed li { display: grid; gap: 2px; }
+.tl-feed .meta { font: 11px var(--mono); color: var(--ink-3); }

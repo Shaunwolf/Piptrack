@@ -115,3 +115,41 @@ def test_collect_end_to_end_and_analyze(tmp_path):
     res = analyze(str(tmp_path))
     assert res["comparison"] and os.path.exists(tmp_path / "report.md")
     assert set(res["learned"]) == {"1d", "4h", "1h"}
+
+
+def test_overlay_analogs_and_pages(tmp_path, monkeypatch):
+    prices = {f"T{i}": daily(seed=i) for i in range(8)}
+    for k in range(10):
+        prices[f"P{k}"] = daily(seed=300 + k, triple_at=240 + k * 9)
+    loader = lambda tickers, tf: {t: prices[t] for t in tickers if t in prices}
+    hourly = lambda tickers: {t: hourly_from(prices[t].iloc[-120:]) for t in tickers}
+    collect(list(prices), str(tmp_path), daily_loader=loader, hourly_loader=hourly, sources=[FakeNews()], controls_per_event=2)
+    from pump_research.triplers import overlay
+    from pump_research.triplers.analyze import analyze
+    analyze(str(tmp_path))
+    data = overlay.load(str(tmp_path))
+    ov = overlay.overlay_data(data, "1d")
+    assert ov["triplers"] and ov["bands"]["triplers"]["median"][ov["bands"]["triplers"]["offset"].index(0)] == 1.0
+    trip = ov["triplers"][0]
+    z = trip["offset"].index(0)
+    res = overlay.analogs(data, [c * 7 for c in trip["close"][:z + 1]], "1d")
+    assert res["matches"][0]["id"] == trip["id"] and res["matches"][0]["distance"] == 0
+    rec = overlay.load_event(str(tmp_path), trip["id"])
+    chart = overlay.event_chart(rec, "1d", ["spiral", "gann_fan"])
+    groups = {t.get("legendgroup"): t.get("visible") for t in chart["figure"]["data"] if t.get("legendgroup")}
+    assert groups.get("Gann fan") is True
+    assert overlay.load_event(str(tmp_path), "../etc") is None
+
+    monkeypatch.setenv("TRIPLER_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("DISABLE_BACKGROUND_SCANNER", "1")
+    from main import app
+    import tripler_routes
+    monkeypatch.setattr(tripler_routes.overlay, "live_closes", lambda t, tf: prices["P1"])
+    app.config.update(TESTING=True, LOGIN_DISABLED=True, WTF_CSRF_ENABLED=False)
+    c = app.test_client()
+    assert c.get("/pump-research/triplers").status_code == 200
+    assert c.get("/api/pump-research/triplers/overlay?tf=4h").status_code == 200
+    m = c.get("/api/pump-research/triplers/match/ZZZ?tf=1d").get_json()
+    assert "tripler_share" in m and m["live"]["close"][-1] == 1.0
+    assert c.get(f"/pump-research/triplers/event/{trip['id']}?tf=1h&tool=spiral").status_code == 200
+    assert c.get("/pump-research/triplers/event/NOPE_1").status_code == 404
