@@ -636,3 +636,31 @@ def pump_dna(ctx, p):
         return result(False, 0, "not enough history to score")
     return result(score >= p["min"], ramp(score, p["min"] - 30, p["min"] + 10), f"Pump similarity {score:.0f}/100", "bullish")
 
+
+
+def reading_options():
+    """Numeric snapshot readings a Chart reading block can test (labelled ones plus every price-vs-average distance)"""
+    from ..labels import FEATURES, feature_label
+    from ..technicals.snapshot import MOVING_AVERAGES
+    keys = [f"ta_close_vs_{name}" for name in MOVING_AVERAGES] + [k for k in FEATURES if k.startswith("ta_")]
+    return [[k, feature_label(k)] for k in dict.fromkeys(keys)]
+
+
+@block("chart_reading", "composite", "Chart reading", "Any value from the technical snapshot (distance from an average, RSI, "
+       "Fibonacci position, range position…) above or below a level. The tripler study writes these with learned levels.",
+       [select("reading", "Reading", reading_options(), "ta_close_vs_ema200"),
+        select("condition", "Condition", opts(("below", "At or below"), ("above", "At or above")), "below"),
+        number("value", "Level", -0.3, -1_000_000, 1_000_000, 0.0001)], styles=("composite",))
+def chart_reading(ctx, p):
+    from ..labels import feature_label
+    from ..technicals import technical_snapshot
+    feats = ctx.memo("snapshot_features", lambda: technical_snapshot(ctx.df, ctx.end, 10).get("features") or {})
+    v = feats.get(p["reading"])
+    name = feature_label(p["reading"])
+    if v is None:
+        return result(False, 0, f"{name}: not available")
+    v = float(v)
+    level = float(p["value"])
+    hit = v <= level if p["condition"] == "below" else v >= level
+    gap = abs(v - level) / (abs(level) + 1e-6)
+    return result(hit, 1.0 if hit else max(0.0, 0.5 - gap), f"{name} {v:.4g} ({'≤' if p['condition'] == 'below' else '≥'} {level:.4g})")

@@ -94,9 +94,37 @@ def compare(df: pd.DataFrame) -> List[Dict]:
     return out
 
 
+def _hits(part: pd.DataFrame, pick: Dict) -> pd.Series:
+    """Strength of one pick on each window: the block's recorded strength, or a learned threshold on a reading"""
+    if pick.get("feature"):
+        col = part[pick["feature"]]
+        hit = col <= pick["value"] if pick["condition"] == "below" else col >= pick["value"]
+        return hit.fillna(False).astype(float)
+    return part[f"str_{pick['block']}"].fillna(0)
+
+
+def best_threshold(ev: pd.Series, ct: pd.Series, direction: str) -> Optional[Dict]:
+    """The level that best separates triplers from ordinary windows (largest hit-rate gap)"""
+    vals = np.unique(np.quantile(pd.concat([ev, ct]).to_numpy(float), np.linspace(0.05, 0.95, 37)))
+    best = None
+    for t in vals:
+        a = (ev <= t).mean() if direction == "below" else (ev >= t).mean()
+        b = (ct <= t).mean() if direction == "below" else (ct >= t).mean()
+        if best is None or a - b > best["gap"]:
+            best = {"value": float(t), "gap": float(a - b), "rate": float(a), "ordinary_rate": float(b)}
+    return best
+
+
+def _nice(v: float) -> float:
+    if v == 0 or not math.isfinite(v):
+        return 0.0
+    digits = 2 - int(math.floor(math.log10(abs(v))))
+    return round(v, max(0, digits))
+
+
 def _score(part: pd.DataFrame, picks: List[Dict]) -> pd.Series:
     wsum = sum(p["weight"] for p in picks)
-    s = sum(p["weight"] * part[f"str_{p['block']}"].fillna(0) for p in picks)
+    s = sum(p["weight"] * _hits(part, p) for p in picks)
     return 100 * s / wsum if wsum else pd.Series(0, index=part.index)
 
 
@@ -109,12 +137,36 @@ def learn_scan(df: pd.DataFrame, timeframe: str = "1d", max_blocks: int = 8, min
         return None
     cut = ev_dates.iloc[int(len(ev_dates) * TRAIN_SHARE)]
     train, test = part[part["launch_date"] < cut], part[part["launch_date"] >= cut]
-    rows = [r for r in compare(train) if r["reading"].startswith("blk_") and r.get("kind") == "flag"]
-    picks = []
-    for r in rows:
-        if r.get("lift") and r["lift"] >= min_lift and r["tripler_rate"] >= min_rate and r["q"] <= max_q:
-            picks.append({"block": r["reading"][4:], "title": r["label"], "lift": r["lift"], "rate": r["tripler_rate"],
-                          "weight": round(min(3.0, max(0.5, math.log2(r["lift"]))), 2)})
+    from ..scanlab.blocks_indicators import reading_options
+    readable = {k for k, _ in reading_options()}
+    candidates = []
+    for r in compare(train):
+        if r["q"] > max_q:
+            continue
+        if r["reading"].startswith("blk_") and r.get("kind") == "flag":
+            if r.get("lift") and r["lift"] >= min_lift and r["tripler_rate"] >= min_rate:
+                candidates.append({"block": r["reading"][4:], "title": r["label"], "lift": r["lift"], "rate": r["tripler_rate"]})
+        elif r.get("kind") == "number" and r["reading"] in readable:
+            ev, ct = train.loc[train["tripler"], r["reading"]].dropna(), train.loc[~train["tripler"], r["reading"]].dropna()
+            direction = "below" if r["tripler_median"] < r["ordinary_median"] else "above"
+            t = best_threshold(ev, ct, direction)
+            if t and t["ordinary_rate"] < 1 and t["rate"] >= min_rate:
+                lift = t["rate"] / max(t["ordinary_rate"], 1e-3)
+                if lift >= min_lift:
+                    value = _nice(t["value"])
+                    candidates.append({"block": "chart_reading", "feature": r["reading"], "condition": direction, "value": value,
+                                       "title": f"{r['label']} {'≤' if direction == 'below' else '≥'} {value:g}",
+                                       "lift": round(lift, 2), "rate": round(t["rate"], 3)})
+    candidates.sort(key=lambda c: -c["lift"] * c["rate"])
+    picks, kept_hits = [], []
+    for c in candidates:
+        h = _hits(train, c)
+        # Skip near-duplicates (the many "price vs moving average" readings say much the same thing)
+        if any(abs(np.corrcoef(h, k)[0, 1]) > 0.8 for k in kept_hits if h.std() > 0 and k.std() > 0):
+            continue
+        c["weight"] = round(min(3.0, max(0.5, math.log2(max(c["lift"], 1.01)))), 2)
+        picks.append(c)
+        kept_hits.append(h)
         if len(picks) >= max_blocks:
             break
     if not picks:
@@ -131,7 +183,7 @@ def learn_scan(df: pd.DataFrame, timeframe: str = "1d", max_blocks: int = 8, min
                 "lift": round(float(prec / base), 2) if base and sel.any() else None}
 
     best = None
-    for th in range(10, 95, 5):
+    for th in range(5, 100, 5):
         m = evaluate(train, th)
         if m["recall"] >= 0.25 and m["lift"] and (best is None or m["lift"] > best[1]["lift"]):
             best = (th, m)
@@ -154,7 +206,9 @@ def to_preset(learned: Dict) -> Optional[Dict]:
         "timeframe": tf,
         "spec": {"match": "all", "mode": "ranked", "min_score": learned["min_score"], "groups": [
             {"name": "Tripler build-up", "logic": "atleast", "min": 1, "weight": 1,
-             "blocks": [{"type": p["block"], "params": {}, "weight": p["weight"], "negate": False} for p in learned["picks"]]}]},
+             "blocks": [{"type": p["block"], "weight": p["weight"], "negate": False,
+                         "params": {"reading": p["feature"], "condition": p["condition"], "value": p["value"]} if p.get("feature") else {}}
+                        for p in learned["picks"]]}]},
         "learned": {k: learned[k] for k in ("cut", "train", "test", "min_score")},
     }
 
