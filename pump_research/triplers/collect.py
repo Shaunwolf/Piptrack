@@ -315,7 +315,8 @@ def collect(tickers: List[str], out_dir: str, settings=None, daily_loader: Optio
             with open(os.path.join(out_dir, "events", f"{rec['id']}.json"), "w") as f:
                 json.dump(rec, f, default=str)
         if n % 50 == 0:
-            logging.info("collected %d of %d windows", n + 1, len(order))
+            logging.info("collected %d of %d windows after %.1f minutes (Reddit searched: %s)", n + 1, len(order),
+                         (time.time() - started) / 60, "yes" if time.time() < social_deadline else "budget used")
 
     meta = {"collected_at": datetime.now(timezone.utc).isoformat(timespec="seconds"), "stocks_requested": len(tickers),
             "stocks_with_prices": found["scanned"], "triplers": len(events), "controls": len(controls),

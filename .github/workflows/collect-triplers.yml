@@ -52,7 +52,7 @@ jobs:
         run: |
           args=(--out tripler_data --social-minutes "$SOCIAL_MINUTES" --limit "$LIMIT")
           if [ -n "$TICKERS" ]; then args+=(--tickers "$TICKERS"); fi
-          uv run python -m pump_research -v triplers collect "${args[@]}" 2>&1 | grep -v "^DEBUG" | tail -n 400
+          uv run python -m pump_research -v triplers collect "${args[@]}" 2>&1 | grep --line-buffered -v -e "^DEBUG" -e "YFPricesMissingError" -e "Failed download" -e "^ERROR:yfinance:$"
 
       - name: Analyze and learn the Tripler DNA scans
         run: |
