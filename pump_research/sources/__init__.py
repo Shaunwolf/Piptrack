@@ -2,7 +2,7 @@
 
 from .prices import YahooPrices, PolygonPrices
 from .filings import SecEdgarFilings
-from .news import PolygonNews, GdeltNews
+from .news import PolygonNews, GdeltNews, GoogleNews
 from .social import PullpushReddit, ArcticShiftReddit
 
 
@@ -25,6 +25,7 @@ def default_context_sources(settings):
         SecEdgarFilings(settings),
         PolygonNews(settings),
         GdeltNews(settings),
+        GoogleNews(settings),
         PullpushReddit(settings),
         ArcticShiftReddit(settings),
     ]

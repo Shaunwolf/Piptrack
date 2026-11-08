@@ -11,7 +11,7 @@ import pandas as pd
 from .engine import ScanContext, evaluate, needed_feeds, normalize_spec
 from .universe import NAMES
 
-TIMEFRAMES = {"1d": ("1d", "2y"), "1wk": ("1wk", "10y"), "1h": ("60m", "180d")}
+TIMEFRAMES = {"1d": ("1d", "2y"), "1wk": ("1wk", "10y"), "4h": ("60m", "360d"), "1h": ("60m", "180d")}
 BENCHMARK = "SPY"
 MIN_BARS = 30
 
@@ -25,7 +25,7 @@ def cache_dir() -> str:
 
 def _stamp(timeframe):
     now = datetime.now(timezone.utc)
-    return now.strftime("%Y-%m-%dT%H") if timeframe == "1h" else now.strftime("%Y-%m-%d")
+    return now.strftime("%Y-%m-%dT%H") if timeframe in ("1h", "4h") else now.strftime("%Y-%m-%d")
 
 
 def _frame(raw: pd.DataFrame) -> Optional[pd.DataFrame]:
@@ -72,6 +72,9 @@ def load_prices(tickers: List[str], timeframe: str = "1d", batch: int = 60) -> D
             except KeyError:
                 part = None
             df = _frame(part)
+            if df is not None and timeframe == "4h":
+                from ..triplers.collect import to_4h
+                df = to_4h(df)
             if df is None:
                 continue
             out[t] = df

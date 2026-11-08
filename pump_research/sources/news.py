@@ -62,3 +62,35 @@ class GdeltNews(DataSource):
         ]
         # GDELT returns at most maxrecords articles and has no pagination
         return Partial(records, f"GDELT cap of {self.max_records} articles reached") if len(articles) >= self.max_records else records
+
+
+class GoogleNews(DataSource):
+    """Google News search RSS with a date range: free, no key, and reaches back years (at most 100 items per query)"""
+    name = "google_news"
+    max_items = 100
+
+    def _fetch(self, ticker, start, end, company_name=None, **kwargs):
+        import xml.etree.ElementTree as ET
+        from email.utils import parsedate_to_datetime
+
+        import requests
+
+        from .base import DEFAULT_HEADERS
+        terms = f'"{company_name}"' if company_name else f'"{ticker}" (stock OR shares)'
+        q = f"{terms} after:{(start - timedelta(days=1)).isoformat()} before:{(end + timedelta(days=1)).isoformat()}"
+        resp = requests.get("https://news.google.com/rss/search", params={"q": q, "hl": "en-US", "gl": "US", "ceid": "US:en"},
+                            headers={"User-Agent": DEFAULT_HEADERS["User-Agent"]}, timeout=self.settings.request_timeout)
+        resp.raise_for_status()
+        items = ET.fromstring(resp.content).findall("./channel/item")
+        records = []
+        for it in items:
+            try:
+                day = parsedate_to_datetime(it.findtext("pubDate") or "").date()
+            except (TypeError, ValueError):
+                continue
+            if start <= day <= end:
+                src = it.find("source")
+                records.append({"date": day.isoformat(), "title": it.findtext("title") or "",
+                                "publisher": src.text if src is not None else "", "url": it.findtext("link") or ""})
+        records.sort(key=lambda r: r["date"])
+        return Partial(records, f"Google News returns at most {self.max_items} items") if len(items) >= self.max_items else records

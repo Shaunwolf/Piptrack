@@ -181,7 +181,9 @@ def cmd_integrations(args):
 def cmd_scan(args):
     """Run a Scan Lab starter scan (or a spec file) over sectors, lists or tickers with live prices"""
     from .model import load_model
-    from .scanlab import PRESETS, expand_universe, preset, run_scan
+    from .scanlab import expand_universe, preset, run_scan
+    from .scanlab.presets import all_presets as _all
+    PRESETS = _all()
     if args.list:
         for key, p in PRESETS.items():
             print(f"{key:20} {p['title']:22} {p['tagline']}")
@@ -231,6 +233,32 @@ def cmd_radar(args):
         print(render_report(grade(args.dir)))
 
 
+def cmd_triplers(args):
+    """Find every listed stock that tripled within 3 weeks and collect its pre-launch readings, or analyze them"""
+    import json
+    if args.action == "collect":
+        from .config import Settings
+        from .triplers import listed_tickers
+        from .triplers.collect import collect
+        tickers = [t.strip().upper() for t in args.tickers.split(",")] if args.tickers else listed_tickers()
+        if args.limit:
+            tickers = tickers[:args.limit]
+        meta = collect(tickers, args.out, Settings(), controls_per_event=args.controls, max_events=args.max_events,
+                       social_budget_minutes=args.social_minutes)
+        print(json.dumps(meta, indent=1))
+    else:
+        from .triplers.analyze import analyze
+        res = analyze(args.out)
+        print(open(os.path.join(args.out, "report.md")).read())
+        if args.install:
+            from .scanlab.presets import LEARNED_DIR
+            os.makedirs(LEARNED_DIR, exist_ok=True)
+            for tf, p in res["presets"].items():
+                with open(os.path.join(LEARNED_DIR, f"tripler_dna_{tf}.json"), "w") as f:
+                    json.dump(p, f, indent=1)
+                print(f"installed Scan Lab preset tripler_dna_{tf}")
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="pump_research", description="Research what happened before extreme stock pumps")
     parser.add_argument("-v", "--verbose", action="store_true")
@@ -273,7 +301,7 @@ def main(argv=None):
     p.add_argument("--sector", action="append", help="GICS sector name (repeatable)")
     p.add_argument("--lists", action="append", help="themed list key, e.g. meme (repeatable)")
     p.add_argument("--tickers", nargs="*")
-    p.add_argument("--timeframe", choices=["1d", "1wk", "1h"], default="1d")
+    p.add_argument("--timeframe", choices=["1d", "1wk", "4h", "1h"], default="1d")
     p.add_argument("--limit", type=int, default=600)
     p.add_argument("--top", type=int, default=25)
     p.add_argument("--all", action="store_true", help="also list near misses")
@@ -285,6 +313,17 @@ def main(argv=None):
     p.add_argument("action", choices=["run", "grade"])
     p.add_argument("--dir", default="radar")
     p.set_defaults(func=cmd_radar)
+
+    p = sub.add_parser("triplers", help="stocks that tripled within 3 weeks: collect pre-launch readings, or analyze them")
+    p.add_argument("action", choices=["collect", "analyze"])
+    p.add_argument("--out", default="tripler_data")
+    p.add_argument("--tickers", help="comma-separated tickers (default: every listed common stock)")
+    p.add_argument("--limit", type=int, default=0, help="only the first N tickers (testing)")
+    p.add_argument("--controls", type=int, default=3, help="ordinary windows per tripler")
+    p.add_argument("--max-events", type=int, default=0, help="keep only the N most recent triplers")
+    p.add_argument("--social-minutes", type=float, default=60, help="time budget for Reddit archive searches")
+    p.add_argument("--install", action="store_true", help="save the learned scans as Scan Lab starter scans")
+    p.set_defaults(func=cmd_triplers)
 
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO if args.verbose else logging.WARNING)

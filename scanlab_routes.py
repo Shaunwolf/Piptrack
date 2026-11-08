@@ -12,7 +12,8 @@ from flask_login import current_user, login_required
 
 from app import db
 from models import SavedScan, ScanAlert
-from pump_research.scanlab import PRESETS, catalog, expand_universe, normalize_spec, run_scan
+from pump_research.scanlab import catalog, expand_universe, normalize_spec, run_scan
+from pump_research.scanlab.presets import all_presets
 from pump_research.scanlab.runner import TIMEFRAMES
 from pump_research.scanlab.universe import clean_tickers, describe
 
@@ -80,8 +81,9 @@ def page():
 @login_required
 def api_catalog():
     return jsonify({**catalog(), "presets": [{"key": k, "title": p["title"], "tagline": p["tagline"], "style": p["style"],
-                                              "spec": p["spec"], "universe": p["universe"]} for k, p in PRESETS.items()],
-                    "universe": describe(), "timeframes": [{"key": "1d", "title": "Daily"}, {"key": "1wk", "title": "Weekly"},
+                                              "spec": p["spec"], "universe": p["universe"], "timeframe": p.get("timeframe", "1d"),
+                                              "learned": p.get("learned")} for k, p in all_presets().items()],
+                    "universe": describe(), "timeframes": [{"key": "1d", "title": "Daily"}, {"key": "1wk", "title": "Weekly"}, {"key": "4h", "title": "4-hour"},
                                                            {"key": "1h", "title": "Hourly"}]})
 
 

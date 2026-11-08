@@ -108,10 +108,16 @@ def context_features(context: Dict[str, List[Dict]], window_dates: List[date], a
     """
     answered = set(context) if answered is None else set(answered)
     has_filings = "sec_filings" in answered
-    has_news = bool({"polygon_news", "gdelt_news"} & answered)
+    has_news = bool({"polygon_news", "gdelt_news", "google_news"} & answered)
     has_reddit = "reddit" in answered
     filings = context.get("sec_filings", [])
-    news = context.get("polygon_news", []) + context.get("gdelt_news", [])
+    news, seen_titles = [], set()
+    for n in context.get("polygon_news", []) + context.get("gdelt_news", []) + context.get("google_news", []):
+        key = (n.get("title") or "").strip().lower()[:90]
+        if key and key in seen_titles:
+            continue
+        seen_titles.add(key)
+        news.append(n)
     reddit = context.get("reddit", [])
     groups = Counter(f["group"] for f in filings)
 
@@ -138,7 +144,7 @@ def context_features(context: Dict[str, List[Dict]], window_dates: List[date], a
         "reddit_avg_sentiment": float(np.mean(sentiments)) if sentiments else None,
         "reddit_top_subreddits": Counter(r["subreddit"] for r in reddit).most_common(5),
     }
-    feats["news_partial"] = bool({"polygon_news", "gdelt_news"} & set(partial))
+    feats["news_partial"] = bool({"polygon_news", "gdelt_news", "google_news"} & set(partial))
     feats["reddit_partial"] = "reddit" in set(partial)
     for key in feats:
         if key.endswith("_partial"):

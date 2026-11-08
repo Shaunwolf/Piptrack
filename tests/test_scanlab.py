@@ -250,7 +250,7 @@ def test_page_and_catalog(lab):
     html = lab.get("/scan-lab").get_data(as_text=True)
     assert "Scan Lab" in html and 'id="palette"' in html
     cat = lab.get("/api/scan-lab/catalog").get_json()
-    assert len(cat["blocks"]) == len(BLOCKS) and {p["key"] for p in cat["presets"]} == set(PRESETS)
+    assert len(cat["blocks"]) == len(BLOCKS) and {p["key"] for p in cat["presets"]} >= set(PRESETS)
     assert any(s["name"] == "Information Technology" for s in cat["universe"]["sectors"])
 
 

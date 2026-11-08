@@ -22,16 +22,22 @@ from .scanlab import expand_universe, preset, run_scan
 from .scanlab.runner import load_prices
 
 RADAR_SCANS = ["squeeze_setup", "pump_dna", "momentum_breakout"]
+
+
+def radar_scans() -> List[str]:
+    """The hand-built radar scans plus the daily Tripler DNA scan, once the tripler study has learned one"""
+    from .scanlab.presets import learned_presets
+    return RADAR_SCANS + [k for k, p in learned_presets().items() if p.get("timeframe", "1d") == "1d"]
 THRESHOLDS = (0.2, 0.5, 1.0)       # +20%, +50%, +100% within 10 trading days
 HORIZON = 10
 
 
-def run_radar(out_dir: str, scans: List[str] = RADAR_SCANS, extra_universe: Optional[Dict] = None,
+def run_radar(out_dir: str, scans: Optional[List[str]] = None, extra_universe: Optional[Dict] = None,
               loader: Callable = load_prices, model=None, settings=None, today: Optional[date] = None, **run_kwargs) -> Dict:
     """Run each scan over its universe; store matches plus everything scanned (the comparison group)"""
     today = today or datetime.now(timezone.utc).date()
     snapshot = {"date": today.isoformat(), "scans": {}}
-    for key in scans:
+    for key in scans or radar_scans():
         p = preset(key)
         universe = p["universe"]
         if extra_universe:

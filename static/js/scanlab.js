@@ -68,7 +68,7 @@
   function fromPreset(p) {
     const spec = JSON.parse(JSON.stringify(p.spec));
     return {
-      name: p.title, scanId: null, timeframe: "1d",
+      name: p.title, scanId: null, timeframe: p.timeframe || "1d",
       universe: { sectors: (p.universe.sectors || []).slice(), lists: (p.universe.lists || []).slice(), tickers: [] },
       spec: {
         match: spec.match || "all", mode: spec.mode || "strict", min_score: spec.min_score || 0,
@@ -163,7 +163,7 @@
   }
 
   function renderSentence() {
-    const tf = { "1d": "daily", "1wk": "weekly", "1h": "hourly" }[state.timeframe] || "daily";
+    const tf = { "1d": "daily", "1wk": "weekly", "4h": "4-hour", "1h": "hourly" }[state.timeframe] || "daily";
     const gs = state.spec.groups.filter((g) => g.blocks.some((b) => b.enabled));
     if (!gs.length) {
       $("#sentence").innerHTML = `Scan <b>${esc(universeText())}</b> on the ${tf} chart. Drag blocks from the left to say what you're looking for.`;

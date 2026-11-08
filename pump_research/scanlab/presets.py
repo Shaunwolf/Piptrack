@@ -1,6 +1,8 @@
 """Starter scans for each trading style. Every one is an ordinary spec the builder can edit."""
 
 import copy
+import json
+import os
 from typing import Dict
 
 from .blocks_patterns import BULLISH_REVERSALS
@@ -143,5 +145,37 @@ PRESETS: Dict[str, Dict] = {
 }
 
 
+LEARNED_DIR = os.path.join(os.path.dirname(__file__), "learned")
+
+
+def learned_presets() -> Dict[str, Dict]:
+    """Scans the tripler study learned from data (written by `pump_research triplers analyze --install`)"""
+    out = {}
+    try:
+        names = sorted(os.listdir(LEARNED_DIR))
+    except OSError:
+        return out
+    for name in names:
+        if name.endswith(".json"):
+            try:
+                with open(os.path.join(LEARNED_DIR, name)) as f:
+                    p = json.load(f)
+                if p.get("spec", {}).get("groups"):
+                    out[name[:-5]] = p
+            except (OSError, ValueError):
+                continue
+    return out
+
+
+def all_presets() -> Dict[str, Dict]:
+    """Hand-built starter scans plus learned ones, learned first (blank stays last)"""
+    out = dict(learned_presets())
+    out.update(PRESETS)
+    blank = out.pop("blank", None)
+    if blank:
+        out["blank"] = blank
+    return out
+
+
 def preset(key: str) -> Dict:
-    return copy.deepcopy(PRESETS[key])
+    return copy.deepcopy(all_presets()[key])
