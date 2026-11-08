@@ -40,7 +40,7 @@ def _bdays_before(d: date, n: int) -> List[date]:
     return out[::-1]
 
 
-def threshold_streak(data: SqueezeData, asof: date, ticker: str, lookback: int = 25) -> Optional[int]:
+def threshold_streak(data: SqueezeData, asof: date, ticker: str, lookback: int = 60) -> Optional[int]:
     """Consecutive published days on the threshold list ending at asof (None if no lists were available)"""
     n, seen_any, cur, checked = 0, False, asof, 0
     while checked < lookback * 2 and n < lookback:
@@ -86,7 +86,7 @@ def squeeze_features(ticker: str, window_dates: List[date], data: Optional[Squee
     try:
         hist = data.short_interest_history(t)
         si = sources.short_interest_asof(hist, asof)
-        if si:
+        if si and si["days_to_cover"] < 999:          # FINRA reports 999.99 when there is no volume history (new listings)
             out["sq_days_to_cover"] = si["days_to_cover"]
             out["sq_short_interest_change_pct"] = si["change_pct"]
             out["sq_short_vs_avg_volume"] = si["short"] / si["avg_volume"] if si["avg_volume"] else None

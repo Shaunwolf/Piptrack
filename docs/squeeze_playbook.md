@@ -53,10 +53,19 @@ From the 20 historic pumps with full build-up data (see `pump_data/pump_report.m
   70% vs 32%; EMA 8/21/50 stacked bullish 58% vs 30%.
 - Bollinger squeezes, divergences, harmonics and most Fibonacci/Gann levels showed no edge on these events.
 
-The squeeze features (`sq_*`: short-volume ratio, threshold-list streak, days to cover) are collected for
-the same pre-pump and ordinary windows, so the report shows whether they actually rose before these
-pumps. Many of these events were low-float IPO pumps rather than short squeezes, so options and short-interest
-signals may only matter for the squeeze-type events (GME, AMC, KOSS, EXPR, BB).
+Squeeze data for the same windows (collection of November 8, 2026, using only data public at the time):
+
+- **Reg SHO threshold list:** GME, SPRT and QMMM had been on it for 25+ consecutive days when their pumps
+  began: 15% of pumps vs 3% of ordinary windows (5.7× lift, p ≈ 0.06). The strongest squeeze signal found, but
+  only three events.
+- **Short-volume ratio:** no difference (median 0.43 before pumps vs 0.46 normally).
+- **Days to cover:** no difference (median 2.0 vs 1.9); 3+ days was actually less common before pumps.
+- **Short interest change:** rising slightly more often before pumps (median +5% vs 0%), not significant.
+
+Many of these events were low-float IPO pumps rather than short squeezes, so short-interest and options
+signals may only matter for squeeze-type events, and 20 events is too few to tell. Options-based signals
+(gamma, call activity) and mention velocity can't be backtested from free data; the daily radar measures them
+going forward.
 
 ## How the system keeps learning
 
