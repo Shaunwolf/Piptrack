@@ -31,6 +31,48 @@ triple are read the same way, three per tripler, so cheap-stock noise isn't mist
   `triplers analyze --install` saves them as Scan Lab starter scans. The daily one joins the daily
   radar, which keeps grading it on live picks.
 
+## First full collection (November 8, 2026)
+
+541 triplers in 5,894 listed stocks over two years, against 1,500 ordinary windows from stocks at the same
+price. The median tripler took 8 trading days to reach 3×, peaked at 4.1×, and launched from $2.84.
+
+**What came before (all significant after correcting for ~1,000 tests):**
+
+- **They were crushed.**
+  - A median 88% below the 1-year high (ordinary windows: 44%) and 71% below the 200-day EMA (12%).
+  - RSI 34 (46).
+  - The Fear & Greed block read extreme fear before 48% of triplers on the daily chart (14% of ordinary
+    windows) and 39% on the 1-hour chart (7%).
+- **They were volatile and falling into a pattern.**
+  - Average true range was 17% of the price (7%).
+  - Falling wedges came before 25–27% of triplers on every chart (10–15% of ordinary windows).
+  - Range breakdowns came before 34% on the daily chart (16%).
+  - Bearish EMA stacks came before 84% on the 1-hour chart (47%).
+  - Volume accumulated while price was flat on the 4-hour chart before 20% (9%).
+- **They were not consolidating.** Tight consolidations, pullbacks in uptrends and higher-highs structure
+  were *less* common before triplers. Calm, orderly charts were the ones that didn't triple.
+- **Short side:**
+  - The Reg SHO threshold list held 3.9% of triplers vs 0.7% (5.3×). Day 8 or later on the list:
+    2.0% vs 0.5%.
+  - Short interest was rising (+4.5% vs −0.5%).
+  - Days to cover was lower (1.0 vs 2.6), because these stocks trade heavy volume.
+  - The short-volume ratio barely differed.
+- **News was quiet:** a median of 0 articles in the window (ordinary: 1).
+- **Reddit couldn't be measured:** the archive refused most searches from GitHub's servers (HTTP 422) and
+  used up its time budget after about 40 events.
+- **SEC filings couldn't be measured:** the SEC blocks GitHub's servers.
+
+**Learned scans, tested on the latest 30% of launches (which the learning never saw):**
+
+| Scan | Flags | Catches | Lift |
+|---|---|---|---|
+| Daily | 141 of 681 windows | 57% of triplers | 2.7× |
+| 4-hour | 83 of 570 | 44% | 3.0× |
+| 1-hour | 63 of 582 | 37% | 3.4× |
+
+These are lifts over ordinary windows from stocks at the same price, which tripled at the rates shown in the
+report. Most crushed, volatile stocks still don't triple. The radar now grades the daily scan on live picks.
+
 ## The page
 
 `/pump-research/triplers` has five parts:

@@ -162,7 +162,7 @@ def learn_scan(df: pd.DataFrame, timeframe: str = "1d", max_blocks: int = 8, min
     for c in candidates:
         h = _hits(train, c)
         # Skip near-duplicates (the many "price vs moving average" readings say much the same thing)
-        if any(abs(np.corrcoef(h, k)[0, 1]) > 0.8 for k in kept_hits if h.std() > 0 and k.std() > 0):
+        if any(abs(np.corrcoef(h, k)[0, 1]) > 0.5 for k in kept_hits if h.std() > 0 and k.std() > 0):
             continue
         c["weight"] = round(min(3.0, max(0.5, math.log2(max(c["lift"], 1.01)))), 2)
         picks.append(c)
