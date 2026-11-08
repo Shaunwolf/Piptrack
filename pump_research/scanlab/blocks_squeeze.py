@@ -181,10 +181,12 @@ def ema_coil(ctx, p):
 
 
 @block("clean_setup", "squeeze", "Pump-and-dump filter",
-       "Passes only stocks without the classic red flags: OTC listing, no options, tiny size, sub-dollar price",
+       "Passes only common stocks without the classic red flags: ETFs and funds, OTC listing, no options, tiny size, sub-dollar price",
        [number("min_price", "Price at least", 1, 0, 50, 0.5, "$"), number("min_cap", "Market cap at least", 50, 0, 100000, 10, "$M"),
         number("min_dollar_vol", "Dollar volume at least", 2, 0, 1000, 0.5, "$M / day"),
-        toggle("options", "Must have listed options", True), toggle("exchange", "Must trade on a national exchange (not OTC)", True)],
+        toggle("options", "Must have listed options", True), toggle("exchange", "Must trade on a national exchange (not OTC)", True),
+        toggle("stocks_only", "Common stocks only (no ETFs or funds)", True,
+               help="ETFs create new shares when demand rises, so they don't squeeze like stocks")],
        styles=("filter", "squeeze"), needs=("short_interest", "options"))
 def clean_setup(ctx, p):
     info, chain = ctx.external("short_interest") or {}, ctx.external("options")
@@ -202,6 +204,8 @@ def clean_setup(ctx, p):
     exch = (info.get("exchange") or "").upper()
     if p["exchange"] and exch in ("PNK", "OTC", "OQB", "OQX", "OEM", "PINK", "OTCM", "GREY"):
         flags.append(f"OTC ({exch})")
+    if p.get("stocks_only", True) and (info.get("quoteType") or "").upper() in ("ETF", "MUTUALFUND", "INDEX"):
+        flags.append(f"{info['quoteType'].upper()}, not a common stock")
     unknown = not info and chain is None
     return result(not flags, 1 - min(1, len(flags) / 3), ("Red flags: " + ", ".join(flags)) if flags else
                   ("No red flags" + (" (exchange and options unknown)" if unknown else "")))

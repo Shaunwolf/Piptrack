@@ -134,6 +134,8 @@ def test_pump_and_dump_filter_flags_red_flags():
     good["volume"] = 5e6
     ok = run("clean_setup", {"short_interest": {"exchange": "NMS", "marketCap": 9e8}, "options": {"has_options": True}}, good)
     assert ok["hit"], ok["detail"]
+    etf = run("clean_setup", {"short_interest": {"exchange": "PCX", "marketCap": 9e8, "quoteType": "ETF"}, "options": {"has_options": True}}, good)
+    assert not etf["hit"] and "ETF" in etf["detail"]
 
 
 def test_vcp_and_ema_coil_on_a_built_base():
