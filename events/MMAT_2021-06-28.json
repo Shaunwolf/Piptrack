@@ -1,0 +1,757 @@
+{
+  "id": "MMAT_2021-06-28",
+  "seed": {
+    "ticker": "MMAT",
+    "approx_date": "2021-06-28",
+    "category": "famous_squeeze",
+    "reported_move": "TRCH merger squeeze (from memory)",
+    "source_url": "",
+    "notes": "No source yet - verify",
+    "ipo_price": null,
+    "cik": null,
+    "price_ticker": ""
+  },
+  "criterion": "broad",
+  "min_multiple": 5.0,
+  "sources": {
+    "yahoo_prices": {
+      "status": "no_data",
+      "detail": "",
+      "records": 0
+    },
+    "hf_ohlcv_1m": {
+      "status": "ok",
+      "detail": "",
+      "records": 22
+    },
+    "sec_filings": {
+      "status": "error",
+      "detail": "HTTPError: 403 from https://www.sec.gov/files/company_tickers.json: <!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\"> <html xmlns=\"http://www.w3.org/1999/xhtml\"> <head> <meta http-equiv=\"Content-T",
+      "records": 0
+    },
+    "polygon_news": {
+      "status": "needs_key",
+      "detail": "Set POLYGON_API_KEY",
+      "records": 0
+    },
+    "gdelt_news": {
+      "status": "skipped",
+      "detail": "Window is older than GDELT DOC's ~3 month search range",
+      "records": 0
+    },
+    "reddit": {
+      "status": "error",
+      "detail": "HTTPError: submission search failed (526 from https://api.pullpush.io/reddit/search/submission/: {\"type\":\"https://dev); comment search failed (526 from https://api.pullpush.io/reddit/search/comment/: {\"type\":\"https://develo)",
+      "records": 0
+    },
+    "reddit_arctic_shift": {
+      "status": "partial",
+      "detail": "4 of 10 subreddits failed: counts are lower bounds",
+      "records": 42
+    }
+  },
+  "event": {
+    "ticker": "MMAT",
+    "pump_date": "2021-07-06",
+    "event_type": "multi_day_run",
+    "spike_date": "2021-07-06",
+    "prev_close": 6.74,
+    "day_open": 6.96,
+    "day_high": 7.995,
+    "day_close": 7.17,
+    "day_volume": 19729042.0,
+    "close_multiple": 1.064,
+    "high_multiple": 1.186,
+    "run_multiple": 1.084,
+    "run_days": 2,
+    "meets_strict": false,
+    "meets_broad": false,
+    "window_start": "2021-06-28",
+    "window_end": "2021-07-02"
+  },
+  "qualifies": false,
+  "detection": "located",
+  "price_features": null,
+  "technicals": null,
+  "daily_profile": [],
+  "controls": [],
+  "context": {
+    "sec_filings": [],
+    "polygon_news": [],
+    "gdelt_news": [],
+    "reddit": [
+      {
+        "date": "2021-06-28",
+        "kind": "submission",
+        "subreddit": "wallstreetbets",
+        "author": "academicpergatory",
+        "score": 1,
+        "num_comments": 1,
+        "title": "$MMAT Loss porn-(BIG FAT JUICY L)",
+        "text": "$MMAT Loss porn-(BIG FAT JUICY L) [removed]",
+        "sentiment": -0.3182,
+        "url": "https://www.reddit.com/r/wallstreetbets/comments/o9vds4/mmat_loss_pornbig_fat_juicy_l/"
+      },
+      {
+        "date": "2021-06-28",
+        "kind": "submission",
+        "subreddit": "wallstreetbets",
+        "author": "Kicktor",
+        "score": 1,
+        "num_comments": 0,
+        "title": "MMAT",
+        "text": "MMAT [removed]",
+        "sentiment": 0.0,
+        "url": "https://www.reddit.com/r/wallstreetbets/comments/o9r2tg/mmat/"
+      },
+      {
+        "date": "2021-06-28",
+        "kind": "submission",
+        "subreddit": "wallstreetbets",
+        "author": "Jah-din",
+        "score": 1,
+        "num_comments": 0,
+        "title": "TRCH -> MMAT = ???",
+        "text": "TRCH -> MMAT = ??? [removed]",
+        "sentiment": 0.0,
+        "url": "https://www.reddit.com/r/wallstreetbets/comments/o9pag7/trch_mmat/"
+      },
+      {
+        "date": "2021-06-28",
+        "kind": "submission",
+        "subreddit": "wallstreetbets",
+        "author": "schmitza07",
+        "score": 1,
+        "num_comments": 1,
+        "title": "MMAT merger not showing up on Broker account",
+        "text": "MMAT merger not showing up on Broker account [removed]",
+        "sentiment": 0.0,
+        "url": "https://www.reddit.com/r/wallstreetbets/comments/o9lgs3/mmat_merger_not_showing_up_on_broker_account/"
+      },
+      {
+        "date": "2021-06-28",
+        "kind": "submission",
+        "subreddit": "wallstreetbets",
+        "author": "Tolowim",
+        "score": 1,
+        "num_comments": 0,
+        "title": "$MMAT ... A quick story time",
+        "text": "$MMAT ... A quick story time [removed]",
+        "sentiment": 0.0,
+        "url": "https://www.reddit.com/r/wallstreetbets/comments/o9l9q1/mmat_a_quick_story_time/"
+      },
+      {
+        "date": "2021-06-28",
+        "kind": "submission",
+        "subreddit": "wallstreetbets",
+        "author": "Cajun70068",
+        "score": 1,
+        "num_comments": 1,
+        "title": "HODL with $TRCH / $MMAT biggest squeeze coming. Hold and or buy the ask",
+        "text": "HODL with $TRCH / $MMAT biggest squeeze coming. Hold and or buy the ask [removed]",
+        "sentiment": 0.0,
+        "url": "https://www.reddit.com/r/wallstreetbets/comments/o9jqub/hodl_with_trch_mmat_biggest_squeeze_coming_hold/"
+      },
+      {
+        "date": "2021-06-28",
+        "kind": "submission",
+        "subreddit": "wallstreetbets",
+        "author": "IPA_Homebrewer",
+        "score": 1,
+        "num_comments": 0,
+        "title": "Let\u2019s go MMAT",
+        "text": "Let\u2019s go MMAT [removed]",
+        "sentiment": 0.0,
+        "url": "https://www.reddit.com/r/wallstreetbets/comments/o9jd0w/lets_go_mmat/"
+      },
+      {
+        "date": "2021-06-28",
+        "kind": "submission",
+        "subreddit": "wallstreetbets",
+        "author": "IPA_Homebrewer",
+        "score": 1,
+        "num_comments": 1,
+        "title": "Let\u2019s go MMAT",
+        "text": "Let\u2019s go MMAT [removed]",
+        "sentiment": 0.0,
+        "url": "https://www.reddit.com/r/wallstreetbets/comments/o9jb79/lets_go_mmat/"
+      },
+      {
+        "date": "2021-06-28",
+        "kind": "submission",
+        "subreddit": "wallstreetbets",
+        "author": "IPA_Homebrewer",
+        "score": 1,
+        "num_comments": 1,
+        "title": "Let\u2019s go MMAT!",
+        "text": "Let\u2019s go MMAT! [removed]",
+        "sentiment": 0.0,
+        "url": "https://www.reddit.com/r/wallstreetbets/comments/o9jaj1/lets_go_mmat/"
+      },
+      {
+        "date": "2021-06-28",
+        "kind": "submission",
+        "subreddit": "wallstreetbets",
+        "author": "SecondFine",
+        "score": 1,
+        "num_comments": 2,
+        "title": "Where is MMAT going to go today?! Someone said to da moon \ud83c\udf1a",
+        "text": "Where is MMAT going to go today?! Someone said to da moon \ud83c\udf1a [removed]",
+        "sentiment": 0.0,
+        "url": "https://www.reddit.com/r/wallstreetbets/comments/o9i742/where_is_mmat_going_to_go_today_someone_said_to/"
+      },
+      {
+        "date": "2021-06-28",
+        "kind": "submission",
+        "subreddit": "wallstreetbets",
+        "author": "SqueezeTheHedgies",
+        "score": 1,
+        "num_comments": 1,
+        "title": "MMAT",
+        "text": "MMAT [removed]",
+        "sentiment": 0.0,
+        "url": "https://www.reddit.com/r/wallstreetbets/comments/o9i2zm/mmat/"
+      },
+      {
+        "date": "2021-06-28",
+        "kind": "submission",
+        "subreddit": "wallstreetbets",
+        "author": "Straight-Diamond-248",
+        "score": 1,
+        "num_comments": 0,
+        "title": "MMAT",
+        "text": "MMAT [removed]",
+        "sentiment": 0.0,
+        "url": "https://www.reddit.com/r/wallstreetbets/comments/o9axef/mmat/"
+      },
+      {
+        "date": "2021-06-28",
+        "kind": "submission",
+        "subreddit": "wallstreetbets",
+        "author": "Straight-Diamond-248",
+        "score": 1,
+        "num_comments": 1,
+        "title": "MMAT",
+        "text": "MMAT [removed]",
+        "sentiment": 0.0,
+        "url": "https://www.reddit.com/r/wallstreetbets/comments/o9avjt/mmat/"
+      },
+      {
+        "date": "2021-06-28",
+        "kind": "submission",
+        "subreddit": "wallstreetbets",
+        "author": "Straight-Diamond-248",
+        "score": 1,
+        "num_comments": 1,
+        "title": "MMAT: everyone keep their eyes on this one tomorrow. It\u2019s going to be a hell of a week \ud83d\udfe2\ud83d\udfe2\ud83d\udfe2",
+        "text": "MMAT: everyone keep their eyes on this one tomorrow. It\u2019s going to be a hell of a week \ud83d\udfe2\ud83d\udfe2\ud83d\udfe2 [removed]",
+        "sentiment": -0.6808,
+        "url": "https://www.reddit.com/r/wallstreetbets/comments/o9au7e/mmat_everyone_keep_their_eyes_on_this_one/"
+      },
+      {
+        "date": "2021-06-28",
+        "kind": "submission",
+        "subreddit": "wallstreetbets",
+        "author": "Cajun70068",
+        "score": 1,
+        "num_comments": 1,
+        "title": "$MMAT $TRCH .. I shall be on the frontlines in the morrow. Clearing the path of the APE as it endeavors to leave this wretched place behind.",
+        "text": "$MMAT $TRCH .. I shall be on the frontlines in the morrow. Clearing the path of the APE as it endeavors to leave this wretched place behind.",
+        "sentiment": -0.0516,
+        "url": "https://www.reddit.com/r/wallstreetbets/comments/o99xfu/mmat_trch_i_shall_be_on_the_frontlines_in_the/"
+      },
+      {
+        "date": "2021-06-29",
+        "kind": "submission",
+        "subreddit": "wallstreetbets",
+        "author": "Necessary-Order-5194",
+        "score": 1,
+        "num_comments": 2,
+        "title": "MMAT feeling good about this \ud83d\udc4d\ud83c\udd99\ufe0f\ud83e\udd8d\ud83d\udcaa\ud83c\udffb",
+        "text": "MMAT feeling good about this \ud83d\udc4d\ud83c\udd99\ufe0f\ud83e\udd8d\ud83d\udcaa\ud83c\udffb",
+        "sentiment": 0.5707,
+        "url": "https://www.reddit.com/r/wallstreetbets/comments/oagrme/mmat_feeling_good_about_this/"
+      },
+      {
+        "date": "2021-06-29",
+        "kind": "submission",
+        "subreddit": "wallstreetbets",
+        "author": "KingOfSenpais",
+        "score": 1,
+        "num_comments": 0,
+        "title": "TRCH now MMAT- HELPPPP",
+        "text": "TRCH now MMAT- HELPPPP [removed]",
+        "sentiment": 0.0,
+        "url": "https://www.reddit.com/r/wallstreetbets/comments/oaeqkl/trch_now_mmat_helpppp/"
+      },
+      {
+        "date": "2021-06-29",
+        "kind": "submission",
+        "subreddit": "wallstreetbets",
+        "author": "Sharp10000",
+        "score": 9,
+        "num_comments": 1,
+        "title": "From $20,000.00 To $750,000.00 at July 2. More updates soon\ud83d\ude80\ud83d\ude80\ud83d\ude80 $GME $AMC $MMAT MOON\ud83c\udf11\ud83c\udf16\ud83c\udf13\ud83c\udf14\ud83c\udf15 SOON\ud83d\ude80\ud83d\ude80\ud83d\ude80",
+        "text": "From $20,000.00 To $750,000.00 at July 2. More updates soon\ud83d\ude80\ud83d\ude80\ud83d\ude80 $GME $AMC $MMAT MOON\ud83c\udf11\ud83c\udf16\ud83c\udf13\ud83c\udf14\ud83c\udf15 SOON\ud83d\ude80\ud83d\ude80\ud83d\ude80",
+        "sentiment": 0.0,
+        "url": "https://www.reddit.com/r/wallstreetbets/comments/oadgnh/from_2000000_to_75000000_at_july_2_more_updates/"
+      },
+      {
+        "date": "2021-06-29",
+        "kind": "submission",
+        "subreddit": "wallstreetbets",
+        "author": "missterrcammeraa",
+        "score": 1,
+        "num_comments": 1,
+        "title": "\u270a\ud83c\udffb\u270a\ud83c\udffc\u270a\u270a\ud83c\udffd\u270a\ud83c\udffe\u270a\ud83c\udfff no matter if your stock of choice is GME, AMC, or MMAT if you believe in the stock HODL no matter what \ud83e\udd8d",
+        "text": "\u270a\ud83c\udffb\u270a\ud83c\udffc\u270a\u270a\ud83c\udffd\u270a\ud83c\udffe\u270a\ud83c\udfff no matter if your stock of choice is GME, AMC, or MMAT if you believe in the stock HODL no matter what \ud83e\udd8d",
+        "sentiment": -0.0382,
+        "url": "https://www.reddit.com/r/wallstreetbets/comments/oa4xee/no_matter_if_your_stock_of_choice_is_gme_amc_or/"
+      },
+      {
+        "date": "2021-06-29",
+        "kind": "submission",
+        "subreddit": "stocks",
+        "author": "LeonardoDiYolio",
+        "score": 0,
+        "num_comments": 3,
+        "title": "TRCH is now MMAT, and it's MORE PRIMED for a squeeze than EVER at 102.69% Short Interest (S.I. DD Linked)",
+        "text": "TRCH is now MMAT, and it's MORE PRIMED for a squeeze than EVER at 102.69% Short Interest (S.I. DD Linked) [removed]",
+        "sentiment": 0.4588,
+        "url": "https://www.reddit.com/r/stocks/comments/oad0ls/trch_is_now_mmat_and_its_more_primed_for_a/"
+      },
+      {
+        "date": "2021-06-30",
+        "kind": "submission",
+        "subreddit": "wallstreetbets",
+        "author": "maximosdecimus21",
+        "score": 1,
+        "num_comments": 1,
+        "title": "MMAT",
+        "text": "MMAT [removed]",
+        "sentiment": 0.0,
+        "url": "https://www.reddit.com/r/wallstreetbets/comments/ob7gux/mmat/"
+      },
+      {
+        "date": "2021-06-30",
+        "kind": "submission",
+        "subreddit": "wallstreetbets",
+        "author": "[deleted]",
+        "score": 1,
+        "num_comments": 1,
+        "title": "MMAT is on the run.",
+        "text": "MMAT is on the run. [removed]",
+        "sentiment": 0.0,
+        "url": "https://www.reddit.com/r/wallstreetbets/comments/ob0hye/mmat_is_on_the_run/"
+      },
+      {
+        "date": "2021-06-30",
+        "kind": "submission",
+        "subreddit": "wallstreetbets",
+        "author": "[deleted]",
+        "score": 1,
+        "num_comments": 1,
+        "title": "MMAT making run",
+        "text": "MMAT making run [removed]",
+        "sentiment": 0.0,
+        "url": "https://www.reddit.com/r/wallstreetbets/comments/ob0g1p/mmat_making_run/"
+      },
+      {
+        "date": "2021-06-30",
+        "kind": "submission",
+        "subreddit": "wallstreetbets",
+        "author": "Grouchy_Skill_6922",
+        "score": 1,
+        "num_comments": 1,
+        "title": "Yall check out $MMAT . It\u2019s claimed to be shorted more than GME and AMC. Being compare to a stock called overstock . Check them out ! Shorts positions must be closed soon!",
+        "text": "Yall check out $MMAT . It\u2019s claimed to be shorted more than GME and AMC. Being compare to a stock called overstock . Check them out ! Shorts positions must be closed soon! [removed]",
+        "sentiment": 0.0,
+        "url": "https://www.reddit.com/r/wallstreetbets/comments/oaowqt/yall_check_out_mmat_its_claimed_to_be_shorted/"
+      },
+      {
+        "date": "2021-06-30",
+        "kind": "submission",
+        "subreddit": "wallstreetbets",
+        "author": "Dependent_Ad5795",
+        "score": 1,
+        "num_comments": 1,
+        "title": "MMAT",
+        "text": "MMAT [removed]",
+        "sentiment": 0.0,
+        "url": "https://www.reddit.com/r/wallstreetbets/comments/oam4th/mmat/"
+      },
+      {
+        "date": "2021-06-30",
+        "kind": "submission",
+        "subreddit": "stocks",
+        "author": "hogarbaal2021",
+        "score": 1,
+        "num_comments": 0,
+        "title": "MMAT new moon \ud83d\udca5",
+        "text": "MMAT new moon \ud83d\udca5 [removed]",
+        "sentiment": -0.3612,
+        "url": "https://www.reddit.com/r/stocks/comments/oao53b/mmat_new_moon/"
+      },
+      {
+        "date": "2021-07-01",
+        "kind": "submission",
+        "subreddit": "wallstreetbets",
+        "author": "yourwifeshobby",
+        "score": 1,
+        "num_comments": 0,
+        "title": "$MMAT post $TRCH squeezable!",
+        "text": "$MMAT post $TRCH squeezable! [removed]",
+        "sentiment": 0.0,
+        "url": "https://www.reddit.com/r/wallstreetbets/comments/obuqry/mmat_post_trch_squeezable/"
+      },
+      {
+        "date": "2021-07-01",
+        "kind": "submission",
+        "subreddit": "wallstreetbets",
+        "author": "SevereSquash8872",
+        "score": 1,
+        "num_comments": 1,
+        "title": "I'm not an investor, but I'd like to see a legit DD on $MMAT",
+        "text": "I'm not an investor, but I'd like to see a legit DD on $MMAT [removed]",
+        "sentiment": 0.5023,
+        "url": "https://www.reddit.com/r/wallstreetbets/comments/obuhns/im_not_an_investor_but_id_like_to_see_a_legit_dd/"
+      },
+      {
+        "date": "2021-07-01",
+        "kind": "submission",
+        "subreddit": "wallstreetbets",
+        "author": "[deleted]",
+        "score": 1,
+        "num_comments": 1,
+        "title": "$MMAT Still in play?",
+        "text": "$MMAT Still in play? [removed]",
+        "sentiment": 0.34,
+        "url": "https://www.reddit.com/r/wallstreetbets/comments/obuf5y/mmat_still_in_play/"
+      },
+      {
+        "date": "2021-07-01",
+        "kind": "submission",
+        "subreddit": "wallstreetbets",
+        "author": "mpekfifteen",
+        "score": 1,
+        "num_comments": 1,
+        "title": "$MMAT Metamaterial Inc. corporate call. Do your DD and decide for yourselves.",
+        "text": "$MMAT Metamaterial Inc. corporate call. Do your DD and decide for yourselves.",
+        "sentiment": 0.0,
+        "url": "https://www.reddit.com/r/wallstreetbets/comments/oboool/mmat_metamaterial_inc_corporate_call_do_your_dd/"
+      },
+      {
+        "date": "2021-07-01",
+        "kind": "submission",
+        "subreddit": "wallstreetbets",
+        "author": "geneairic",
+        "score": 8,
+        "num_comments": 17,
+        "title": "Last chance for MMAT before finalized merge and PR on July 6th",
+        "text": "Last chance for MMAT before finalized merge and PR on July 6th [removed]",
+        "sentiment": 0.25,
+        "url": "https://www.reddit.com/r/wallstreetbets/comments/obkrl9/last_chance_for_mmat_before_finalized_merge_and/"
+      },
+      {
+        "date": "2021-07-01",
+        "kind": "submission",
+        "subreddit": "wallstreetbets",
+        "author": "mpekfifteen",
+        "score": 149,
+        "num_comments": 79,
+        "title": "First Metamaterial company listed on NASDAQ $MMAT",
+        "text": "First Metamaterial company listed on NASDAQ $MMAT",
+        "sentiment": 0.0,
+        "url": "https://www.reddit.com/r/wallstreetbets/comments/obg557/first_metamaterial_company_listed_on_nasdaq_mmat/"
+      },
+      {
+        "date": "2021-07-01",
+        "kind": "submission",
+        "subreddit": "stocks",
+        "author": "hogarbaal2021",
+        "score": 1,
+        "num_comments": 0,
+        "title": "MMAT is already accepted by our group",
+        "text": "MMAT is already accepted by our group [removed]",
+        "sentiment": 0.2732,
+        "url": "https://www.reddit.com/r/stocks/comments/obao1y/mmat_is_already_accepted_by_our_group/"
+      },
+      {
+        "date": "2021-07-02",
+        "kind": "submission",
+        "subreddit": "wallstreetbets",
+        "author": "yourwifeshobby",
+        "score": 1,
+        "num_comments": 1,
+        "title": "TRCH FTD'S will juice MMAT like OSTK. They know it so since the merger, they've more than doubled down. TRCH was one thing maybe a distraction but the hole they've dug at the new MMAT CRAZY! 50million/70% cost to borrow/ 100%utilization! COME ON! LETS SQUEEZE EM GUYS! PS YES I STILL HODL MY GME/AMC",
+        "text": "TRCH FTD'S will juice MMAT like OSTK. They know it so since the merger, they've more than doubled down. TRCH was one thing maybe a distraction but the hole they've dug at the new MMAT CRAZY! 50million/70% cost to borrow/ 100%utilization! COME ON! LETS SQUEEZE EM GUYS! PS YES I STILL HODL MY GME/AMC",
+        "sentiment": 0.3753,
+        "url": "https://www.reddit.com/r/wallstreetbets/comments/oclann/trch_ftds_will_juice_mmat_like_ostk_they_know_it/"
+      },
+      {
+        "date": "2021-07-02",
+        "kind": "submission",
+        "subreddit": "wallstreetbets",
+        "author": "ArcWyre",
+        "score": 1,
+        "num_comments": 1,
+        "title": "$MMAT Yolo, 200 Shares in, lets see it moon.",
+        "text": "$MMAT Yolo, 200 Shares in, lets see it moon.",
+        "sentiment": 0.5106,
+        "url": "https://www.reddit.com/r/wallstreetbets/comments/oceshj/mmat_yolo_200_shares_in_lets_see_it_moon/"
+      },
+      {
+        "date": "2021-07-02",
+        "kind": "submission",
+        "subreddit": "wallstreetbets",
+        "author": "ArcWyre",
+        "score": 1,
+        "num_comments": 1,
+        "title": "MMAT seems to be on sale.",
+        "text": "MMAT seems to be on sale. [removed]",
+        "sentiment": 0.0,
+        "url": "https://www.reddit.com/r/wallstreetbets/comments/oceqba/mmat_seems_to_be_on_sale/"
+      },
+      {
+        "date": "2021-07-02",
+        "kind": "submission",
+        "subreddit": "wallstreetbets",
+        "author": "MildestKicks",
+        "score": 1,
+        "num_comments": 1,
+        "title": "$MMAT / $TRCH Squeeze & Tesla Partnership Plan",
+        "text": "$MMAT / $TRCH Squeeze & Tesla Partnership Plan",
+        "sentiment": 0.0,
+        "url": "https://www.reddit.com/r/wallstreetbets/comments/ocadsu/mmat_trch_squeeze_tesla_partnership_plan/"
+      },
+      {
+        "date": "2021-07-02",
+        "kind": "submission",
+        "subreddit": "wallstreetbets",
+        "author": "RealCaro",
+        "score": 1,
+        "num_comments": 2,
+        "title": "PLEASE HELP US AT MMAT, METAMATERIALS",
+        "text": "PLEASE HELP US AT MMAT, METAMATERIALS [removed]",
+        "sentiment": 0.7555,
+        "url": "https://www.reddit.com/r/wallstreetbets/comments/oc96kl/please_help_us_at_mmat_metamaterials/"
+      },
+      {
+        "date": "2021-07-02",
+        "kind": "submission",
+        "subreddit": "wallstreetbets",
+        "author": "RealCaro",
+        "score": 1,
+        "num_comments": 0,
+        "title": "PLEASE HELP US AT MMAT METAMATERIALS",
+        "text": "PLEASE HELP US AT MMAT METAMATERIALS",
+        "sentiment": 0.6124,
+        "url": "https://www.reddit.com/r/wallstreetbets/comments/oc95yh/please_help_us_at_mmat_metamaterials/"
+      },
+      {
+        "date": "2021-07-02",
+        "kind": "submission",
+        "subreddit": "wallstreetbets",
+        "author": "[deleted]",
+        "score": 1,
+        "num_comments": 2,
+        "title": "Figured I would share my YOLO on $MMAT. This short term just became a long term. Just another day in the life of being a dumbass.",
+        "text": "Figured I would share my YOLO on $MMAT. This short term just became a long term. Just another day in the life of being a dumbass. [deleted]",
+        "sentiment": 0.1111,
+        "url": "https://www.reddit.com/r/wallstreetbets/comments/obzpsi/figured_i_would_share_my_yolo_on_mmat_this_short/"
+      },
+      {
+        "date": "2021-07-02",
+        "kind": "submission",
+        "subreddit": "wallstreetbets",
+        "author": "SirbeinTacoFrog",
+        "score": 1,
+        "num_comments": 0,
+        "title": "MMAT",
+        "text": "MMAT [removed]",
+        "sentiment": 0.0,
+        "url": "https://www.reddit.com/r/wallstreetbets/comments/obz39f/mmat/"
+      },
+      {
+        "date": "2021-07-02",
+        "kind": "submission",
+        "subreddit": "stocks",
+        "author": "MildestKicks",
+        "score": 0,
+        "num_comments": 5,
+        "title": "$MMAT / $TRCH Squeeze & Tesla Partnership Plan",
+        "text": "$MMAT / $TRCH Squeeze & Tesla Partnership Plan [removed]",
+        "sentiment": 0.0,
+        "url": "https://www.reddit.com/r/stocks/comments/ocaetl/mmat_trch_squeeze_tesla_partnership_plan/"
+      }
+    ]
+  },
+  "context_features": {
+    "filings_total": null,
+    "filings_offering": null,
+    "filings_material_event": null,
+    "filings_insider": null,
+    "filings_ownership": null,
+    "news_articles": null,
+    "reddit_mentions": 42,
+    "reddit_unique_authors": 28,
+    "reddit_mentions_per_day": [
+      15,
+      5,
+      6,
+      7,
+      9
+    ],
+    "reddit_mention_acceleration": 0.746031746031746,
+    "reddit_avg_sentiment": 0.07880714285714285,
+    "reddit_top_subreddits": [
+      [
+        "wallstreetbets",
+        38
+      ],
+      [
+        "stocks",
+        4
+      ]
+    ],
+    "news_partial": false,
+    "reddit_partial": true
+  },
+  "price_history": [
+    {
+      "date": "2021-06-28",
+      "open": 9.76,
+      "high": 9.97,
+      "low": 7.6,
+      "close": 7.94,
+      "volume": 26898369.0
+    },
+    {
+      "date": "2021-06-29",
+      "open": 8.23,
+      "high": 8.48,
+      "low": 6.95,
+      "close": 7.03,
+      "volume": 19707627.0
+    },
+    {
+      "date": "2021-06-30",
+      "open": 6.84,
+      "high": 7.95,
+      "low": 6.311,
+      "close": 7.45,
+      "volume": 25352288.0
+    },
+    {
+      "date": "2021-07-01",
+      "open": 7.34,
+      "high": 7.76,
+      "low": 7.05,
+      "close": 7.29,
+      "volume": 9847006.0
+    },
+    {
+      "date": "2021-07-02",
+      "open": 7.27,
+      "high": 7.3,
+      "low": 6.73,
+      "close": 6.74,
+      "volume": 8715725.0
+    },
+    {
+      "date": "2021-07-06",
+      "open": 6.96,
+      "high": 7.995,
+      "low": 6.58,
+      "close": 7.17,
+      "volume": 19729042.0
+    },
+    {
+      "date": "2021-07-07",
+      "open": 6.93,
+      "high": 7.07,
+      "low": 5.79,
+      "close": 5.8,
+      "volume": 15705699.0
+    },
+    {
+      "date": "2021-07-08",
+      "open": 5.42,
+      "high": 6.25,
+      "low": 5.33,
+      "close": 5.72,
+      "volume": 13346076.0
+    },
+    {
+      "date": "2021-07-09",
+      "open": 5.64,
+      "high": 5.64,
+      "low": 4.72,
+      "close": 4.74,
+      "volume": 25637607.0
+    },
+    {
+      "date": "2021-07-12",
+      "open": 4.87,
+      "high": 4.87,
+      "low": 3.88,
+      "close": 3.94,
+      "volume": 39914123.0
+    },
+    {
+      "date": "2021-07-13",
+      "open": 4.0,
+      "high": 4.2,
+      "low": 3.51,
+      "close": 3.98,
+      "volume": 47690127.0
+    },
+    {
+      "date": "2021-07-14",
+      "open": 3.95,
+      "high": 4.7,
+      "low": 3.63,
+      "close": 4.27,
+      "volume": 37796725.0
+    },
+    {
+      "date": "2021-07-15",
+      "open": 4.25,
+      "high": 4.44,
+      "low": 3.73,
+      "close": 3.79,
+      "volume": 19101695.0
+    },
+    {
+      "date": "2021-07-16",
+      "open": 3.79,
+      "high": 3.9,
+      "low": 3.6,
+      "close": 3.63,
+      "volume": 11640820.0
+    },
+    {
+      "date": "2021-07-19",
+      "open": 3.43,
+      "high": 3.58,
+      "low": 3.31,
+      "close": 3.47,
+      "volume": 12096907.0
+    },
+    {
+      "date": "2021-07-20",
+      "open": 3.44,
+      "high": 3.47,
+      "low": 3.085,
+      "close": 3.19,
+      "volume": 21089962.0
+    }
+  ],
+  "window_dates": [
+    "2021-06-28",
+    "2021-06-29",
+    "2021-06-30",
+    "2021-07-01",
+    "2021-07-02"
+  ]
+}

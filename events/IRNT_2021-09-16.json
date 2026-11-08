@@ -1,0 +1,237 @@
+{
+  "id": "IRNT_2021-09-16",
+  "seed": {
+    "ticker": "IRNT",
+    "approx_date": "2021-09-16",
+    "category": "famous_squeeze",
+    "reported_move": "de-SPAC low-float squeeze (from memory)",
+    "source_url": "",
+    "notes": "No source yet - verify",
+    "ipo_price": null,
+    "cik": null,
+    "price_ticker": ""
+  },
+  "criterion": "broad",
+  "min_multiple": 5.0,
+  "sources": {
+    "yahoo_prices": {
+      "status": "no_data",
+      "detail": "",
+      "records": 0
+    },
+    "hf_ohlcv_1m": {
+      "status": "ok",
+      "detail": "",
+      "records": 35
+    },
+    "sec_filings": {
+      "status": "error",
+      "detail": "HTTPError: 403 from https://www.sec.gov/files/company_tickers.json: <!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\"> <html xmlns=\"http://www.w3.org/1999/xhtml\"> <head> <meta http-equiv=\"Content-T",
+      "records": 0
+    },
+    "polygon_news": {
+      "status": "needs_key",
+      "detail": "Set POLYGON_API_KEY",
+      "records": 0
+    },
+    "gdelt_news": {
+      "status": "skipped",
+      "detail": "Window is older than GDELT DOC's ~3 month search range",
+      "records": 0
+    },
+    "reddit": {
+      "status": "error",
+      "detail": "HTTPError: submission search failed (526 from https://api.pullpush.io/reddit/search/submission/: {\"type\":\"https://dev); comment search failed (526 from https://api.pullpush.io/reddit/search/comment/: {\"type\":\"https://develo)",
+      "records": 0
+    },
+    "reddit_arctic_shift": {
+      "status": "partial",
+      "detail": "9 of 10 subreddits failed: counts are lower bounds",
+      "records": 0
+    }
+  },
+  "event": {
+    "ticker": "IRNT",
+    "pump_date": "2021-09-03",
+    "event_type": "multi_day_run",
+    "spike_date": "2021-09-07",
+    "prev_close": 16.52,
+    "day_open": 27.82,
+    "day_high": 29.96,
+    "day_close": 19.68,
+    "day_volume": 29825035.0,
+    "close_multiple": 1.191,
+    "high_multiple": 1.814,
+    "run_multiple": 2.391,
+    "run_days": 5,
+    "meets_strict": false,
+    "meets_broad": false,
+    "window_start": "2021-08-27",
+    "window_end": "2021-09-02"
+  },
+  "qualifies": false,
+  "detection": "located",
+  "price_features": null,
+  "technicals": null,
+  "daily_profile": [],
+  "controls": [],
+  "context": {
+    "sec_filings": [],
+    "polygon_news": [],
+    "gdelt_news": [],
+    "reddit": []
+  },
+  "context_features": {
+    "filings_total": null,
+    "filings_offering": null,
+    "filings_material_event": null,
+    "filings_insider": null,
+    "filings_ownership": null,
+    "news_articles": null,
+    "reddit_mentions": null,
+    "reddit_unique_authors": null,
+    "reddit_mentions_per_day": null,
+    "reddit_mention_acceleration": null,
+    "reddit_avg_sentiment": null,
+    "reddit_top_subreddits": null,
+    "news_partial": false,
+    "reddit_partial": true
+  },
+  "price_history": [
+    {
+      "date": "2021-08-27",
+      "open": 13.44,
+      "high": 18.38,
+      "low": 11.77,
+      "close": 12.5,
+      "volume": 2978310.0
+    },
+    {
+      "date": "2021-08-30",
+      "open": 12.75,
+      "high": 15.5,
+      "low": 10.84,
+      "close": 13.97,
+      "volume": 2897072.0
+    },
+    {
+      "date": "2021-08-31",
+      "open": 13.77,
+      "high": 14.03,
+      "low": 13.04,
+      "close": 13.43,
+      "volume": 889668.0
+    },
+    {
+      "date": "2021-09-01",
+      "open": 14.19,
+      "high": 14.3,
+      "low": 13.24,
+      "close": 13.36,
+      "volume": 558651.0
+    },
+    {
+      "date": "2021-09-02",
+      "open": 13.5,
+      "high": 14.43,
+      "low": 12.19,
+      "close": 13.48,
+      "volume": 980114.0
+    },
+    {
+      "date": "2021-09-03",
+      "open": 14.0,
+      "high": 18.57,
+      "low": 13.99,
+      "close": 16.52,
+      "volume": 4358753.0
+    },
+    {
+      "date": "2021-09-07",
+      "open": 27.82,
+      "high": 29.96,
+      "low": 18.95,
+      "close": 19.68,
+      "volume": 29825035.0
+    },
+    {
+      "date": "2021-09-08",
+      "open": 19.19,
+      "high": 19.45,
+      "low": 16.75,
+      "close": 18.84,
+      "volume": 4889708.0
+    },
+    {
+      "date": "2021-09-09",
+      "open": 19.29,
+      "high": 19.54,
+      "low": 17.25,
+      "close": 17.3,
+      "volume": 1620879.0
+    },
+    {
+      "date": "2021-09-10",
+      "open": 17.9,
+      "high": 24.4,
+      "low": 17.75,
+      "close": 21.57,
+      "volume": 10930215.0
+    },
+    {
+      "date": "2021-09-13",
+      "open": 20.71,
+      "high": 23.22,
+      "low": 19.11,
+      "close": 19.44,
+      "volume": 5128685.0
+    },
+    {
+      "date": "2021-09-14",
+      "open": 20.35,
+      "high": 23.85,
+      "low": 19.5,
+      "close": 23.32,
+      "volume": 7620038.0
+    },
+    {
+      "date": "2021-09-15",
+      "open": 27.35,
+      "high": 32.72,
+      "low": 24.47,
+      "close": 32.06,
+      "volume": 44177435.0
+    },
+    {
+      "date": "2021-09-16",
+      "open": 43.99,
+      "high": 47.5,
+      "low": 35.06,
+      "close": 41.37,
+      "volume": 52557371.0
+    },
+    {
+      "date": "2021-09-17",
+      "open": 37.26,
+      "high": 37.64,
+      "low": 29.12,
+      "close": 30.255,
+      "volume": 15118474.0
+    },
+    {
+      "date": "2021-09-20",
+      "open": 27.95,
+      "high": 33.85,
+      "low": 26.18,
+      "close": 33.33,
+      "volume": 13377903.0
+    }
+  ],
+  "window_dates": [
+    "2021-08-27",
+    "2021-08-30",
+    "2021-08-31",
+    "2021-09-01",
+    "2021-09-02"
+  ]
+}
