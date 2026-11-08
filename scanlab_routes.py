@@ -116,6 +116,25 @@ def api_run():
     return jsonify(out)
 
 
+# --- Daily radar (published by the radar workflow to the repo's `radar` branch) --------------------------------
+
+@scanlab_bp.route("/api/scan-lab/radar")
+@login_required
+def api_radar():
+    import json
+    from pump_research.squeeze.cache import Missing, fetch
+    base = os.environ.get("RADAR_URL") or "https://raw.githubusercontent.com/{}/{}/radar".format(
+        os.environ.get("VERCEL_GIT_REPO_OWNER") or "Shaunwolf", os.environ.get("VERCEL_GIT_REPO_SLUG") or "Piptrack")
+    out = {}
+    for name in ("latest", "grades"):
+        try:
+            out[name] = json.loads(fetch(f"{base}/{name}.json", max_age=1800, timeout=15))
+        except (Missing, PermissionError, ValueError, requests.RequestException, OSError):
+            out[name] = None
+    out["available"] = out["latest"] is not None
+    return jsonify(out)
+
+
 # --- Saved scans -----------------------------------------------------------------------------------------
 
 def _own_scan(scan_id):

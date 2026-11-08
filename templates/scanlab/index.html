@@ -14,6 +14,7 @@
       <input class="lab-name" id="scan-name" value="Untitled scan" maxlength="80" aria-label="Scan name">
       <div class="lab-actions">
         <button class="lab-btn" type="button" id="open-presets">Starter scans</button>
+        <button class="lab-btn" type="button" id="open-radar">Daily radar</button>
         <button class="lab-btn" type="button" id="open-scans">My scans</button>
         <button class="lab-btn" type="button" id="open-alerts">Alerts <span class="count" id="alert-count" hidden>0</span></button>
         <button class="lab-btn" type="button" id="open-save">Save &amp; alert</button>
@@ -84,6 +85,12 @@
       <button class="lab-icon-btn" type="button" data-close>Close</button></div>
     <div class="lab-dialog-body"><p class="muted" style="margin:0 0 14px">Each one is a normal scan you can change block by block.</p>
       <div class="lab-presets" id="presets"></div></div>
+  </dialog>
+
+  <dialog class="lab-dialog" id="radar-dialog" aria-labelledby="radar-title">
+    <div class="lab-dialog-head"><h2 class="lab-h2" id="radar-title">Daily radar</h2>
+      <button class="lab-icon-btn" type="button" data-close>Close</button></div>
+    <div class="lab-dialog-body"><div class="lab-list-plain" id="radar"></div></div>
   </dialog>
 
   <dialog class="lab-dialog" id="scans-dialog" aria-labelledby="scans-title">

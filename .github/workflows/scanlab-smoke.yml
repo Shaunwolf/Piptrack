@@ -33,7 +33,7 @@ jobs:
         run: |
           {
             echo "## Scan Lab smoke test ($(date -u +%F))"
-            for preset in candlestick_purist harmonic_hunter fib_gann momentum_breakout squeeze_hunter mean_reversion trend_follower pump_dna; do
+            for preset in squeeze_setup candlestick_purist harmonic_hunter fib_gann momentum_breakout squeeze_hunter mean_reversion trend_follower pump_dna; do
               echo; echo "### $preset"; echo '```'
               uv run python -m pump_research scan --preset "$preset" --top 15 2>&1 | tail -n 20
               echo '```'

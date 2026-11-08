@@ -634,6 +634,36 @@
     } catch (e) { if (render) $("#alerts").innerHTML = `<p class="lab-note">${esc(e.message)}</p>`; }
   }
 
+  const pct = (x) => (x == null ? "–" : `${Math.round(x * 100)}%`);
+  async function openRadar() {
+    const box = $("#radar");
+    box.innerHTML = `<p class="lab-note">Loading…</p>`;
+    try {
+      const d = await api("/api/scan-lab/radar");
+      if (!d.available) {
+        box.innerHTML = `<p class="lab-note">No radar runs published yet. The <b>Daily squeeze radar</b> workflow runs after each US close once the
+          project is merged (or add the <span class="mono">radar</span> label to the pull request to run it now).</p>`;
+        return;
+      }
+      const g = (d.grades && d.grades.scans) || {};
+      const scans = Object.entries(d.latest.scans).map(([key, s]) => {
+        const gr = g[key];
+        const learned = gr && gr.picks && gr.picks.n ? `<div class="muted" style="font-size:12.5px">Track record: ${gr.picks.n} graded picks ·
+          ${pct(gr.picks.hit_20)} rose 20%+ within 10 days vs ${pct(gr.base_rate.hit_20)} of everything scanned
+          ${gr.lift_at_20pct ? `(${gr.lift_at_20pct.toFixed(1)}× lift)` : ""} · ${pct(gr.picks.hit_100)} doubled</div>`
+          : `<div class="muted" style="font-size:12.5px">Track record builds up as picks reach 10 trading days old.</div>`;
+        const picks = s.picks.length ? s.picks.slice(0, 20).map((p) => `<div class="lab-alert"><div class="row1"><span><span class="tk">${esc(p.ticker)}</span>
+            <span class="muted">${esc(p.sector || "")}</span></span><span class="mono" style="font-size:12px">${p.score.toFixed(0)}/100 · ${p.price.toFixed(2)}</span></div>
+            <div class="lab-fired">${p.fired.slice(0, 6).map((f) => `<span>${esc(f)}</span>`).join("")}</div>
+            <a class="lab-open" href="/pump-research/scan?ticker=${encodeURIComponent(p.ticker)}">Open the chart analysis →</a></div>`).join("")
+          : `<p class="lab-note">No picks this day out of ${s.scanned.length} scanned.</p>`;
+        return `<div class="lab-saved"><div class="row1"><span class="nm">${esc(s.title)}</span>
+          <span class="muted mono" style="font-size:11px">${esc(d.latest.date)} · ${s.picks.length} of ${s.scanned.length}</span></div>${learned}${picks}</div>`;
+      });
+      box.innerHTML = scans.join("");
+    } catch (e) { box.innerHTML = `<p class="lab-note">${esc(e.message)}</p>`; }
+  }
+
   async function saveScan(asNew) {
     const body = {
       name: $("#save-name").value.trim() || state.name, spec: specForServer(), universe: state.universe, timeframe: state.timeframe,
@@ -733,6 +763,7 @@
       renderAll(); save(); closeDialog(b); toast(`Loaded “${state.name}”. Press Run scan, or change any block.`);
     });
     $("#open-scans").addEventListener("click", () => { openDialog("#scans-dialog"); refreshScans(); });
+    $("#open-radar").addEventListener("click", () => { openDialog("#radar-dialog"); openRadar(); });
     $("#scans").addEventListener("click", async (e) => {
       const b = e.target.closest("[data-scan-act]"); if (!b) return;
       const id = Number(b.closest("[data-scan]").dataset.scan);

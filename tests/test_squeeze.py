@@ -175,3 +175,34 @@ def test_runner_prefetches_only_needed_feeds():
 
 def test_squeeze_preset_uses_all_four_feeds():
     assert needed_feeds(normalize_spec(PRESETS["squeeze_setup"]["spec"])) == ["options", "short_interest", "social", "squeeze"]
+
+
+# --- Radar: stores picks, grades them later against the day's base rate ---------------------------------------------------
+
+def test_radar_stores_picks_and_grades_them(tmp_path, monkeypatch):
+    import pandas as pd
+    from pump_research import radar
+
+    days = pd.bdate_range("2024-01-02", periods=80)
+    flat = pd.DataFrame({"open": 10.0, "high": 10.1, "low": 9.9, "close": 10.0, "volume": 1e6}, index=days.date)
+    jumper = flat.copy()
+    jumper.iloc[62:, jumper.columns.get_loc("high")] = 16.0                 # +60% high soon after the radar day
+    frames = {"JUMP": jumper, "FLAT": flat, "SPY": flat}
+
+    def loader_until(n):
+        return lambda tickers, timeframe="1d": {t: frames[t].iloc[:n] for t in tickers if t in frames}
+
+    def fake_preset(key):
+        return {"title": key, "universe": {"tickers": ["JUMP", "FLAT"]},
+                "spec": {"mode": "ranked", "groups": [{"name": "G", "logic": "all", "blocks": [{"type": "price_range"}]}]}}
+    monkeypatch.setattr(radar, "preset", fake_preset)
+    snap = radar.run_radar(str(tmp_path), scans=["demo"], loader=loader_until(60), today=date(2024, 3, 25))
+    assert {p["ticker"] for p in snap["scans"]["demo"]["picks"]} == {"JUMP", "FLAT"}
+    assert (tmp_path / "picks" / "2024-03-25.json").exists() and (tmp_path / "latest.json").exists()
+
+    pending = radar.grade(str(tmp_path), loader=loader_until(65))            # only 5 bars later: not gradable yet
+    assert pending["pending_days"] == ["2024-03-25"]
+    done = radar.grade(str(tmp_path), loader=loader_until(80))
+    s = done["scans"]["demo"]
+    assert s["picks"]["n"] == 2 and s["picks"]["hit_50"] == 0.5 and s["base_rate"]["hit_50"] == 0.5
+    assert "Squeeze radar" in (tmp_path / "report.md").read_text()

@@ -213,6 +213,24 @@ def cmd_scan(args):
         print("no data:", ", ".join(out["missing"][:30]) + (" …" if len(out["missing"]) > 30 else ""))
 
 
+def cmd_radar(args):
+    """Daily radar: store today's picks, or grade past picks against what happened next"""
+    from .radar import grade, render_report, run_radar
+    if args.action == "run":
+        settings = _settings(args)
+        try:
+            from .model import load_model
+            model = load_model(settings)
+        except Exception:
+            model = None
+        snap = run_radar(args.dir, model=model, settings=settings)
+        for key, s in snap["scans"].items():
+            print(f"{key}: {len(s['picks'])} picks out of {len(s['scanned'])} scanned: "
+                  + ", ".join(p["ticker"] for p in s["picks"][:15]))
+    else:
+        print(render_report(grade(args.dir)))
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="pump_research", description="Research what happened before extreme stock pumps")
     parser.add_argument("-v", "--verbose", action="store_true")
@@ -262,6 +280,11 @@ def main(argv=None):
     p.add_argument("--json", action="store_true")
     p.add_argument("--list", action="store_true", help="list the starter scans")
     p.set_defaults(func=cmd_scan)
+
+    p = sub.add_parser("radar", help="daily radar: run today's scans, or grade past picks"); common(p)
+    p.add_argument("action", choices=["run", "grade"])
+    p.add_argument("--dir", default="radar")
+    p.set_defaults(func=cmd_radar)
 
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO if args.verbose else logging.WARNING)
