@@ -1,0 +1,37 @@
+name: Inspect squeeze data sources
+
+# Samples FINRA short volume, Reg SHO threshold lists, SEC fails-to-deliver, ApeWisdom and
+# yfinance short interest/options from GitHub's runners and publishes them to the squeeze-inspect branch.
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [labeled]
+
+permissions:
+  contents: write
+
+jobs:
+  inspect:
+    if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'squeeze-inspect'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT || format('PipSqueak research {0}@users.noreply.github.com', github.repository_owner) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests yfinance
+      - run: python scripts/squeeze_inspect.py
+      - name: Publish to the squeeze-inspect branch
+        run: |
+          cd squeeze_inspect
+          git init -q -b squeeze-inspect
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Squeeze source inspection from ${GITHUB_SHA::7}"
+          git push -f "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" squeeze-inspect
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
