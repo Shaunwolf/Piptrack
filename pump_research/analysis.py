@@ -91,8 +91,8 @@ def _is_bool_column(series: pd.Series) -> bool:
 
 
 def numeric_features(events: pd.DataFrame, controls: pd.DataFrame) -> List[str]:
-    """Core price features plus every numeric technical (ta_*) feature present in both groups"""
-    ta = sorted(c for c in events.columns if c.startswith("ta_") and c in controls
+    """Core price features plus every numeric technical (ta_*) and squeeze (sq_*) feature present in both groups"""
+    ta = sorted(c for c in events.columns if c.startswith(("ta_", "sq_")) and c in controls
                 and not _is_bool_column(events[c]) and not _is_bool_column(controls[c]))
     return [f for f in COMPARED_FEATURES if f in events and f in controls] + ta
 

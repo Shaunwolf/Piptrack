@@ -10,6 +10,7 @@
   const BATCH = 40;
 
   const GLYPHS = {
+    squeeze: '<path d="M2 3h12M2 13h12" stroke="currentColor" stroke-width="1.4"/><path d="M8 4.5v7M5.5 6.5 8 4.5l2.5 2M5.5 9.5 8 11.5l2.5-2" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>',
     candles: '<path d="M4 2v3M4 11v3M12 1v4M12 12v3" stroke="currentColor" stroke-width="1.4"/><rect x="2.5" y="5" width="3" height="6" fill="currentColor"/><rect x="10.5" y="5" width="3" height="7" fill="none" stroke="currentColor" stroke-width="1.4"/>',
     harmonics: '<path d="M1 12 L4.5 3 L8 9 L11.5 4 L15 13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="15" cy="13" r="1.6" fill="currentColor"/>',
     chart: '<path d="M1 4 L4.5 12 L8 6 L11.5 12 L15 4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M1 6.5h14" stroke="currentColor" stroke-width="1" stroke-dasharray="2 2"/>',
@@ -190,8 +191,9 @@
     $("#timeframe").innerHTML = catalog.timeframes.map((t) =>
       `<button type="button" data-tf="${t.key}" aria-pressed="${state.timeframe === t.key}">${esc(t.title)}</button>`).join("");
     const n = u.sectors.reduce((a, s) => a + ((catalog.universe.sectors.find((x) => x.name === s) || {}).count || 0), 0)
-      + u.lists.reduce((a, k) => a + ((catalog.universe.lists.find((x) => x.key === k) || {}).count || 0), 0) + u.tickers.length;
-    $("#universe-count").textContent = n ? `≈ ${n} stocks to scan` : "Pick at least one sector, list or ticker";
+      + u.lists.reduce((a, k) => a + (Number((catalog.universe.lists.find((x) => x.key === k) || {}).count) || 0), 0) + u.tickers.length;
+    const live = u.lists.some((k) => (catalog.universe.lists.find((x) => x.key === k) || {}).count === "live");
+    $("#universe-count").textContent = n || live ? `≈ ${n} stocks${live ? " + live lists" : ""} to scan` : "Pick at least one sector, list or ticker";
   }
 
   // --- Palette ------------------------------------------------------------------------------------------------

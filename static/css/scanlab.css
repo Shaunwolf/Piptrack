@@ -21,7 +21,7 @@
   --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
   /* family identity (paired with a glyph and name, never colour alone) */
-  --f-candles: #f5a524; --f-harmonics: #b48cff; --f-chart: #4fc9c2; --f-fibgann: #e3c34a; --f-trend: #5aa2ff;
+  --f-squeeze: #ff5d73; --f-candles: #f5a524; --f-harmonics: #b48cff; --f-chart: #4fc9c2; --f-fibgann: #e3c34a; --f-trend: #5aa2ff;
   --f-momentum: #ff7aa8; --f-volatility: #57d3e6; --f-volume: #8fdc5a; --f-structure: #c2b7a6; --f-filters: #9aa3ad;
   --f-composite: #ff8d5c;
 

@@ -49,7 +49,19 @@ LISTS: Dict[str, Dict] = {
     "sector_etfs": {"title": "Sector ETFs", "theme": "ETF",
                     "tickers": ["XLK", "XLF", "XLV", "XLE", "XLI", "XLY", "XLP", "XLU", "XLB", "XLRE", "XLC", "SMH", "XBI", "KRE"]},
     "index_etfs": {"title": "Index ETFs", "theme": "ETF", "tickers": ["SPY", "QQQ", "IWM", "DIA", "VTI", "ARKK"]},
+    # Live lists, fetched when a scan runs
+    "reg_sho": {"title": "Reg SHO threshold list (live)", "theme": "Threshold list", "tickers": [], "live": "threshold"},
+    "trending": {"title": "Trending on Reddit (live)", "theme": "Trending", "tickers": [], "live": "trending"},
 }
+
+
+def live_tickers(kind: str) -> List[str]:
+    """Today's threshold list or the fastest-rising Reddit/StockTwits tickers ([] when unavailable)"""
+    try:
+        from .feeds import threshold_tickers, trending_tickers
+        return threshold_tickers() if kind == "threshold" else trending_tickers()
+    except Exception:
+        return []
 
 
 def clean_tickers(text_or_list) -> List[str]:
@@ -73,7 +85,8 @@ def expand_universe(universe: Dict, limit: int = 600) -> Dict:
                 sector_of[t] = s
     for key in universe.get("lists") or []:
         lst = LISTS.get(key)
-        for t in (lst or {}).get("tickers", []):
+        names = live_tickers(lst["live"]) if lst and lst.get("live") else (lst or {}).get("tickers", [])
+        for t in names:
             if t not in sector_of:
                 tickers.append(t)
                 sector_of[t] = SECTOR_OF.get(t, lst["theme"])
@@ -86,4 +99,4 @@ def expand_universe(universe: Dict, limit: int = 600) -> Dict:
 
 def describe() -> Dict:
     return {"sectors": [{"name": s, "count": len(t)} for s, t in sorted(SECTORS.items())],
-            "lists": [{"key": k, "title": v["title"], "count": len(v["tickers"])} for k, v in LISTS.items()]}
+            "lists": [{"key": k, "title": v["title"], "count": "live" if v.get("live") else len(v["tickers"])} for k, v in LISTS.items()]}

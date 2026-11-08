@@ -15,6 +15,25 @@ def g(name, logic, *blocks, min=1, weight=1):
 
 
 PRESETS: Dict[str, Dict] = {
+    "squeeze_setup": {
+        "title": "Squeeze setup", "style": "squeeze",
+        "tagline": "Short pressure + rising attention + a tight base, minus the pump-and-dump red flags.",
+        "universe": {"lists": ["reg_sho", "trending", "meme", "pump_history"]},
+        "spec": {"match": "all", "mode": "strict", "groups": [
+            g("Squeeze fuel", "atleast", b("reg_sho", 2, mode="streak", days=5),
+              b("short_interest", 2, pct_float=20, days_to_cover=3, rising=False),
+              b("short_volume", ratio=0.55, rising=True), min=1),
+            g("Ignition", "atleast", b("mention_velocity", mentions=20, growth=2), b("gamma", condition="negative", pct=5, vol_oi=1),
+              b("gamma", condition="hot_calls", pct=5, vol_oi=1), b("volume_awakening", recent=3, mult=1.5, quiet=20), min=1),
+            g("Timing", "any", b("vcp", 2, contractions=3, last_max=8, first_max=35, lookback=80, status="setting_up", near=5,
+                                 within=3, stage2=False, dry=True),
+              b("ema_coil", fast=10, slow=21, spread=1.5, above50=True),
+              b("harmonic_forming", patterns=["gartley", "bat", "butterfly", "crab", "deep_crab", "shark", "cypher"],
+                direction="bullish", status="near", distance=4, tolerance=5, overlap=False, swing="auto"),
+              b("breakout", side="up", lookback="20", volume=1.5, within=3)),
+            g("Not a pump-and-dump", "all", b("clean_setup", min_price=1, min_cap=50, min_dollar_vol=2, options=True, exchange=True)),
+        ]},
+    },
     "candlestick_purist": {
         "title": "Candlestick purist", "style": "candlestick",
         "tagline": "Bullish reversal candles at support after a pullback, nothing else.",

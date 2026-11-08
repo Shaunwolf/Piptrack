@@ -33,4 +33,6 @@ class Settings:
     sec_user_agent: str = field(default_factory=lambda: os.environ.get(
         "SEC_USER_AGENT", "PipSqueak pump research (set SEC_USER_AGENT to 'Name email')"))
     polygon_api_key: str = field(default_factory=lambda: os.environ.get("POLYGON_API_KEY", ""))
+    # Squeeze data (FINRA short volume and short interest, Reg SHO threshold lists) for every window
+    squeeze_data: bool = field(default_factory=lambda: os.environ.get("PUMP_SQUEEZE_DATA") == "1")
     request_timeout: int = 20

@@ -42,7 +42,7 @@ def path(closes, vol=1e6, wick=0.01):
 def test_catalog_covers_every_family_with_valid_params():
     cat = catalog()
     fams = [f["id"] for f in cat["families"]]
-    assert fams[:4] == ["candles", "harmonics", "chart", "fibgann"] and len(cat["blocks"]) >= 45
+    assert fams[:5] == ["squeeze", "candles", "harmonics", "chart", "fibgann"] and len(cat["blocks"]) >= 54
     for b in cat["blocks"]:
         assert b["family"] in FAMILIES and b["title"] and b["summary"]
         for p in b["params"]:

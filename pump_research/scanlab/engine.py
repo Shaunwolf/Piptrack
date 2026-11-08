@@ -129,10 +129,11 @@ class Block:
     params: List[Param]
     fn: Callable
     styles: tuple = ()
+    needs: tuple = ()          # live data feeds the runner must fetch first (see scanlab.feeds)
 
     def to_dict(self):
         return {"id": self.id, "family": self.family, "title": self.title, "summary": self.summary,
-                "params": [p.to_dict() for p in self.params], "styles": list(self.styles)}
+                "params": [p.to_dict() for p in self.params], "styles": list(self.styles), "needs": list(self.needs)}
 
     def clean_params(self, raw: Optional[Dict]) -> Dict:
         raw = raw if isinstance(raw, dict) else {}
@@ -147,9 +148,9 @@ def family(id, title, blurb):
     FAMILIES[id] = Family(id, title, blurb)
 
 
-def block(id, family_id, title, summary, params, styles=()):
+def block(id, family_id, title, summary, params, styles=(), needs=()):
     def register(fn):
-        BLOCKS[id] = Block(id, family_id, title, summary, params, fn, styles)
+        BLOCKS[id] = Block(id, family_id, title, summary, params, fn, styles, needs)
         return fn
     return register
 
@@ -191,6 +192,10 @@ class ScanContext:
         self.o, self.h, self.l, self.c, self.v = (self.df[k] for k in ("open", "high", "low", "close", "volume"))
         self.close = float(self.c.iloc[-1])
         self._cache: Dict = {}
+
+    def external(self, kind):
+        """Live data the runner fetched for this ticker (short interest, options, ...); None if unavailable"""
+        return (self.meta.get("feeds") or {}).get(kind)
 
     def memo(self, key, fn):
         if key not in self._cache:
@@ -339,8 +344,13 @@ def evaluate(spec: Dict, ctx: ScanContext, normalized: bool = False) -> Dict:
             "bias": "bullish" if bull > bear else "bearish" if bear > bull else "neutral"}
 
 
-FAMILY_ORDER = ["candles", "harmonics", "chart", "fibgann", "trend", "momentum", "volatility", "volume", "structure",
-                "filters", "composite"]
+FAMILY_ORDER = ["squeeze", "candles", "harmonics", "chart", "fibgann", "trend", "momentum", "volatility", "volume",
+                "structure", "filters", "composite"]
+
+
+def needed_feeds(spec: Dict) -> List[str]:
+    """Live data feeds a (normalized) spec's enabled blocks need"""
+    return sorted({n for g in spec["groups"] for b in g["blocks"] if b["enabled"] for n in BLOCKS[b["type"]].needs})
 
 
 def catalog() -> Dict:

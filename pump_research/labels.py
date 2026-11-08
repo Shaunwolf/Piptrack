@@ -51,6 +51,18 @@ FEATURES = {
 }
 
 FEATURES.update({
+    "sq_short_vol_ratio": "Off-exchange short-volume ratio",
+    "sq_short_vol_ratio_last3": "Short-volume ratio, last 3 days",
+    "sq_short_vol_ratio_change": "Short-volume ratio vs the 10 days before",
+    "sq_threshold_streak": "Days in a row on the Reg SHO threshold list",
+    "sq_on_threshold_list": "On the Reg SHO threshold list",
+    "sq_threshold_day8_plus": "Day 8+ on the threshold list (close-out due by day 13)",
+    "sq_days_to_cover": "Days to cover (short interest ÷ daily volume)",
+    "sq_short_interest_change_pct": "Change in short interest since the last report",
+    "sq_short_vs_avg_volume": "Short interest vs average daily volume",
+    "sq_days_to_cover_3plus": "Days to cover 3 or more",
+})
+FEATURES.update({
     "ta_fib_confluence": "Fibonacci/Gann tools agreeing on price",
     "ta_fib_time_confluence": "Fibonacci time lines on this bar",
     "ta_fib_ext_position": "Position on the trend fib extension",

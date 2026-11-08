@@ -8,7 +8,7 @@ from typing import Callable, Dict, List, Optional
 
 import pandas as pd
 
-from .engine import ScanContext, evaluate, normalize_spec
+from .engine import ScanContext, evaluate, needed_feeds, normalize_spec
 from .universe import NAMES
 
 TIMEFRAMES = {"1d": ("1d", "2y"), "1wk": ("1wk", "10y"), "1h": ("60m", "180d")}
@@ -83,12 +83,22 @@ def load_prices(tickers: List[str], timeframe: str = "1d", batch: int = 60) -> D
 
 
 def run_scan(spec: Dict, tickers: List[str], sector_of: Optional[Dict[str, str]] = None, timeframe: str = "1d",
-             loader: Callable = load_prices, model: Optional[Dict] = None, settings=None, include_misses: bool = True) -> Dict:
+             loader: Callable = load_prices, model: Optional[Dict] = None, settings=None, include_misses: bool = True,
+             feeds: Optional[Callable] = None) -> Dict:
     """Evaluate the spec on every ticker; matches first, then the best near misses, by blend score"""
     spec = normalize_spec(spec)
     started = time.time()
     prices = loader(list(tickers) + [BENCHMARK], timeframe)
     bench = prices.get(BENCHMARK)
+    needs = needed_feeds(spec)
+    fed: Dict[str, Dict] = {}
+    if needs:
+        from .feeds import fetch_feeds
+        have = [t for t in tickers if prices.get(t) is not None and len(prices[t]) >= MIN_BARS]
+        last_days = [prices[t].index[-1] for t in have]
+        asof = max(last_days) if last_days else datetime.now(timezone.utc).date()
+        asof = asof.date() if hasattr(asof, "date") and callable(asof.date) else asof
+        fed = (feeds or fetch_feeds)(needs, have, asof)
     rows, missing = [], []
     for t in tickers:
         df = prices.get(t)
@@ -96,7 +106,7 @@ def run_scan(spec: Dict, tickers: List[str], sector_of: Optional[Dict[str, str]]
             missing.append(t)
             continue
         try:
-            ctx = ScanContext(df, ticker=t, benchmark=bench, model=model, settings=settings)
+            ctx = ScanContext(df, ticker=t, benchmark=bench, model=model, settings=settings, meta={"feeds": fed.get(t, {})})
             ev = evaluate(spec, ctx, normalized=True)
         except Exception as e:
             logging.warning("scan failed for %s: %s", t, e)

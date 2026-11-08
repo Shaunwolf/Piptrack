@@ -62,6 +62,23 @@ def fetch_prices(seed: Seed, price_sources):
     return records_to_frame([]), tried
 
 
+def add_squeeze_features(record: Dict, ticker: str, window_dates, control_windows, data=None):
+    """Short volume, threshold-list streaks and short interest for the pre-pump window and each ordinary window"""
+    from .squeeze import squeeze_features
+    found = 0
+    try:
+        sq = squeeze_features(ticker, list(window_dates), data)
+        record["price_features"].update(sq)
+        found += len(sq)
+        for control, win in zip(record["controls"], control_windows):
+            control.update(squeeze_features(ticker, list(win), data))
+        status = OK if found else NO_DATA
+        detail = "" if found else "no short-volume, threshold-list or short-interest data for this window"
+    except Exception as e:
+        status, detail = "error", f"{type(e).__name__}: {e}"
+    record["sources"]["squeeze"] = {"status": status, "detail": detail, "records": found}
+
+
 def collect_event(seed: Seed, settings, price_sources, context_sources) -> Dict:
     record = {
         "id": event_id(seed),
@@ -110,10 +127,14 @@ def collect_event(seed: Seed, settings, price_sources, context_sources) -> Dict:
             peak = float(prices["high"].iloc[pump_idx:pump_idx + max(1, event.run_days)].max())
             record["event"]["peak_fib_extension"] = extension_multiple(peak, snapshot["fibonacci"])
             record["daily_profile"] = daily_profile(prices, pump_idx, settings)
+            control_windows = []
             for end_idx in control_window_ends(prices, pump_idx, settings):
                 feats = price_features(prices, end_idx, settings)
                 if feats:
                     record["controls"].append({"window_end": dates[end_idx].isoformat(), **feats})
+                    control_windows.append(dates[end_idx - settings.pre_window_days + 1:end_idx + 1])
+            if getattr(settings, "squeeze_data", False):
+                add_squeeze_features(record, seed.ticker, window_dates, control_windows)
 
         # Keep the price series from baseline start through a couple of weeks after the pump
         lo = max(0, pump_idx - settings.pre_window_days - settings.baseline_days)
